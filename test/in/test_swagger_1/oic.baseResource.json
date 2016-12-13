@@ -1,0 +1,44 @@
+{
+  "properties": {
+    "range": {
+      "description": "The valid range for the value Property",
+      "items": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "integer"
+          }
+        ]
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "The value sensed or actuated by this Resource"
+    }
+  },
+  "type": "object"
+}

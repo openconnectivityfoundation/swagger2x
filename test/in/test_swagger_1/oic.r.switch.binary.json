@@ -1,0 +1,46 @@
+{
+  "properties": {
+    "BLAH1": {
+      "description": "BLAH1 description",
+      "readOnly": true,
+      "type": "boolean"
+    },
+    "BLAH2": {
+      "description": "BLAH2 description",
+      "readOnly": true,
+      "type": "boolean"
+    },
+    "BLAH3": {
+      "description": "BLAH3 description",
+      "readOnly": true,
+      "type": "boolean"
+    },
+    "BLAHF1": {
+      "description": "Status of the switch",
+      "readOnly": false,
+      "type": "string"
+    },
+    "BLAHF2": {
+      "description": "Status of the switch",
+      "readOnly": false,
+      "type": "number"
+    },
+    "BLAHF3": {
+      "description": "Status of the switch",
+      "readOnly": false,
+      "type": "integer"
+    },
+    "value": {
+      "description": "description value",
+      "type": "boolean"
+    },
+    "value2": {
+      "description": "description value2",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "value"
+  ],
+  "type": "object"
+}

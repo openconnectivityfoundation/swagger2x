@@ -1,0 +1,17 @@
+************************
+*** swagger2x (v1) ***
+************************
+usage: swagger2x.py [-h] [-ver] [-swagger [SWAGGER]] [-schema [SCHEMA]]
+                    [-template [TEMPLATE]] [-schemadir [SCHEMADIR]]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -ver, --verbose       Execute in verbose mode
+  -swagger [SWAGGER], --swagger [SWAGGER]
+                        swagger file name
+  -schema [SCHEMA], --schema [SCHEMA]
+                        schema to be added to word document
+  -template [TEMPLATE], --template [TEMPLATE]
+                        template to be used
+  -schemadir [SCHEMADIR], --schemadir [SCHEMADIR]
+                        path to dir with additional referenced schemas

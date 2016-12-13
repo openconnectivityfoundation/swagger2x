@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "id": {
+      "description": "ReadOnly, Instance ID of this specific resource",
+      "type": "string"
+    },
+    "range": {
+      "type": "string"
+    },
+    "value": {
+      "type": [
+        "string",
+        "boolean"
+      ]
+    }
+  },
+  "required": [
+    "id"
+  ],
+  "type": "object"
+}

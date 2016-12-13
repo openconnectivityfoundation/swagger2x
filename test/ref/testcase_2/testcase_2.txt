@@ -1,0 +1,29 @@
+************************
+*** swagger2doc (v1) ***
+************************
+file        : ../test/in/test_swagger_1/test_swagger_1.swagger.json
+resource    : BinarySwitchResURI
+schema      : None
+schemadir   : .
+docx        : ../input/ResourceTemplate.docx
+word_out    : ../test/./out/testcase_2/testcase_2.docx
+
+Title OICBinarySwitch
+RT =  oic.r.switch.binary
+description: This resource describes a binary switch (on/off).@crThe value is a boolean.@crA value of <COMMA>true<COMMA> means that the switch is on.@crA value of <COMMA>false<COMMA> means that the switch is off.@cr
+sanitzied text: This resource describes a binary switch (on/off).
+The value is a boolean.
+A value of 'true' means that the switch is on.
+A value of 'false' means that the switch is off.
+
+handling object: BinarySwitch
+parse_schema: property: BLAH3
+parse_schema: property: BLAH2
+parse_schema: property: BLAHF1
+parse_schema: property: BLAHF2
+parse_schema: property: BLAHF3
+parse_schema: property: value2
+parse_schema: property: BLAH1
+parse_schema: property: value
+document saved.. ../test/./out/testcase_2/testcase_2.docx
+<swagger_parser.SwaggerParser object at 0x0393A250>

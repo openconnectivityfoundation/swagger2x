@@ -22,15 +22,15 @@ use -h to see all the options.
 The templates can be found at /src/templates
 the following structure is defined:
 
-   -src
-      |
-      |- templates
-             | 
-             |- <template name>
-                        |
-                        |--- <template file>.jinga2
-                        |--- other files (will be copied to output)
-                        
+       -src
+          |
+          |- templates
+                 |
+                 |- <template name>
+                            |
+                            |--- <template file>.jinga2
+                            |--- other files (will be copied to output)
+
 
 ## jinja2 templates information
 The template contents is an mix of the target syntax and jinja2 commands.

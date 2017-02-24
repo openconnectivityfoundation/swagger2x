@@ -302,7 +302,12 @@ parser.add_argument( "-schemadir"  , "--schemadir"  , default=".",
                      help="path to dir with additional referenced schemas",  nargs='?', const="", required=False)
 parser.add_argument( "-out_dir"  , "--out_dir"  , default=".",
                      help="output dir",  nargs='?', const="", required=True)
-
+# generation values
+parser.add_argument( "-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
+                     help="uuid",  nargs='?', const="", required=False)
+parser.add_argument( "-manufactorer"  , "--manufactorer"  , default="ocf.org",
+                     help="manufactorer name",  nargs='?', const="", required=False)
+                     
 args = parser.parse_args()
 
 
@@ -316,6 +321,9 @@ print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
 print("template      : " + str(args.template))
 print("template_dir  : " + str(args.template_dir))
+print("")
+print("uuid          : " + str(args.uuid))
+print("manufactorer  : " + str(args.manufactorer))
 print("")
 
 try: 
@@ -346,7 +354,11 @@ try:
         template_environment.globals['replace_chars'] = replace_chars
         template_environment.globals['path_names'] = path_names
         template_environment.globals['query_ref'] = query_ref
-        text = template_environment.render(json_data=json_data, version=my_version, input_file = args.swagger )
+        text = template_environment.render( json_data=json_data, 
+            version=my_version, 
+            uuid= str(args.uuid),
+            manufactorer= str(args.manufactorer),
+            input_file = args.swagger )
         
         if args.out_dir is not None:
             outputfile = template_file.replace(".jinja2", "")

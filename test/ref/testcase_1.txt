@@ -1,8 +1,10 @@
 ************************
-*** swagger2x (v1) ***
+swagger2x  20171123
 ************************
-usage: swagger2x.py [-h] [-ver] [-swagger [SWAGGER]] [-schema [SCHEMA]]
-                    [-template [TEMPLATE]] [-schemadir [SCHEMADIR]]
+usage: swagger2x.py [-h] [-ver] -swagger [SWAGGER] [-schema [SCHEMA]]
+                    -template [TEMPLATE] -template_dir [TEMPLATE_DIR]
+                    [-schemadir [SCHEMADIR]] -out_dir [OUT_DIR] [-uuid [UUID]]
+                    [-manufactorer [MANUFACTORER]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -13,5 +15,13 @@ optional arguments:
                         schema to be added to word document
   -template [TEMPLATE], --template [TEMPLATE]
                         template to be used
+  -template_dir [TEMPLATE_DIR], --template_dir [TEMPLATE_DIR]
+                        template directory
   -schemadir [SCHEMADIR], --schemadir [SCHEMADIR]
                         path to dir with additional referenced schemas
+  -out_dir [OUT_DIR], --out_dir [OUT_DIR]
+                        output dir
+  -uuid [UUID], --uuid [UUID]
+                        uuid
+  -manufactorer [MANUFACTORER], --manufactorer [MANUFACTORER]
+                        manufactorer name

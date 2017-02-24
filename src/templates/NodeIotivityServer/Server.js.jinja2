@@ -1,0 +1,115 @@
+//    copyright 2016 Open Interconnect Consortium, Inc. All rights reserved.
+//
+//    Redistribution and use in source and binary forms, with or without modification,
+//    are permitted provided that the following conditions are met:
+//    1.  Redistributions of source code must retain the above copyright notice,
+//        this list of conditions and the following disclaimer.
+//    2.  Redistributions in binary form must reproduce the above copyright notice,
+//        this list of conditions and the following disclaimer in the documentation and/or other materials provided
+//        with the distribution.
+//         
+//    THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+//    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
+//    WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
+//    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+//    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+//    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+//    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+//    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+//   Generated code from swagger2x
+
+var intervalId;
+var iotivity = require( "iotivity-node/lowlevel" );
+
+// instances for each end point  
+{% for path, path_data in json_data['paths'].items() %}
+// path {{ path }}
+var  {{path|variablesyntax}};
+{% endfor %}
+
+console.log( "Starting OCF stack in server mode" );
+
+// Start iotivity and set up the processing loop
+iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
+
+iotivity.OCSetDeviceInfo( {
+	specVersion: "res.1.1.0",
+	dataModelVersions: [ "abc.0.0.1" ],
+	deviceName: "{{json_data['info']['title']}}",
+	types: []
+} );
+iotivity.OCSetPlatformInfo( {
+	platformID: "{{uuid}}",
+	manufacturerName: "{{manufactorer}}"
+} );
+
+intervalId = setInterval( function() {
+	iotivity.OCProcess();
+}, 1000 );
+
+console.log( "Registering resource" );
+
+
+{% for path, path_data in json_data['paths'].items() %}
+
+// Create a new resource
+iotivity.OCCreateResource(
+
+	// The bindings fill in this object
+	{{path|variablesyntax}},
+
+	"core.fan",
+	iotivity.OC_RSRVD_INTERFACE_DEFAULT,
+	"{{path}}",
+	function( flag, request ) {
+		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
+		console.log( JSON.stringify( request, null, 4 ) );
+
+		// If we find the magic question in the request, we return the magic answer
+		if ( request && request.payload && request.payload.values &&
+				request.payload.values.question ===
+				"How many angels can dance on the head of a pin?" ) {
+
+			iotivity.OCDoResponse( {
+				requestHandle: request.requestHandle,
+				resourceHandle: request.resource,
+				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+				payload: {
+					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+					values: {
+						"answer": "As many as wanting."
+					}
+				},
+				resourceUri: "{{path}}",
+				sendVendorSpecificHeaderOptions: []
+			} );
+
+			return iotivity.OCEntityHandlerResult.OC_EH_OK;
+		}
+
+		// By default we error out
+		return iotivity.OCEntityHandlerResult.OC_EH_ERROR;
+	},
+    // always discoverable
+	iotivity.OCResourceProperty.OC_DISCOVERABLE );
+
+{% endfor %}
+    
+console.log( "Server ready" );
+
+// Exit gracefully when interrupted
+process.on( "SIGINT", function() {
+	console.log( "SIGINT: Quitting..." );
+
+	// Tear down the processing loop and stop iotivity
+	clearInterval( intervalId );
+    // deleting all handles
+{% for path, path_data in json_data['paths'].items() %}
+    iotivity.OCDeleteResource( {{path|variablesyntax}}.handle );
+{% endfor %}
+	iotivity.OCStop();
+
+	// Exit
+	process.exit( 0 );
+} );

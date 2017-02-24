@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "OICBinarySwitch",
+    "title": "oic.d.light",
     "version": "v1.0.0-20151223",
     "license": {
       "name": "copyright 2016 Open Connectivity Foundation, Inc. All rights reserved.",

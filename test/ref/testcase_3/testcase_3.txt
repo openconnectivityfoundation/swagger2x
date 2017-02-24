@@ -2,10 +2,10 @@
 swagger2x  20171123
 ************************
 file          : ../test/in/test_swagger_1/test_swagger_1.swagger.json
-out_dir       : ./out/testcase_2/
+out_dir       : ./out/testcase_3/
 schema        : None
 schemadir     : .
-template      : PythonFlask
+template      : NodeIotivityServer
 template_dir  : ../src/templates
 
 uuid          : 9b8fadc6-1e57-4651-bab2-e268f89f3ea7
@@ -147,26 +147,11 @@ parse tree of input file:
   ],
   "swagger": "2.0"
 }
-processing: python-server.py.jinja2
+processing: Server.js.jinja2
 replace_chars a:  /BinarySwitchResURI
 replace_chars chars:  /\  +-*^|%$=~@()[].,
-parameter_names {'$ref': '#/parameters/interface'}
-query_ref: reference: interface
-query_ref: reference: interface
-query_ref: reference: interface
-query_ref: reference: interface
-replace_chars a:  if
-replace_chars chars:  /\  +-*^|%$=~@()[].,
-query_ref: reference: interface
 replace_chars a:  /BinarySwitchResURI
 replace_chars chars:  /\  +-*^|%$=~@()[].,
-parameter_names {'$ref': '#/parameters/interface'}
-query_ref: reference: interface
-query_ref: reference: interface
-query_ref: reference: interface
-query_ref: reference: interface
-replace_chars a:  if
+replace_chars a:  /BinarySwitchResURI
 replace_chars chars:  /\  +-*^|%$=~@()[].,
-query_ref: reference: interface
-copying template file:  install_packages.py
 copying template file:  readme.txt

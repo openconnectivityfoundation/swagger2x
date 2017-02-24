@@ -58,6 +58,11 @@ my_test -h
 TEST_CASE="testcase_2"
 my_test_in_dir -template_dir ../src/templates -template PythonFlask -swagger ../test/in/test_swagger_1/test_swagger_1.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
 
+
+# default docx 
+TEST_CASE="testcase_3"
+my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_1/test_swagger_1.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
+
 }
 
 tests  

@@ -17,59 +17,78 @@
 //    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 //    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//   Generated code from swagger2x
+// Generated code from swagger2x
+// generates an IOTivity node server based on
+// https://github.com/otcshare/iotivity-node
+// documentation available at:
+// https://github.com/01org/iot-js-api/tree/master/api/ocf
 
 var intervalId;
 var iotivity = require( "iotivity-node/lowlevel" );
 
 // instances for each end point  
-{% for path, path_data in json_data['paths'].items() %}
+{% for path, path_data in json_data['paths'].items() -%}
 // path {{ path }}
 var  {{path|variablesyntax}};
-{% endfor %}
+{% endfor -%}
+
+// list all variables as globals
+{% for definition, def_data in json_data['definitions'].items() -%}
+{% for decl, decl_data in def_data.items() -%}
+{% if decl == "properties" -%} 
+{% for var, var_data in decl_data.items() -%}
+var {{var|variablesyntax}}; // readonly: {{var_data.readOnly}} type: {{var_data.type}} description: {{var_data.description}}
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
 
 console.log( "Starting OCF stack in server mode" );
 
 // Start iotivity and set up the processing loop
 iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
 
+// set the device data
 iotivity.OCSetDeviceInfo( {
 	specVersion: "res.1.1.0",
 	dataModelVersions: [ "abc.0.0.1" ],
 	deviceName: "{{json_data['info']['title']}}",
 	types: []
 } );
+// set the platform data
 iotivity.OCSetPlatformInfo( {
 	platformID: "{{uuid}}",
 	manufacturerName: "{{manufactorer}}"
 } );
-
+// helper function
 intervalId = setInterval( function() {
 	iotivity.OCProcess();
 }, 1000 );
 
-console.log( "Registering resource" );
-
-
-{% for path, path_data in json_data['paths'].items() %}
-
-// Create a new resource
+console.log( "Registering resources" );
+{% for path, path_data in json_data['paths'].items() -%}
+// Create a new resource for {{path}}
 iotivity.OCCreateResource(
-
 	// The bindings fill in this object
 	{{path|variablesyntax}},
-
-	"core.fan",
-	iotivity.OC_RSRVD_INTERFACE_DEFAULT,
+	"{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}",
+    {% for methodName, method_data in path_data.items() -%} 
+    {% if methodName == "get" -%} 
+    {% for property_name, property_data in method_data.items() -%}
+    {% if property_name == "parameters" -%}
+    {% for parameter_data in property_data -%}
+    {% if parameter_data["$ref"] -%} 
+    {{query_ref(json_data, parameter_data["$ref"], "enum")}},
+    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
 	"{{path}}",
 	function( flag, request ) {
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
 		console.log( JSON.stringify( request, null, 4 ) );
 
-		// If we find the magic question in the request, we return the magic answer
-		if ( request && request.payload && request.payload.values &&
-				request.payload.values.question ===
-				"How many angels can dance on the head of a pin?" ) {
+        {% for methodName, method_data in path_data.items() -%} 
+        {% if methodName == "get" -%} 
+        // GET method
+		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
 
 			iotivity.OCDoResponse( {
 				requestHandle: request.requestHandle,
@@ -78,15 +97,60 @@ iotivity.OCCreateResource(
 				payload: {
 					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
 					values: {
-						"answer": "As many as wanting."
+                        {% for var, var_dict in retrieve_path_dict(path_data, "get/200/x-example").items() -%}
+                        {% if loop.last -%}
+                        "{{var}}" : {{var|variablesyntax}}
+                        {% else -%}
+                        "{{var}}" : {{var|variablesyntax}},
+                        {% endif -%}
+                        {% endfor -%}
 					}
 				},
 				resourceUri: "{{path}}",
 				sendVendorSpecificHeaderOptions: []
 			} );
-
-			return iotivity.OCEntityHandlerResult.OC_EH_OK;
-		}
+            return iotivity.OCEntityHandlerResult.OC_EH_OK; 
+        }            
+        {% endif -%}
+        {% if methodName == "post" -%} 
+        // POST method
+		if ( request && request.method === iotivity.OCMethod.OC_REST_POST ) {
+            
+            if ( request && request.payload)
+            {
+              // update the global variables
+              {% for var, var_dict in retrieve_path_dict(path_data, "post/200/x-example").items() -%}
+              "{{var|variablesyntax}}" = request.payload.{{var}};
+              {% endfor -%}
+            }
+            // do something with the new values like printing them..
+            {% for var, var_dict in retrieve_path_dict(path_data, "post/200/x-example").items() -%}
+            console.log( "new value ({{var}}) : " + {{var}} );
+            {% endfor -%}
+			iotivity.OCDoResponse( {
+				requestHandle: request.requestHandle,
+				resourceHandle: request.resource,
+				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+				payload: {
+					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+					values: {
+						{% for var, var_dict in retrieve_path_dict(path_data, "post/200/x-example").items() -%}
+                        {% if loop.last -%}
+                        "{{var}}" : {{var|variablesyntax}}
+                        {% else -%}
+                        "{{var}}" : {{var|variablesyntax}},
+                        {% endif -%}
+                        {% endfor -%}
+					}
+				},
+				resourceUri: "{{path}}",
+				sendVendorSpecificHeaderOptions: []
+			} );
+            return iotivity.OCEntityHandlerResult.OC_EH_OK;
+        }
+        {% endif -%}
+        {% endfor -%}
+        
 
 		// By default we error out
 		return iotivity.OCEntityHandlerResult.OC_EH_ERROR;
@@ -94,22 +158,22 @@ iotivity.OCCreateResource(
     // always discoverable
 	iotivity.OCResourceProperty.OC_DISCOVERABLE );
 
-{% endfor %}
-    
+{% endfor -%}
+
 console.log( "Server ready" );
 
 // Exit gracefully when interrupted
 process.on( "SIGINT", function() {
-	console.log( "SIGINT: Quitting..." );
+    console.log( "SIGINT: Quitting..." );
 
-	// Tear down the processing loop and stop iotivity
-	clearInterval( intervalId );
+    // Tear down the processing loop and stop iotivity
+    clearInterval( intervalId );
     // deleting all handles
-{% for path, path_data in json_data['paths'].items() %}
+    {% for path, path_data in json_data['paths'].items() -%}
     iotivity.OCDeleteResource( {{path|variablesyntax}}.handle );
-{% endfor %}
-	iotivity.OCStop();
-
-	// Exit
-	process.exit( 0 );
+    {% endfor -%}
+    // stop the stack
+    iotivity.OCStop();
+    // Exit
+    process.exit( 0 );
 } );

@@ -60,8 +60,14 @@ my_test_in_dir -template_dir ../src/templates -template PythonFlask -swagger ../
 
 
 # default docx 
+# note that the javascript created is incorrect due to the input
 TEST_CASE="testcase_3"
 my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_1/test_swagger_1.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
+
+
+# default docx 
+TEST_CASE="testcase_4"
+my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_2/test_swagger_2.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
 
 }
 

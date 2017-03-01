@@ -175,6 +175,19 @@ def get_value_by_path_name( parse_tree, path_name, target):
     value = find_key_link(json_path_dict, target)
     return value
 
+    
+def get_dict_by_path_name( parse_tree, path_name):
+    """
+    retrieve the target key below the path_name
+    :param parse_tree: tree to search from
+    :param path_name: url name (without the /)
+    :param target: key to find
+    :return:
+    """
+    full_path_name = path_name
+    json_path_dict = find_key_link(parse_tree, full_path_name)
+    #value = find_key_link(json_path_dict, target)
+    return json_path_dict
 
 #
 #  jinga2 custom functions: globals
@@ -186,14 +199,60 @@ def replace_chars(a, chars):
     :param chars: chars to be replaced with "" (nothing)
     :return:
     """
-    print ("replace_chars a: ", a)
-    print ("replace_chars chars: ", chars)
+    #print ("replace_chars a: ", a)
+    #print ("replace_chars chars: ", chars)
     string = a
     for char in chars:
        copy_string =  string.replace(char, '')
        string = copy_string
     return string
 
+    
+    
+def retrieve_path_value(parse_tree, path, value):
+    """
+    retrieves the parameter values of an path instance
+    :param parse_tree: the json parse tree of the swagger document
+    :param path: path value of the value to find
+    :param value: value to find
+    :return:
+    """
+    #print ("retrieve_path_value", parse_tree, path, value)
+    keys = path.split("/")
+    my_tree = parse_tree
+    for key in keys:
+        #print ("Tree before:", my_tree)
+        #print ("key", key)
+        ret_my_tree = get_dict_by_path_name(my_tree, key)
+        my_tree = ret_my_tree
+        #print ("Tree after:", my_tree)
+    
+    ret_value = None
+    if my_tree is not None:
+        ret_value = my_tree[value]
+        #print ("found value:",ret_value)
+    return ret_value
+    
+    
+def retrieve_path_dict(parse_tree, path):
+    """
+    retrieves the parameter values of an path instance
+    :param parse_tree: the json parse tree of the swagger document
+    :param path: path value of the dict to find
+    :return:
+    """
+    #print ("retrieve_path_dict", parse_tree, path)
+    keys = path.split("/")
+    my_tree = parse_tree
+    for key in keys:
+        #print ("Tree before:", my_tree)
+        #print ("key", key)
+        ret_my_tree = get_dict_by_path_name(my_tree, key)
+        my_tree = ret_my_tree
+        #print ("Tree after:", my_tree)
+    
+    return my_tree
+    
     
 def parameter_names(parse_tree, path, value):
     """
@@ -203,7 +262,8 @@ def parameter_names(parse_tree, path, value):
     :param value: value to find
     :return:
     """
-    parameters  = get_value_by_path_name(parse_tree,path, "parameters")
+    #print ("parameter_names", parse_tree, path, value)
+    parameters  = get_value_by_path_name(parse_tree, path, "parameters")
     path_names = ""
     # this is an list
     for parameter_data in parameters:
@@ -242,6 +302,23 @@ def query_ref(parse_tree, parameter_ref, value):
         return ""
 
 
+def query_path(parse_tree, my_path, value):
+    """
+    find the reference of the query value
+    :param parse_tree: full json parse tree of the swagger file
+    :param parameter_ref: reference value to be found
+    :param value: key in the reference to be found
+    :return:
+    """
+    keys = my_path.split("/")
+    index = len(keys)
+    print ("query_ref: reference:",keys[index-1])
+    parameter_block = get_value_by_path_name(parse_tree, "parameters", keys[index-1])
+    try:
+        return parameter_block[value]
+    except:
+        return ""
+        
 #
 #  jinga custom functions : tests
 #       
@@ -266,7 +343,7 @@ def variablesyntax(input_string):
     :return: adjusted string
     """
     chars_to_replace = "/\  +-*^|%$=~@()[].,"
-    return replace_chars(input_string, chars_to_replace )
+    return "_"+replace_chars(input_string, chars_to_replace )
     
     
 #
@@ -354,6 +431,8 @@ try:
         template_environment.globals['replace_chars'] = replace_chars
         template_environment.globals['path_names'] = path_names
         template_environment.globals['query_ref'] = query_ref
+        template_environment.globals['retrieve_path_value'] = retrieve_path_value
+        template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
         text = template_environment.render( json_data=json_data, 
             version=my_version, 
             uuid= str(args.uuid),

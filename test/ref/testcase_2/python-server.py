@@ -41,7 +41,7 @@ app = Flask(__name__)
 
 # method: get
 @app.route('/BinarySwitchResURI', methods=['get'])
-def get_BinarySwitchResURI():
+def get__BinarySwitchResURI():
     # Method: get
     # description : This resource describes a binary switch (on/off).@crThe value is a boolean.@crA value of <COMMA>true<COMMA> means that the switch is on.@crA value of <COMMA>false<COMMA> means that the switch is off.@cr
     # query params
@@ -51,14 +51,14 @@ def get_BinarySwitchResURI():
     # property name : #/parameters/interface : if 
     # enum     : ['oic.if.a']
     # required     : 
-    _if = request.args.get('if')
+    __if = request.args.get('if')
     
     
 
     
     
     response_200 = 200
-    response_200_example = {'rt': 'oic.r.switch.binary', 'value': False, 'id': 'unique_example_id'}
+    response_200_example = {'value': False, 'id': 'unique_example_id', 'rt': 'oic.r.switch.binary'}
     # schema: {'$ref': '#/definitions/BinarySwitch'}
     return Response(json.dumps(response_200_example),  mimetype='application/json')
     
@@ -66,7 +66,7 @@ def get_BinarySwitchResURI():
 
 # method: post
 @app.route('/BinarySwitchResURI', methods=['post'])
-def post_BinarySwitchResURI():
+def post__BinarySwitchResURI():
     # Method: post
     # description : 
     # query params
@@ -76,7 +76,7 @@ def post_BinarySwitchResURI():
     # property name : #/parameters/interface : if 
     # enum     : ['oic.if.a']
     # required     : 
-    _if = request.args.get('if')
+    __if = request.args.get('if')
     
      
          

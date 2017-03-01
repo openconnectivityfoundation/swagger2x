@@ -34,11 +34,14 @@ e.g. the end points, methods, query param and payload information are all availa
 code that will be generated will be generated towards:
 
        -------------------
-       |     library      |
+       |     library      |  <-- functions/class/methods that are allowed to be
+       |                  |      used by the template
        --------------------
-       | operating system |
+       | operating system |  <-- os constructs that are allowed to be
+       |                  |      used by the template
        --------------------
-       |    language      |
+       |    language      | <-- language constructs/syntax that must be used
+       |                  |     by the template
        -------------------
 
 The template is an mix of the library calls, the supported operating system in the used language mixed with the jinaj2 template language to generate the code.
@@ -58,9 +61,20 @@ the following structure is defined:
                             |--- <template file>.jinja2
                             |--- other files (will be copied to output)
 
-## available templates
+## Available Templates
 
-<list here>
+### PythonFlask
+- generates an python Flask server
+- normal http server
+- no OCF implemenation
+
+reason:
+- example of language and use of constructs
+
+### NodeIotivityServer
+- generates an node.js server for the IOTivity stack
+- OCF specific based  on:
+https://github.com/otcshare/iotivity-node
 
 ## jinja2 templates information
 The template contents is an mix of the target syntax and jinja2 commands.
@@ -78,7 +92,6 @@ https://realpython.com/blog/python/primer-on-jinja-templating/
 #### has_body (method_name)
 method name of an swagger path name
 
-
 ### jinja2 custom (global) functions
 
 #### replace_chars (string, array of chars to be replaced by "")
@@ -95,15 +108,16 @@ typical value = "+-? ,./"
 ### jinja2 filter functions
 
 #### variablesyntax
-replace chars so that it can be used as an variable
+replace chars so that the data can be used as an variable.
+note that it prefixes the variable with "_" so that names don't get in the
+way of language defined names (like "if")
 
+## TODO list
 
-## TODO
-
-- client code for IOTivity node
-- device code for IOTivity node
-- client code for IOTivity c++
-- client code for IOTivity c++
+- template for client code for IOTivity node
+- template for device code for IOTivity node
+- template for client code for IOTivity c++
+- template for client code for IOTivity c++
 - wheel instalation of the tool
 - rename option for generated files
 

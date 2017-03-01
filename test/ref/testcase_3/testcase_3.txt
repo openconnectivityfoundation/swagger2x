@@ -148,10 +148,5 @@ parse tree of input file:
   "swagger": "2.0"
 }
 processing: Server.js.jinja2
-replace_chars a:  /BinarySwitchResURI
-replace_chars chars:  /\  +-*^|%$=~@()[].,
-replace_chars a:  /BinarySwitchResURI
-replace_chars chars:  /\  +-*^|%$=~@()[].,
-replace_chars a:  /BinarySwitchResURI
-replace_chars chars:  /\  +-*^|%$=~@()[].,
+query_ref: reference: interface
 copying template file:  readme.txt

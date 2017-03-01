@@ -30,14 +30,13 @@ var iotivity = require( "iotivity-node/lowlevel" );
 // path /BinarySwitchResURI
 var  _BinarySwitchResURI;
 // list all variables as globals
-var _BLAH1; // readonly: True type: boolean description: BLAH1 description
-var _value; // readonly:  type: boolean description: description value
-var _BLAHF2; // readonly: False type: number description: Status of the switch
-var _BLAH2; // readonly: True type: boolean description: BLAH2 description
-var _BLAH3; // readonly: True type: boolean description: BLAH3 description
-var _BLAHF1; // readonly: False type: string description: Status of the switch
-var _BLAHF3; // readonly: False type: integer description: Status of the switch
-var _value2; // readonly:  type: boolean description: description value2
+var _value; // readonly:  type: boolean description: Status of the switch
+var _rt; // readonly:  type: string description: ReadOnly, Resource Type
+var _p; // readonly:  type: string description: ReadOnly, bitmap indicating observable and discoverable
+var _if; // readonly:  type: array description: ReadOnly, The interface set supported by this resource
+var _range; // readonly:  type: string description: 
+var _id; // readonly:  type: string description: ReadOnly, Instance ID of this specific resource
+var _n; // readonly:  type: string description: Friendly name of the resource
 console.log( "Starting OCF stack in server mode" );
 
 // Start iotivity and set up the processing loop
@@ -47,7 +46,7 @@ iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
 iotivity.OCSetDeviceInfo( {
 	specVersion: "res.1.1.0",
 	dataModelVersions: [ "abc.0.0.1" ],
-	deviceName: "oic.d.light",
+	deviceName: "OICBinarySwitch",
 	types: []
 } );
 // set the platform data
@@ -72,26 +71,6 @@ iotivity.OCCreateResource(
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
 		console.log( JSON.stringify( request, null, 4 ) );
 
-        // GET method
-		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
-
-			iotivity.OCDoResponse( {
-				requestHandle: request.requestHandle,
-				resourceHandle: request.resource,
-				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
-				payload: {
-					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-					values: {
-                        "rt" : _rt,
-                        "id" : _id,
-                        "value" : _value
-                        }
-				},
-				resourceUri: "/BinarySwitchResURI",
-				sendVendorSpecificHeaderOptions: []
-			} );
-            return iotivity.OCEntityHandlerResult.OC_EH_OK; 
-        }            
         // POST method
 		if ( request && request.method === iotivity.OCMethod.OC_REST_POST ) {
             
@@ -120,6 +99,26 @@ iotivity.OCCreateResource(
 			} );
             return iotivity.OCEntityHandlerResult.OC_EH_OK;
         }
+        // GET method
+		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
+
+			iotivity.OCDoResponse( {
+				requestHandle: request.requestHandle,
+				resourceHandle: request.resource,
+				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+				payload: {
+					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+					values: {
+                        "id" : _id,
+                        "rt" : _rt,
+                        "value" : _value
+                        }
+				},
+				resourceUri: "/BinarySwitchResURI",
+				sendVendorSpecificHeaderOptions: []
+			} );
+            return iotivity.OCEntityHandlerResult.OC_EH_OK; 
+        }            
         // By default we error out
 		return iotivity.OCEntityHandlerResult.OC_EH_ERROR;
 	},

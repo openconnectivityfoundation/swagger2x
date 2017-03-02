@@ -26,10 +26,10 @@
 var intervalId;
 var iotivity = require( "iotivity-node/lowlevel" );
 
-// instances for each end point  
+// resource_handles for each end point  
 {% for path, path_data in json_data['paths'].items() -%}
 // path {{ path }}
-var  {{path|variablesyntax}};
+var  {{path|variablesyntax}}_handle = {};
 {% endfor -%}
 
 // list all variables as globals
@@ -70,8 +70,8 @@ console.log( "Registering resources" );
 // Create a new resource for {{path}}
 iotivity.OCCreateResource(
 	// The bindings fill in this object
-	{{path|variablesyntax}},
-	"{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}",
+	{{path|variablesyntax}}_handle,
+	iotivity.OC_RSRVD_INTERFACE_DEFAULT,//"{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}",
     {% for methodName, method_data in path_data.items() -%} 
     {% if methodName == "get" -%} 
     {% for property_name, property_data in method_data.items() -%}
@@ -120,7 +120,7 @@ iotivity.OCCreateResource(
             {
               // update the global variables
               {% for var, var_dict in retrieve_path_dict(path_data, "post/200/x-example").items() -%}
-              "{{var|variablesyntax}}" = request.payload.{{var}};
+              {{var|variablesyntax}} = request.payload.{{var}};
               {% endfor -%}
             }
             // do something with the new values like printing them..
@@ -170,7 +170,7 @@ process.on( "SIGINT", function() {
     clearInterval( intervalId );
     // deleting all handles
     {% for path, path_data in json_data['paths'].items() -%}
-    iotivity.OCDeleteResource( {{path|variablesyntax}}.handle );
+    iotivity.OCDeleteResource( {{path|variablesyntax}}_handle.handle );
     {% endfor -%}
     // stop the stack
     iotivity.OCStop();

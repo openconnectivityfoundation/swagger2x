@@ -9,6 +9,8 @@ what is missing:
 - creation/deletion of resources
 - no code generation of URL arguments
 - no code generation of error codes.
+- translation for interfaces
+  now uses an fixed constant from the API
 
 
 

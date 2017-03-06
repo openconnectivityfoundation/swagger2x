@@ -71,15 +71,15 @@ console.log( "Registering resources" );
 iotivity.OCCreateResource(
 	// The bindings fill in this object
 	{{path|variablesyntax}}_handle,
-	iotivity.OC_RSRVD_INTERFACE_DEFAULT,//"{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}",
     {% for methodName, method_data in path_data.items() -%} 
     {% if methodName == "get" -%} 
     {% for property_name, property_data in method_data.items() -%}
     {% if property_name == "parameters" -%}
     {% for parameter_data in property_data -%}
     {% if parameter_data["$ref"] -%} 
-    {{query_ref(json_data, parameter_data["$ref"], "enum")}},
+    iotivity.OC_RSRVD_INTERFACE_DEFAULT, //{{query_ref(json_data, parameter_data["$ref"], "enum")}}, // this should be an array in the API
     {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
+    "{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}", // this should be an array in the API
 	"{{path}}",
 	function( flag, request ) {
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );

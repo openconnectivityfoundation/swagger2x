@@ -1,6 +1,6 @@
 #############################
 #
-#    copyright 2016 Open Interconnect Consortium, Inc. All rights reserved.
+#    copyright 2016-2017 Open Interconnect Consortium, Inc. All rights reserved.
 #    Redistribution and use in source and binary forms, with or without modification,
 #    are permitted provided that the following conditions are met:
 #    1.  Redistributions of source code must retain the above copyright notice,
@@ -36,43 +36,45 @@ from flask import Flask, render_template, jsonify, redirect, abort, request, sen
 app = Flask(__name__)
 
 
-{% for path, path_data in json_data['paths'].items() %}
+{% for path, path_data in json_data['paths'].items() -%}
+#
 # path {{ path }}
+#
 {% for methodName, method_data in path_data.items() %}
 # method: {{methodName}}
 @app.route('{{path}}', methods=['{{methodName}}'])
 def {{methodName}}_{{path|variablesyntax}}({{path_names(json_data, path)}}):
     # Method: {{methodName}}
-    {% for property_name, property_data in method_data.items() %}{% if property_name == "description" %}# description : {{property_data}}{% endif %}{% endfor %}
+    {% for property_name, property_data in method_data.items() %}{% if property_name == "description" %}# description : {{property_data}}{% endif -%}{% endfor -%}
     # query params
-    {% for property_name, property_data in method_data.items() %}{% if property_name == "parameters" %}
-    {% for parameter_data in property_data %}
-    {% if parameter_data["in"] == "query" %} 
+    {% for property_name, property_data in method_data.items() -%}{% if property_name == "parameters" -%}
+    {% for parameter_data in property_data -%}
+    {% if parameter_data["in"] == "query" -%} 
     # property name     : {{parameter_data["name"]}}  
     #          enum     : {{parameter_data["enum"]}}
     #          required : {{parameter_data["required"]}}
-    {% endif %} {% if parameter_data["$ref"] %} 
+    {% endif -%} {% if parameter_data["$ref"] -%} 
     # property name : {{parameter_data["$ref"]}} : {{query_ref(json_data, parameter_data["$ref"], "name")}} 
     # enum     : {{query_ref(json_data, parameter_data["$ref"], "enum")}}
     # required     : {{query_ref(json_data, parameter_data["$ref"], "required")}}
     _{{query_ref(json_data, parameter_data["$ref"], "name")|variablesyntax}} = request.args.get('{{query_ref(json_data, parameter_data["$ref"], "name")}}')
-    {% endif %}{% endfor %}{% endif %}{% endfor %}
-    {% if methodName is hasbody %} {% for property_name, property_data in method_data.items() %}{% if property_name == "parameters" %} {% for parameter_data in property_data %} {% if parameter_data["in"] == "body" %} 
+    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
+    {% if methodName is hasbody -%} {% for property_name, property_data in method_data.items() -%}{% if property_name == "parameters" -%} {% for parameter_data in property_data -%} {% if parameter_data["in"] == "body" -%} 
     # example body: {{ parameter_data["x-example"] }}
     # data in string format and you have to parse into dictionary
     req_data = request.data
     req_data_dict = json.loads(req_data)
-    {% endif %}{% endfor %}{% endif %}{% endfor %}{% endif %}
+    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}
 
-    {% for property_name, property_data in method_data.items() %}{% if property_name == "responses" %}
-    {% for response in property_data %}
+    {% for property_name, property_data in method_data.items() -%}{% if property_name == "responses" -%}
+    {% for response in property_data -%}
     response_{{response}} = {{response}}
     response_{{response}}_example = {{property_data[response]["x-example"]}}
     # schema: {{property_data[response]["schema"]}}
     return Response(json.dumps(response_{{response}}_example),  mimetype='application/json')
-    {% endfor %}{% endif %}{% endfor %}
+    {% endfor -%}{% endif -%}{% endfor -%}
 
-{% endfor %}
+{% endfor -%}
 {% endfor %}
 
 if __name__ == '__main__':

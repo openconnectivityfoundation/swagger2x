@@ -5,7 +5,16 @@ generates an http/json server based on python Flask
 Flask:
 see http://flask.pocoo.org/
 All endpoints per method have an seperate function.
-the Flask route make sure that this function is called when the server is being used.
+the Flask route annotation make sure that this function is called when the server is being used.
+
+This example shows:
+- function generation per end point
+    each method per endpoint has is own callback
+    each call back has
+    - input body (if applicable)
+    - query parameters (if applicable)
+    - list of return codes
+    - example used as return payload
 
 
 File: python-server.py

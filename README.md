@@ -67,14 +67,18 @@ the following structure is defined:
 - generates an python Flask server
 - normal http server
 - no OCF implemenation
+- used as demonstration that the code generation from swagger2.0 files works:
+   - call back generation per endpoint-method
+   - code to obtain the body of an PUT/POST
+   - code to obtain the query parameters
+   - code to create the return payload (from the supplied example)
 
-reason:
-- example of language and use of constructs
 
 ### NodeIotivityServer
 - generates an node.js server for the IOTivity stack
 - OCF specific based  on:
 https://github.com/otcshare/iotivity-node
+- work in progress
 
 ## jinja2 templates information
 The template contents is an mix of the target syntax and jinja2 commands.

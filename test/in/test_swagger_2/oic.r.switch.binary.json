@@ -1,0 +1,12 @@
+{
+  "properties": {
+    "value": {
+      "description": "Status of the switch",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "value"
+  ],
+  "type": "object"
+}

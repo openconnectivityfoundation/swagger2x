@@ -116,6 +116,11 @@ replace chars so that the data can be used as an variable.
 note that it prefixes the variable with "_" so that names don't get in the
 way of language defined names (like "if")
 
+#### variableforbidden
+if the varialbe is "if", "var", "function", "null"
+it will be prefixed with "_" 
+all other names will be kept intact (e.g. just pass through)
+
 ## TODO list
 
 - template for client code for IOTivity node

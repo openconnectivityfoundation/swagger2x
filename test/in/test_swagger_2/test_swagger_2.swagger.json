@@ -1,0 +1,128 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "OICBinarySwitch",
+    "version": "v1.0.0-20151223",
+    "license": {
+      "name": "copyright 2016 Open Connectivity Foundation, Inc. All rights reserved.",
+      "x-description": "Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:@cr        1.  Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.@cr        2.  Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.@cr@cr        THIS SOFTWARE IS PROVIDED BY THE Open Connectivity Foundation, INC. <COMMA>AS IS<COMMA> AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. @cr        IN NO EVENT SHALL THE Open Connectivity Foundation, INC. OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) @cr        HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.@cr"
+    }
+  },
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/BinarySwitchResURI" : {
+      "get": {
+        "description": "This resource describes a binary switch (on/off).@crThe value is a boolean.@crA value of <COMMA>true<COMMA> means that the switch is on.@crA value of <COMMA>false<COMMA> means that the switch is off.@cr",
+        "parameters": [
+          {"$ref": "#/parameters/interface"}
+        ],
+        "responses": {
+            "200": {
+              "description" : "",
+              "x-example":
+                {
+                  "rt":     "oic.r.switch.binary",
+                  "id":     "unique_example_id",
+                  "value":  false
+                }
+                ,
+              "schema": { "$ref": "#/definitions/BinarySwitch" }
+            }
+        }
+      },
+      "post": {
+        "description": "",
+        "parameters": [
+          {"$ref": "#/parameters/interface"},
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": { "$ref": "#/definitions/BinarySwitch" },
+            "x-example":
+              {
+                "id":    "unique_example_id",
+                "value": true
+              }
+          }
+        ],
+        "responses": {
+            "200": {
+              "description" : "",
+              "x-example":
+                {
+                  "id":    "unique_example_id",
+                  "value": true
+                }
+                ,
+              "schema": { "$ref": "#/definitions/BinarySwitch" }
+            }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "interface" : {
+      "in" : "query",
+      "name" : "if",
+      "type" : "string",
+      "enum" : ["oic.if.a"]
+    }
+  },
+  "definitions": {
+    "BinarySwitch" : 
+            {
+        "properties": {
+          "id": {
+            "description": "ReadOnly, Instance ID of this specific resource",
+            "type": "string"
+          },
+          "if": {
+            "description": "ReadOnly, The interface set supported by this resource",
+            "items": [
+              {
+                "enum": [
+                  "oic.if.def",
+                  "oic.if.ll",
+                  "oic.if.b",
+                  "oic.if.rp",
+                  "oic.if.p",
+                  "oic.if.a",
+                  "oic.if.s"
+                ],
+                "type": "string"
+              }
+            ],
+            "minItems": 1,
+            "type": "array"
+          },
+          "n": {
+            "description": "Friendly name of the resource",
+            "type": "string"
+          },
+          "p": {
+            "description": "ReadOnly, bitmap indicating observable and discoverable",
+            "type": "string"
+          },
+          "range": {
+            "type": "string"
+          },
+          "rt": {
+            "description": "ReadOnly, Resource Type",
+            "type": "string"
+          },
+          "value": {
+            "description": "Status of the switch",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
+      }
+
+  }
+}

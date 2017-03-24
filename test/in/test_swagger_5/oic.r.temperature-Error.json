@@ -1,0 +1,30 @@
+{
+  "properties": {
+    "range": {
+      "description": "ReadOnly, Comma separated min,max values for this temperature on this device",
+      "type": "string"
+    },
+    "units": {
+      "oneOf": [
+        {
+          "description": "ReadOnly, Units for the temperature value",
+          "enum": [
+            "C",
+            "F",
+            "K"
+          ]
+        },
+        {
+          "items": {
+            "enum": [
+              "C",
+              "F",
+              "K"
+            ]
+          },
+          "type": "array"
+        }
+      ]
+    }
+  }
+}

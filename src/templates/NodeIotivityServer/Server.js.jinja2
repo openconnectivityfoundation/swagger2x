@@ -84,12 +84,34 @@ iotivity.OCCreateResource(
 	function( flag, request ) {
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
 		console.log( JSON.stringify( request, null, 4 ) );
-
+       
         {% for methodName, method_data in path_data.items() -%} 
         {% if methodName == "get" -%} 
         // GET method
 		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
-
+        
+            // list the query params for {{methodName}}
+            {% for property_name, property_data in method_data.items() -%}
+            {% if property_name == "parameters" -%}
+            {% for parameter_data in property_data -%}
+            {% if parameter_data["$ref"] -%} 
+            var {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = ""; // {{query_ref(json_data, parameter_data["$ref"], "type")}} {{query_ref(json_data, parameter_data["$ref"], "description")}}
+            if (request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden }} != undefined ) {
+               // possible values: {{query_ref(json_data, parameter_data["$ref"], "enum")}}.
+               {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden}};
+            }
+            {% endif -%}
+            {% if parameter_data["in"] in ["query"] -%} 
+            var {{parameter_data["name"] |variablesyntax}} = "" ;  // {{parameter_data["type"]}} {{parameter_data["description"]}}
+            if (request.{{parameter_data["name"] |variableforbidden }} != undefined ) {
+                // possible values: {{parameter_data["enum"]}}
+               {{parameter_data["name"] |variablesyntax}} = request.{{parameter_data["name"]|variableforbidden}} ;
+            }
+            {% endif -%}
+            {% endfor -%} 
+            {% endif -%}
+            {% endfor -%} 
+        
 			iotivity.OCDoResponse( {
 				requestHandle: request.requestHandle,
 				resourceHandle: request.resource,
@@ -116,6 +138,28 @@ iotivity.OCCreateResource(
         // POST method
 		if ( request && request.method === iotivity.OCMethod.OC_REST_POST ) {
             
+            // list the query params for {{methodName}}
+            {% for property_name, property_data in method_data.items() -%}
+            {% if property_name == "parameters" -%}
+            {% for parameter_data in property_data -%}
+            {% if parameter_data["$ref"] -%} 
+            var {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = "" ; // {{query_ref(json_data, parameter_data["$ref"], "type")}} {{query_ref(json_data, parameter_data["$ref"], "description")}}
+            if (request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden }} != undefined ) {
+                // possible values: {{query_ref(json_data, parameter_data["$ref"], "enum")}}.
+                {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request.{{query_ref(json_data, parameter_data["$ref"], "name")|variableforbidden}} ;
+            }
+            {% endif -%}
+            {% if parameter_data["in"] in ["query"] -%} 
+            var {{parameter_data["name"] |variablesyntax}} = "" ; // {{parameter_data["type"]}} {{parameter_data["description"]}}
+            if (request.{{parameter_data["name"] |variableforbidden }} != undefined ) {
+                // possible values: {{parameter_data["enum"]}}
+                {{parameter_data["name"] |variablesyntax}} = request.{{parameter_data["name"]|variableforbidden}} ;
+            }
+            {% endif -%}
+            {% endfor -%} 
+            {% endif -%}
+            {% endfor -%} 
+            
             if ( request && request.payload)
             {
               // update the global variables
@@ -125,7 +169,7 @@ iotivity.OCCreateResource(
             }
             // do something with the new values like printing them..
             {% for var, var_dict in retrieve_path_dict(path_data, "post/200/x-example").items() -%}
-            console.log( "new value ({{var}}) : " + {{var}} );
+            console.log( "new value ({{var}}) : " + {{var  | variablesyntax}} );
             {% endfor -%}
 			iotivity.OCDoResponse( {
 				requestHandle: request.requestHandle,

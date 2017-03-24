@@ -54,20 +54,26 @@ function tests {
 TEST_CASE="testcase_1"
 my_test -h
 
-# default docx 
+# test flask server
 TEST_CASE="testcase_2"
 my_test_in_dir -template_dir ../src/templates -template PythonFlask -swagger ../test/in/test_swagger_1/test_swagger_1.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
 
 
-# default docx 
+# nodeIOTIvity
 # note that the javascript created is incorrect due to the input
 TEST_CASE="testcase_3"
 my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_1/test_swagger_1.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
 
 
-# default docx 
+# node.js iotivity binary light, query param "if"
 TEST_CASE="testcase_4"
 my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_2/test_swagger_2.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
+
+
+# node.js iotivity : temperature, query param "if" and "units"
+TEST_CASE="testcase_5"
+my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swagger ../test/in/test_swagger_5/TemperatureResURI.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
+
 
 }
 

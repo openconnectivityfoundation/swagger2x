@@ -1,0 +1,36 @@
+{
+  "properties": {
+    "if": {
+      "description": "ReadOnly, The interface set supported by this resource",
+      "items": [
+        {
+          "enum": [
+            "oic.if.def",
+            "oic.if.ll",
+            "oic.if.b",
+            "oic.if.rp",
+            "oic.if.p",
+            "oic.if.a",
+            "oic.if.s"
+          ],
+          "type": "string"
+        }
+      ],
+      "minItems": 1,
+      "type": "array"
+    },
+    "n": {
+      "description": "Friendly name of the resource",
+      "type": "string"
+    },
+    "p": {
+      "description": "ReadOnly, bitmap indicating observable and discoverable",
+      "type": "string"
+    },
+    "rt": {
+      "description": "ReadOnly, Resource Type",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

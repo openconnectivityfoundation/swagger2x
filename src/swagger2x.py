@@ -346,6 +346,20 @@ def variablesyntax(input_string):
     return "_"+replace_chars(input_string, chars_to_replace )
     
     
+    
+  
+#
+#  jinga custom functions: filter
+#       
+def variableforbidden(input_string):
+    """
+    replace chars so that it can be used as an variable
+    :param input_string: string to be adjusted
+    :return: adjusted string
+    """
+    if input_string in ["if", "var", "function", "null"]:
+        return "_"+input_string
+    return input_string
 #
 #   main of script
 #
@@ -423,6 +437,7 @@ try:
     env = Environment(loader=FileSystemLoader(full_path))
     env.tests['hasbody'] = ishasbody
     env.filters['variablesyntax'] = variablesyntax
+    env.filters['variableforbidden'] = variableforbidden
     
     for template_file in template_files:
         print ("processing:", template_file)

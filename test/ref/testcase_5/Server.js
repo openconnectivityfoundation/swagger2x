@@ -30,16 +30,16 @@ var iotivity = require( "iotivity-node/lowlevel" );
 // path /TemperatureResURI
 var  _TemperatureResURI_handle = {};
 // list all variables as globals
-var _temperature; // readonly:  type: number description: Current temperature setting or measurement
 var _range; // readonly:  type: array description: The valid range for the value Property
-var _units; // readonly: True type:  description: Units for the temperature value
-var _rt; // readonly: True type: array description: Resource Type
-var _id; // readonly: True type: string description: Instance ID of this specific resource
-var _n; // readonly: True type: string description: Friendly name of the resource
-var _precision; // readonly: True type: number description: Accuracy granularity of the exposed value
-var _if; // readonly: True type: array description: The interface set supported by this resource
-var _step; // readonly: True type:  description: Step value across the defined range
 var _value; // readonly:  type:  description: The value sensed or actuated by this Resource
+var _rt; // readonly: True type: array description: Resource Type
+var _precision; // readonly: True type: number description: Accuracy granularity of the exposed value
+var _n; // readonly: True type: string description: Friendly name of the resource
+var _if; // readonly: True type: array description: The interface set supported by this resource
+var _units; // readonly: True type:  description: Units for the temperature value
+var _step; // readonly: True type:  description: Step value across the defined range
+var _id; // readonly: True type: string description: Instance ID of this specific resource
+var _temperature; // readonly:  type: number description: Current temperature setting or measurement
 console.log( "Starting OCF stack in server mode" );
 
 // Start iotivity and set up the processing loop
@@ -74,14 +74,47 @@ iotivity.OCCreateResource(
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
 		console.log( JSON.stringify( request, null, 4 ) );
        
+        // GET method
+		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
+        
+            // list the query params for get
+            var _if = ""; // string 
+            if (request["if"] != undefined ) {
+               // possible values: ['oic.if.a', 'oic.if.s', 'oic.if.baseline'].
+               _if = request["if"];
+            }
+            var _units = "" ;  // string Units
+            if (request["units"] != undefined ) {
+                // possible values: ['C', 'F', 'K']
+               _units = request["units"] ;
+            }
+            iotivity.OCDoResponse( {
+				requestHandle: request.requestHandle,
+				resourceHandle: request.resource,
+				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
+				payload: {
+					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
+					values: {
+                        "units" : _units,
+                        "range" : _range,
+                        "id" : _id,
+                        "rt" : _rt,
+                        "temperature" : _temperature
+                        }
+				},
+				resourceUri: "/TemperatureResURI",
+				sendVendorSpecificHeaderOptions: []
+			} );
+            return iotivity.OCEntityHandlerResult.OC_EH_OK; 
+        }            
         // POST method
 		if ( request && request.method === iotivity.OCMethod.OC_REST_POST ) {
             
             // list the query params for post
             var _if = "" ; // string 
-            if (request._if != undefined ) {
+            if (request["if"] != undefined ) {
                 // possible values: ['oic.if.a', 'oic.if.s', 'oic.if.baseline'].
-                _if = request._if ;
+                _if = request["if"] ;
             }
             if ( request && request.payload)
             {
@@ -108,39 +141,6 @@ iotivity.OCCreateResource(
 			} );
             return iotivity.OCEntityHandlerResult.OC_EH_OK;
         }
-        // GET method
-		if ( request && request.method === iotivity.OCMethod.OC_REST_GET ) {
-        
-            // list the query params for get
-            var _if = ""; // string 
-            if (request._if != undefined ) {
-               // possible values: ['oic.if.a', 'oic.if.s', 'oic.if.baseline'].
-               _if = request._if;
-            }
-            var _units = "" ;  // string Units
-            if (request.units != undefined ) {
-                // possible values: ['C', 'F', 'K']
-               _units = request.units ;
-            }
-            iotivity.OCDoResponse( {
-				requestHandle: request.requestHandle,
-				resourceHandle: request.resource,
-				ehResult: iotivity.OCEntityHandlerResult.OC_EH_OK,
-				payload: {
-					type: iotivity.OCPayloadType.PAYLOAD_TYPE_REPRESENTATION,
-					values: {
-                        "range" : _range,
-                        "temperature" : _temperature,
-                        "units" : _units,
-                        "id" : _id,
-                        "rt" : _rt
-                        }
-				},
-				resourceUri: "/TemperatureResURI",
-				sendVendorSpecificHeaderOptions: []
-			} );
-            return iotivity.OCEntityHandlerResult.OC_EH_OK; 
-        }            
         // By default we error out
 		return iotivity.OCEntityHandlerResult.OC_EH_ERROR;
 	},

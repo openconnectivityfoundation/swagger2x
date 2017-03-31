@@ -96,16 +96,16 @@ iotivity.OCCreateResource(
             {% for parameter_data in property_data -%}
             {% if parameter_data["$ref"] -%} 
             var {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = ""; // {{query_ref(json_data, parameter_data["$ref"], "type")}} {{query_ref(json_data, parameter_data["$ref"], "description")}}
-            if (request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden }} != undefined ) {
+            if (request["{{query_ref(json_data, parameter_data["$ref"], "name")}}"] != undefined ) {
                // possible values: {{query_ref(json_data, parameter_data["$ref"], "enum")}}.
-               {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden}};
+               {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request["{{query_ref(json_data, parameter_data["$ref"], "name")}}"];
             }
             {% endif -%}
             {% if parameter_data["in"] in ["query"] -%} 
             var {{parameter_data["name"] |variablesyntax}} = "" ;  // {{parameter_data["type"]}} {{parameter_data["description"]}}
-            if (request.{{parameter_data["name"] |variableforbidden }} != undefined ) {
+            if (request["{{parameter_data["name"]}}"] != undefined ) {
                 // possible values: {{parameter_data["enum"]}}
-               {{parameter_data["name"] |variablesyntax}} = request.{{parameter_data["name"]|variableforbidden}} ;
+               {{parameter_data["name"] |variablesyntax}} = request["{{parameter_data["name"]}}"] ;
             }
             {% endif -%}
             {% endfor -%} 
@@ -144,16 +144,16 @@ iotivity.OCCreateResource(
             {% for parameter_data in property_data -%}
             {% if parameter_data["$ref"] -%} 
             var {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = "" ; // {{query_ref(json_data, parameter_data["$ref"], "type")}} {{query_ref(json_data, parameter_data["$ref"], "description")}}
-            if (request.{{query_ref(json_data, parameter_data["$ref"], "name") |variableforbidden }} != undefined ) {
+            if (request["{{query_ref(json_data, parameter_data["$ref"], "name")}}"] != undefined ) {
                 // possible values: {{query_ref(json_data, parameter_data["$ref"], "enum")}}.
-                {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request.{{query_ref(json_data, parameter_data["$ref"], "name")|variableforbidden}} ;
+                {{query_ref(json_data, parameter_data["$ref"], "name") |variablesyntax}} = request["{{query_ref(json_data, parameter_data["$ref"], "name")}}"] ;
             }
             {% endif -%}
             {% if parameter_data["in"] in ["query"] -%} 
             var {{parameter_data["name"] |variablesyntax}} = "" ; // {{parameter_data["type"]}} {{parameter_data["description"]}}
-            if (request.{{parameter_data["name"] |variableforbidden }} != undefined ) {
+            if (request["{{parameter_data["name"]}}"] != undefined ) {
                 // possible values: {{parameter_data["enum"]}}
-                {{parameter_data["name"] |variablesyntax}} = request.{{parameter_data["name"]|variableforbidden}} ;
+                {{parameter_data["name"] |variablesyntax}} = request["{{parameter_data["name"]}}"] ;
             }
             {% endif -%}
             {% endfor -%} 

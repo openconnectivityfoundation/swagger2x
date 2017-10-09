@@ -30,7 +30,7 @@ import argparse
 import traceback
 from datetime import datetime
 from time import gmtime, strftime
-import jsonref
+#import jsonref
 import os.path
 from os import listdir
 from os.path import isfile, join
@@ -40,21 +40,21 @@ from shutil import copyfile
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
                     (sys.version_info[0], sys.version_info[1]))
-try: 
-    from swagger_spec_validator.validator20 import validate_spec
-except:
-    print("missing swagger_parser:")
-    print ("Trying to Install required module: swagger_parser ")
-    os.system('python3 -m pip install swagger_spec_validator.validator20')
-from swagger_spec_validator.validator20 import validate_spec
+#try: 
+#    from swagger_spec_validator.validator20 import validate_spec
+#except:
+#    print("missing swagger_parser:")
+#    print ("Trying to Install required module: swagger_parser ")
+#    os.system('python3 -m pip install swagger_spec_validator.validator20')
+#from swagger_spec_validator.validator20 import validate_spec
 
-try: 
-    from swagger_parser import SwaggerParser
-except:
-    print("missing swagger_parser:")
-    print ("Trying to Install required module: swagger_parser ")
-    os.system('python3 -m pip install swagger_parser')
-from swagger_parser import SwaggerParser
+#try: 
+#    from swagger_parser import SwaggerParser
+#except:
+#    print("missing swagger_parser:")
+#    print ("Trying to Install required module: swagger_parser ")
+#    os.system('python3 -m pip install swagger_parser')
+#from swagger_parser import SwaggerParser
 #
 # jinja2 imports
 #

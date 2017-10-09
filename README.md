@@ -6,7 +6,9 @@ templates engine: jinga2
 
 ## instalation
 This tool is python3 based.
-It should automatically install all the packages that it needs to run.
+
+run ```src\install.py``` to install the dependencies.
+
 
 Installation of the tool is making a clone of the repository.
 use the tool relative of where the respository is located on your system.

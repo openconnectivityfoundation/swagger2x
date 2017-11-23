@@ -300,7 +300,157 @@ def query_ref(parse_tree, parameter_ref, value):
         return parameter_block[value]
     except:
         return ""
+        
 
+def swagger_rt(json_data):
+    """
+    get the rt value from the example
+    :param json_data: the swagger file as json struct
+    :return: array of arrays of found values e.g. [ [a,b],[a,b] ]
+    """
+    rt_values = []
+    for path, item in json_data["paths"].items():
+        try:
+            x_example = item["get"]["responses"]["200"]["x-example"]
+            rt = x_example.get("rt")
+            for rt_value in rt:
+                rt_values.append([ path, rt_value])
+        except:
+            try:
+                rt = item["post"]["responses"]["200"]["x-example"]["rt"]
+                for rt_value in rt:
+                    rt_values.append([path, rt_value])
+            except:
+                pass
+    return rt_values
+    
+    
+def swagger_if(json_data, input_path):
+    """
+    get the if value from the schema that is referenced by the path in get (or put)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    if_values = []
+    print("swagger_if: path:", input_path)
+    for path, path_item in json_data["paths"].items():
+        schema = None
+        if input_path == path:
+            try:
+                schema = path_item["get"]["responses"]["200"]["schema"]
+            except:
+                try:
+                    schema = path_item["post"]["responses"]["200"]["schema"]
+                except:
+                    pass
+        if schema is not None:
+            print("swagger_if: schema", schema) 
+            def_data = json_data["definitions"]
+            for def_name, def_item in def_data.items():
+                full_def_name = "#/definitions/" + def_name
+                if full_def_name == schema["$ref"]:
+                    #print("swagger_if: found", def_item)
+                    if_block = find_key_link(def_data, "if")
+                    print("swagger_if: found", if_block) 
+                    if if_block is not None:
+                        enum_values = if_block["items"]["enum"]
+                        for enum_value in enum_values:
+                            if_values.append(enum_value)
+                            
+        else:
+            print("swagger_if: schema not found:", input_path)
+    
+    return if_values
+    
+    
+def swagger_property_names(json_data, input_path):
+    """
+    get the properties  from the schema that is referenced by the path in get (or put)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    prop_values = []
+    print("swagger_property_names: path:", input_path)
+    for path, path_item in json_data["paths"].items():
+        schema = None
+        if input_path == path:
+            try:
+                schema = path_item["get"]["responses"]["200"]["schema"]
+            except:
+                try:
+                    schema = path_item["post"]["responses"]["200"]["schema"]
+                except:
+                    pass
+        if schema is not None:
+            print("swagger_property_names: schema", schema) 
+            def_data = json_data["definitions"]
+            for def_name, def_item in def_data.items():
+                full_def_name = "#/definitions/" + def_name
+                if full_def_name == schema["$ref"]:
+                    #print("swagger_property_names: found", def_item)
+                    prop_block = find_key_link(def_data, "properties")
+                    print("swagger_property_names: found", prop_block) 
+                    if prop_block is not None:
+                        for prop_name, prop in prop_block.items():
+                            prop_values.append(prop_name)
+                            
+        else:
+            print("swagger_property_names: schema not found:", input_path)
+    
+    return prop_values
+    
+    
+    
+def swagger_properties(json_data, input_path):
+    """
+    get the properties  from the schema that is referenced by the path in get (or put)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    prop_block = []
+    print("swagger_properties: path:", input_path)
+    for path, path_item in json_data["paths"].items():
+        schema = None
+        if input_path == path:
+            try:
+                schema = path_item["get"]["responses"]["200"]["schema"]
+            except:
+                try:
+                    schema = path_item["post"]["responses"]["200"]["schema"]
+                except:
+                    pass
+        if schema is not None:
+            print("swagger_properties: schema", schema) 
+            def_data = json_data["definitions"]
+            for def_name, def_item in def_data.items():
+                full_def_name = "#/definitions/" + def_name
+                if full_def_name == schema["$ref"]:
+                    #print("swagger_properties: found", def_item)
+                    prop_block = find_key_link(def_data, "properties")
+        else:
+            print("swagger_properties: schema not found:", input_path)
+    
+    return prop_block
+        
+def query_rt_from_path(parse_tree, path):
+    """
+    find the rt from path level
+    :param parse_tree: full json parse tree of the swagger file
+    :param parameter_ref: reference value to be found
+    :param value: key in the reference to be found
+    :return:
+    """
+    print ("query_rt_from_path: rt from path:", path)
+    found_values = swagger_rt(parse_tree)
+    for value in found_values:
+        if value[0] == path:
+            return value[1] 
+    return ""
+
+    
 
 def query_path(parse_tree, my_path, value):
     """
@@ -345,8 +495,6 @@ def variablesyntax(input_string):
     chars_to_replace = "/\  +-*^|%$=~@()[].,"
     return "_"+replace_chars(input_string, chars_to_replace )
     
-    
-    
   
 #
 #  jinga custom functions: filter
@@ -360,6 +508,24 @@ def variableforbidden(input_string):
     if input_string in ["if", "var", "function", "null"]:
         return "_"+input_string
     return input_string
+    
+def convert_to_c_type(json_type):
+    """
+    convert the json type to c type
+    :param json_type: the json type
+    :return: c type.
+    """
+    print ("convert_to_c_type: json_type:", json_type)
+    if json_type in ["number"]:
+        return "float"
+    if json_type in ["integer"]:
+        return "int"  # uint8_t ?
+    if json_type in ["string"]:
+        return "std::string"
+        
+    return "void*"
+    
+    
 #
 #   main of script
 #
@@ -382,8 +548,8 @@ parser.add_argument( "-ver"        , "--verbose"    , help="Execute in verbose m
 
 parser.add_argument( "-swagger"    , "--swagger"    , default=None,
                      help="swagger file name",  nargs='?', const="", required=True)
-parser.add_argument( "-schema"     , "--schema"     , default=None,
-                     help="schema to be added to word document",  nargs='?', const="", required=False)
+#parser.add_argument( "-schema"     , "--schema"     , default=None,
+#                     help="schema to be added to word document",  nargs='?', const="", required=False)
 parser.add_argument( "-template"     , "--template"     , default=None,
                      help="template to be used",  nargs='?', const="", required=True)
 parser.add_argument( "-template_dir"     , "--template_dir"     , default=None,
@@ -408,7 +574,7 @@ args = parser.parse_args()
 
 print("file          : " + str(args.swagger))
 print("out_dir       : " + str(args.out_dir))
-print("schema        : " + str(args.schema))
+#print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
 print("template      : " + str(args.template))
 print("template_dir  : " + str(args.template_dir))
@@ -438,6 +604,7 @@ try:
     env.tests['hasbody'] = ishasbody
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
+    env.filters['convert_to_c_type'] = convert_to_c_type
     
     for template_file in template_files:
         print ("processing:", template_file)
@@ -446,6 +613,11 @@ try:
         template_environment.globals['replace_chars'] = replace_chars
         template_environment.globals['path_names'] = path_names
         template_environment.globals['query_ref'] = query_ref
+        template_environment.globals['query_rt'] = query_rt_from_path
+        template_environment.globals['query_if'] = swagger_if
+        template_environment.globals['query_property_names'] = swagger_property_names
+        template_environment.globals['query_properties'] = swagger_properties
+        
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
         text = template_environment.render( json_data=json_data, 

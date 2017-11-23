@@ -78,4 +78,17 @@ my_test_in_dir -template_dir ../src/templates -template NodeIotivityServer -swag
 
 }
 
+
+function testC {
+
+
+# node.js iotivity : temperature, query param "if" and "units"
+TEST_CASE="testcase_5-C"
+my_test_in_dir -template_dir ../src/templates -template C++IotivityServer -swagger ../test/in/test_swagger_5/TemperatureResURI.swagger.json -out_dir $OUTPUT_DIR/$TEST_CASE/
+#compare_file $OUTPUT_DIR/$TEST_CASE/Server.js $REF_DIR/$TEST_CASE/Server.js
+
+
+}
+
 tests  
+#testC

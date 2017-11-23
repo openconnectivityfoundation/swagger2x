@@ -105,6 +105,65 @@ any input string.
 function: santize strings to be part of the target language.
 typical value = "+-? ,./"
 
+#### query_rt
+retrieve an rt value for an path
+input: full swagger file
+input: path
+return: rt value (as part of the x-example)
+typical usage:
+
+{% for path, path_data in json_data['paths'].items() -%}
+{{query_rt(json_data,path)}}
+{% endfor -%}
+
+
+#### query_if
+retrieve an list of if values for an path
+input: full swagger file
+input: path
+return: if value (as part of the resolved schema)
+typical usage:
+
+{% for path, path_data in json_data['paths'].items() -%}
+{{query_if(json_data, path)}}
+{% endfor -%}
+
+
+#### query_property_names
+retrieve an list of properties values of an schema belonging to the path
+input: full swagger file
+input: path
+return: if value (as part of the resolved schema)
+typical usage:
+
+{% for path, path_data in json_data['paths'].items() -%}
+{% for propname in query_property_names(json_data, path) -%}
+{{propname}}
+{% endfor -%}
+{% endfor -%}
+
+
+
+#### query_properties
+retrieve an list of properties an schema belonging to the path
+input: full swagger file
+input: path
+return: if value (as part of the resolved schema)
+typical usage:
+
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+
+
+#### query_ref
+retrieve an reference 
+typical usage:
+
+{{query_ref(json_data, parameter_data["$ref"], "enum")}}
+
 
 #### path_names (string, array of chars to be replaced by "")
 any input string.
@@ -118,15 +177,28 @@ replace chars so that the data can be used as an variable.
 note that it prefixes the variable with "_" so that names don't get in the
 way of language defined names (like "if")
 
+typical usage:
+
+{% for path, path_data in json_data['paths'].items() -%}
+{{path|variablesyntax}}
+{% endfor -%}
+
 #### variableforbidden
 if the varialbe is "if", "var", "function", "null"
 it will be prefixed with "_" 
 all other names will be kept intact (e.g. just pass through)
 
+#### convert_to_c_type
+convert the json types into c types.
+typical usage:
+
+{{var|convert_to_c_type}}
+
+note does not do array type.
+
 ## TODO list
 
 - template for client code for IOTivity node
-- template for device code for IOTivity node
 - template for client code for IOTivity c++
 - template for client code for IOTivity c++
 - wheel instalation of the tool
@@ -135,3 +207,24 @@ all other names will be kept intact (e.g. just pass through)
 ## Fixes
 
 <list fixes here>
+
+
+
+
+
+
+### hints
+
+
+{% for path, path_data in json_data['paths'].items() -%}
+{% for definition, def_data in json_data['definitions'].items() -%}
+{% for decl, decl_data in def_data.items() -%}
+{% if decl == "properties" -%} 
+{% for var, var_data in decl_data.items() -%}
+    // readonly: {{var_data.readOnly}} type: {{var_data.type}} description: {{var_data.description}}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var_data.name|variablesyntax}}; 
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+{% endfor %}
+{% endfor -%}

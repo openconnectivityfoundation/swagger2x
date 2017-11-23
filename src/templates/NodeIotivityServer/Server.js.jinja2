@@ -49,17 +49,19 @@ console.log( "Starting OCF stack in server mode" );
 iotivity.OCInit( null, 0, iotivity.OCMode.OC_SERVER );
 
 // set the device data
-iotivity.OCSetDeviceInfo( {
-	specVersion: "res.1.1.0",
-	dataModelVersions: [ "abc.0.0.1" ],
-	deviceName: "{{json_data['info']['title']}}",
-	types: []
-} );
+iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+	iotivity.OC_RSRVD_SPEC_VERSION, "res.1.1.0" );
+iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+	iotivity.OC_RSRVD_DATA_MODEL_VERSION, "abc.0.0.1" );
+iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_DEVICE,
+	iotivity.OC_RSRVD_DEVICE_NAME, "{{json_data['info']['title']}}" );
+
 // set the platform data
-iotivity.OCSetPlatformInfo( {
-	platformID: "{{uuid}}",
-	manufacturerName: "{{manufactorer}}"
-} );
+iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+	iotivity.OC_RSRVD_PLATFORM_ID, "{{uuid}}" );
+iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
+	iotivity.OC_RSRVD_MFG_NAME, "{{manufactorer}}" );
+
 // helper function
 intervalId = setInterval( function() {
 	iotivity.OCProcess();
@@ -71,6 +73,7 @@ console.log( "Registering resources" );
 iotivity.OCCreateResource(
 	// The bindings fill in this object
 	{{path|variablesyntax}}_handle,
+    "{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}", // this should be an array in the API
     {% for methodName, method_data in path_data.items() -%} 
     {% if methodName == "get" -%} 
     {% for property_name, property_data in method_data.items() -%}
@@ -79,7 +82,6 @@ iotivity.OCCreateResource(
     {% if parameter_data["$ref"] -%} 
     iotivity.OC_RSRVD_INTERFACE_DEFAULT, //{{query_ref(json_data, parameter_data["$ref"], "enum")}}, // this should be an array in the API
     {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
-    "{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}", // this should be an array in the API
 	"{{path}}",
 	function( flag, request ) {
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );

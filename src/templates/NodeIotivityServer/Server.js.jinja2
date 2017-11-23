@@ -76,6 +76,21 @@ intervalId = setInterval( function() {
 	iotivity.OCProcess();
 }, 1000 );
 
+function validateResourceProperties( theArray ) {
+    var index;
+
+    if ( Array.isArray( theArray ) && theArray.length > 0 ) {
+        for ( index in theArray ) {
+            if ( typeof theArray[ index ] !== "string" ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    return false;
+}
+
 function bindStringsToResource( handle, strings, binder ) {
     var index, result;
 
@@ -88,10 +103,18 @@ function bindStringsToResource( handle, strings, binder ) {
     }
 
     return true;
-};
+}
 
 console.log( "Registering resources" );
+
 {% for path, path_data in json_data['paths'].items() -%}
+
+if ( !( validateResourceProperties( {{path|variablesyntax}}_resourceTypes ) &&
+        validateResourceProperties( {{path|variablesyntax}}_interfaces ) ) ) {
+    console.log( "Error: Invalid resource properties" );
+    process.exit( 1 );
+}
+
 // Create a new resource for {{path}}
 iotivity.OCCreateResource(
 	// The bindings fill in this object
@@ -220,11 +243,12 @@ iotivity.OCCreateResource(
     // always discoverable
 	iotivity.OCResourceProperty.OC_DISCOVERABLE );
 
-bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_resourceTypes.slice( 1 ),
-	"OCBindResourceTypeToResource");
-
-bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_interfaces.slice( 1 ),
-	"OCBindResourceInterfaceToResource" );
+if ( !( bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_resourceTypes.slice( 1 ),
+                "OCBindResourceTypeToResource") &&
+        bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_interfaces.slice( 1 ),
+                "OCBindResourceInterfaceToResource" ) ) ) {
+    process.exit( 1 );
+}
 
 {% endfor -%}
 

@@ -112,7 +112,7 @@ console.log( "Registering resources" );
 if ( !( validateResourceProperties( {{path|variablesyntax}}_resourceTypes ) &&
         validateResourceProperties( {{path|variablesyntax}}_interfaces ) ) ) {
     console.log( "Error: Invalid resource properties" );
-    process.exit( 1 );
+    exitHandler();
 }
 
 // Create a new resource for {{path}}
@@ -247,25 +247,29 @@ if ( !( bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|va
                 "OCBindResourceTypeToResource") &&
         bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_interfaces.slice( 1 ),
                 "OCBindResourceInterfaceToResource" ) ) ) {
-    process.exit( 1 );
+    exitHandler();
 }
 
 {% endfor -%}
 
 console.log( "Server ready" );
 
-// Exit gracefully when interrupted
-process.on( "SIGINT", function() {
+// Cleanup when interrupted
+function exitHandler() {
     console.log( "SIGINT: Quitting..." );
 
     // Tear down the processing loop and stop iotivity
     clearInterval( intervalId );
     // deleting all handles
     {% for path, path_data in json_data['paths'].items() -%}
-    iotivity.OCDeleteResource( {{path|variablesyntax}}_handle.handle );
+    if ( {{path|variablesyntax}}_handle.handle )
+        iotivity.OCDeleteResource( {{path|variablesyntax}}_handle.handle );
     {% endfor -%}
     // stop the stack
     iotivity.OCStop();
     // Exit
     process.exit( 0 );
-} );
+}
+
+// Exit gracefully when interrupted
+process.on('SIGINT', exitHandler);

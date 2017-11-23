@@ -29,7 +29,16 @@ var iotivity = require( "iotivity-node/lowlevel" );
 // resource_handles for each end point  
 {% for path, path_data in json_data['paths'].items() -%}
 // path {{ path }}
-var  {{path|variablesyntax}}_handle = {};
+var {{path|variablesyntax}}_handle = {};
+var {{path|variablesyntax}}_resourceTypes = {{retrieve_path_value(path_data, "get/200/x-example", "rt")}};
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" -%}
+{% for property_name, property_data in method_data.items() -%}
+{% if property_name == "parameters" -%}
+{% for parameter_data in property_data -%}
+{% if parameter_data["$ref"] -%}
+var {{path|variablesyntax}}_interfaces = {{query_ref(json_data, parameter_data["$ref"], "enum")}};
+{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
 {% endfor -%}
 
 // list all variables as globals
@@ -62,10 +71,24 @@ iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
 iotivity.OCSetPropertyValue( iotivity.OCPayloadType.PAYLOAD_TYPE_PLATFORM,
 	iotivity.OC_RSRVD_MFG_NAME, "{{manufactorer}}" );
 
-// helper function
+// helper functions
 intervalId = setInterval( function() {
 	iotivity.OCProcess();
 }, 1000 );
+
+function bindStringsToResource( handle, strings, binder ) {
+    var index, result;
+
+    for ( index = 0; index < strings.length; index++ ) {
+         result = iotivity[ binder ]( handle, strings[ index ] );
+         if ( result !== iotivity.OCStackResult.OC_STACK_OK ) {
+             console.log( "Error: Failed to perform: " + binder );
+             return false;
+         }
+    }
+
+    return true;
+};
 
 console.log( "Registering resources" );
 {% for path, path_data in json_data['paths'].items() -%}
@@ -73,15 +96,8 @@ console.log( "Registering resources" );
 iotivity.OCCreateResource(
 	// The bindings fill in this object
 	{{path|variablesyntax}}_handle,
-    "{{retrieve_path_value(path_data, "get/200/x-example", "rt")}}", // this should be an array in the API
-    {% for methodName, method_data in path_data.items() -%} 
-    {% if methodName == "get" -%} 
-    {% for property_name, property_data in method_data.items() -%}
-    {% if property_name == "parameters" -%}
-    {% for parameter_data in property_data -%}
-    {% if parameter_data["$ref"] -%} 
-    iotivity.OC_RSRVD_INTERFACE_DEFAULT, //{{query_ref(json_data, parameter_data["$ref"], "enum")}}, // this should be an array in the API
-    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
+	{{path|variablesyntax}}_resourceTypes[ 0 ],
+	{{path|variablesyntax}}_interfaces[ 0 ],
 	"{{path}}",
 	function( flag, request ) {
 		console.log( "Entity handler called with flag = " + flag + " and the following request:" );
@@ -203,6 +219,12 @@ iotivity.OCCreateResource(
 	},
     // always discoverable
 	iotivity.OCResourceProperty.OC_DISCOVERABLE );
+
+bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_resourceTypes.slice( 1 ),
+	"OCBindResourceTypeToResource");
+
+bindStringsToResource( {{path|variablesyntax}}_handle.handle,  {{path|variablesyntax}}_interfaces.slice( 1 ),
+	"OCBindResourceInterfaceToResource" );
 
 {% endfor -%}
 

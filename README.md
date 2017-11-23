@@ -191,9 +191,9 @@ all other names will be kept intact (e.g. just pass through)
 #### convert_to_c_type
 convert the json types into c types.
 typical usage:
-
+```
 {{var|convert_to_c_type}}
-
+```
 note does not do array type.
 
 ## TODO list
@@ -213,18 +213,3 @@ note does not do array type.
 
 
 
-### hints
-
-
-{% for path, path_data in json_data['paths'].items() -%}
-{% for definition, def_data in json_data['definitions'].items() -%}
-{% for decl, decl_data in def_data.items() -%}
-{% if decl == "properties" -%} 
-{% for var, var_data in decl_data.items() -%}
-    // readonly: {{var_data.readOnly}} type: {{var_data.type}} description: {{var_data.description}}
-    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var_data.name|variablesyntax}}; 
-{% endfor -%}
-{% endif -%}
-{% endfor -%}
-{% endfor %}
-{% endfor -%}

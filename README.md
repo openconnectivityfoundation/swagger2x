@@ -108,24 +108,44 @@ any input string.
 function: santize strings to be part of the target language.
 typical value = "+-? ,./"
 
-#### query_rt
-retrieve an rt value for an path
-input: full swagger file
-input: path
-return: rt value (as part of the x-example)
+#### retrieve_path_value
+retrieve an specific value from a property
+- input: json_object
+- input: path leading from that object
+- input: property name to retrieve the value from, e.g. will be prefixed with path
+- return: value of the property
+
 typical usage:
 
+```
+{% for path, path_data in json_data['paths'].items() -%}
+ var {{path|variablesyntax}}_resourceTypes = {{retrieve_path_value(path_data, "get/200/x-example", "rt")}};
+{% endfor -%}
+```
+
+
+#### query_rt
+retrieve an rt value for an path
+- input: full swagger file
+- input: path
+- return: rt value (as part of the x-example)
+
+typical usage:
+
+```
 {% for path, path_data in json_data['paths'].items() -%}
 {{query_rt(json_data,path)}}
 {% endfor -%}
-
+```
 
 #### query_if
 retrieve an list of if values for an path
-input: full swagger file
-input: path
-return: if value (as part of the resolved schema)
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
 typical usage:
+
 ```
 {% for path, path_data in json_data['paths'].items() -%}
 {{query_if(json_data, path)}}
@@ -134,10 +154,12 @@ typical usage:
 
 #### query_property_names
 retrieve an list of properties values of an schema belonging to the path
-input: full swagger file
-input: path
-return: if value (as part of the resolved schema)
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
 typical usage:
+
 ```
 {% for path, path_data in json_data['paths'].items() -%}
 {% for propname in query_property_names(json_data, path) -%}
@@ -149,10 +171,12 @@ typical usage:
 
 #### query_properties
 retrieve an list of properties an schema belonging to the path
-input: full swagger file
-input: path
-return: if value (as part of the resolved schema)
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
 typical usage:
+
 ```
 {% for path, path_data in json_data['paths'].items() %}
 {% for var, var_data in query_properties(json_data, path).items() %}
@@ -163,7 +187,9 @@ typical usage:
 
 #### query_ref
 retrieve an reference 
+
 typical usage:
+
 ```
 {{query_ref(json_data, parameter_data["$ref"], "enum")}}
 ```
@@ -171,6 +197,7 @@ typical usage:
 #### path_names (string, array of chars to be replaced by "")
 any input string.
 function: santize strings to be part of the target language.
+
 typical value = "+-? ,./"
 
 ### jinja2 filter functions

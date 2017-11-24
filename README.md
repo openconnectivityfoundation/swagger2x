@@ -80,6 +80,7 @@ the following structure is defined:
 - generates an node.js server for the IOTivity stack
 - OCF specific based  on:
 https://github.com/otcshare/iotivity-node
+- Requires iotivity-node v1.2.1 or later
 - work in progress
 
 ## jinja2 templates information

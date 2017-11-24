@@ -91,4 +91,4 @@ my_test_in_dir -template_dir ../src/templates -template C++IotivityServer -swagg
 }
 
 tests  
-#testC
+testC

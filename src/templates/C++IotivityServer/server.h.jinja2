@@ -39,23 +39,6 @@
 using namespace std;
 using namespace OC;
 
-{% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
-#define {{path|variablesyntax}}_RESOURCE_ENDPOINT "{{path}}"  // used path
-#define {{path|variablesyntax}}_RESOURCE_TYPE "{{query_rt(json_data, path)}}"  // rt value (should be an array)
-#define {{path|variablesyntax}}_RESOURCE_INTERFACE "{{query_if(json_data, path)}}" // interface if  (should be an array)
-{% endif -%}
-{% endfor -%}
-{% endfor -%}
-
-
-{% for path, path_data in json_data['paths'].items() -%}
-{% for propname in query_properties(json_data, path) -%}
-#define {{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{propname|variablesyntax}} "{{propname}}"
-{% endfor -%}
-{% endfor -%}
-
 class IoTServer
 {
     shared_ptr<PlatformConfig> m_platformConfig;
@@ -67,7 +50,7 @@ class IoTServer
 {% if methodName == "get" %} 
     // path: {{path}}
     OCRepresentation m{{path|variablesyntax}}Representation;
-    OCResourceHandle m{{path|variablesyntax}}Resource;
+    OCResourceHandle m{{path|variablesyntax}}ResourceHandle;
     ObservationIds m{{path|variablesyntax}}Observers;
     shared_ptr<IoTObserver> m{{path|variablesyntax}}ObserverLoop;
     OCRepresentation get{{path|variablesyntax}}Representation();
@@ -76,11 +59,21 @@ class IoTServer
 {% endfor -%}
 {% endfor %}
 
-
+    // variables for the resources
 {% for path, path_data in json_data['paths'].items() -%}
-    // membervariables for path: {{path}}
-{% for var, var_data in query_properties(json_data, path).items() %}
-    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; {% endfor -%}
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" %} 
+    static string m{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}";  // used path
+    static string m{{path|variablesyntax}}_RESOURCE_TYPE[] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (should be an array)
+    static string m{{path|variablesyntax}}_RESOURCE_INTERFACE[] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if  {% endif -%}
+{% endfor -%}
+{% endfor -%}
+
+
+{% for path, path_data in json_data['paths'].items() %}
+    // membervariables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
+    static string m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute{% endfor -%}
 {% endfor %}
 
 public:

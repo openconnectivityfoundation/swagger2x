@@ -526,6 +526,31 @@ def convert_to_c_type(json_type):
     return "void*"
     
     
+def convert_to_cplus_string_array(my_array):
+    """
+    convert the json type to c type
+    :param json_type: the json type
+    :return: c type.
+    """
+    my_ret = '{'
+    counter = 0
+    if isinstance(my_array, str):
+        my_ret += '"'+str(my_array)+'"'
+    elif isinstance(my_array, list):
+        for item in my_array:
+            if counter  > 0:
+               my_ret += ',' 
+            my_ret += '"'+str(item)+'"'
+            counter +=1
+    else:
+        pass
+        
+    my_ret += '}'
+    
+        
+    return my_ret
+    
+    
 #
 #   main of script
 #
@@ -604,7 +629,9 @@ try:
     env.tests['hasbody'] = ishasbody
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
-    env.filters['convert_to_c_type'] = convert_to_c_type
+    env.filters['convert_to_c_type'] = convert_to_c_type    
+    env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
+
     
     for template_file in template_files:
         print ("processing:", template_file)

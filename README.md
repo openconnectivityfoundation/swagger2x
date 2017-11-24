@@ -68,7 +68,7 @@ the following structure is defined:
 ### PythonFlask
 - generates an python Flask server
 - normal http server
-- no OCF implemenation
+- __NO OCF implemenation__
 - used as demonstration that the code generation from swagger2.0 files works:
    - call back generation per endpoint-method
    - code to obtain the body of an PUT/POST
@@ -81,7 +81,9 @@ the following structure is defined:
 - OCF specific based  on:
 https://github.com/otcshare/iotivity-node
 - Requires iotivity-node v1.2.1 or later
-- work in progress
+- work in progress:
+    - adding security
+    - adding introspection
 
 ## jinja2 templates information
 The template contents is an mix of the target syntax and jinja2 commands.

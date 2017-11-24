@@ -35,18 +35,18 @@ e.g. the end points, methods, query param and payload information are all availa
 
 code that will be generated will be generated towards:
 
-       -------------------
-       |     library      |  <-- functions/class/methods that are allowed to be
+       --------------------
+       |     library      |  <-- functions/class/methods (from libraries) that are allowed to be
        |                  |      used by the template
        --------------------
-       | operating system |  <-- os constructs that are allowed to be
+       | operating system |  <-- os constructs (in the used language) that are allowed to be
        |                  |      used by the template
        --------------------
        |    language      | <-- language constructs/syntax that must be used
        |                  |     by the template
-       -------------------
+       --------------------
 
-The template is an mix of the library calls, the supported operating system in the used language mixed with the jinaj2 template language to generate the code.
+The template is an mix of the library calls, the supported operating system in the used language mixed with the jinja2 template language to generate the code.
 jinja2 takes the json swagger information and make it iteratable by looping over the end points, methods etc. and uses then the info from json to fill in the library/os calls.
 
 
@@ -67,7 +67,7 @@ the following structure is defined:
 
 ### PythonFlask
 - generates an python Flask server
-- normal http server
+    - this is an http server
 - __NO OCF implemenation__
 - used as demonstration that the code generation from swagger2.0 files works:
    - call back generation per endpoint-method
@@ -85,6 +85,8 @@ https://github.com/otcshare/iotivity-node
     - adding security
     - adding introspection
 
+    
+    
 ## jinja2 templates information
 The template contents is an mix of the target syntax and jinja2 commands.
 information about jinja2 commands can be found at:
@@ -229,7 +231,7 @@ note does not do array type.
 ## TODO list
 
 - template for client code for IOTivity node
-- template for client code for IOTivity c++
+- template for server code for IOTivity c++ (in progress)
 - template for client code for IOTivity c++
 - wheel instalation of the tool
 - rename option for generated files

@@ -34,6 +34,24 @@
  input_file            : {{input_file}}
  version of input_file : {{json_data['info']['version']}}
  title of input_file   : {{json_data['info']['title']}}
+ 
+ 
+ typical device resource tree
+ 
+ |-- oic/res
+ |
+ |-- oic/p
+ |-- oic/d
+ |-- virtual security resources
+ |
+ |-- resource-1
+ .
+ |-- resource-n
+ 
+ content of oic/res is determined by the resources that are tagged with OC_DISCOVERABLE
+ oic/p : content is determined by the globals in the cpp file
+ oic/d : content is determined by the globals in the cpp file
+ 
 */
 
 using namespace std;
@@ -75,6 +93,22 @@ class IoTServer
     static string m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
     {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute{% endfor -%}
 {% endfor %}
+
+    // OCPlatformInfo Contains all the platform info to be stored
+    OCPlatformInfo m_platformInfo;
+    
+    // delete the platform information
+    void DeletePlatformInfo();
+    
+    // set the platform information
+    OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+        std::string platformVersion, std::string operatingSystemVersion,
+        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
+        std::string systemTime);
+      
+    // set the device information      
+    OCStackResult SetDeviceInfo();
 
 public:
     IoTServer();

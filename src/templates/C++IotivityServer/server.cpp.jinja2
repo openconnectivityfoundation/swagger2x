@@ -34,6 +34,42 @@
  title of input_file   : {{json_data['info']['title']}}
 */
 
+// Set of strings for each of platform Info fields
+std::string gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+std::string gManufacturerName = "OCF";
+std::string gManufacturerLink = "https://openconnectivity.org/";
+std::string gModelNumber = "ModelNumber";
+std::string gDateOfManufacture = "2017-12-01";
+std::string gPlatformVersion = "1.0";
+std::string gOperatingSystemVersion = "myOS";
+std::string gHardwareVersion = "1.0";
+std::string gFirmwareVersion = "1.0";
+std::string gSupportLink = "https://openconnectivity.org/";
+std::string gSystemTime = "2017-12-01T12.00";
+
+// Set of strings for each of device info fields
+std::string  gDeviceName = "{{json_data['info']['title']}}";
+std::string  gDeviceType = "oic.wk.tv";
+std::string  gSpecVersion = "ocf.1.3.0";
+//std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
+std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
+std::string  gProtocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
+
+
+/**
+*  DuplicateString
+*
+* @param targetString  destination string, will be allocated
+* @param sourceString  soruce string, e.g. will be copied
+
+*  TODO: don't use strncpy
+*/
+void DuplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
 
 /**
 *  intialize platform
@@ -45,6 +81,23 @@ void IoTServer::initializePlatform()
     m_platformConfig = make_shared<PlatformConfig>(ServiceType::InProc, ModeType::Server, "0.0.0.0",
                                                    0, OC::QualityOfService::HighQos);
     OCPlatform::Configure(*m_platformConfig);
+    
+    // initialize "oic/p"
+    OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
+            gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
+            gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
+    result = OCPlatform::registerPlatformInfo(m_platformInfo);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Platform Registration (oic/p) failed\n";
+    }
+    
+    // initialize "oic/d"
+    result = SetDeviceInfo();
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Device Registration (oic/p) failed\n";
+    }
 }
 
 /**
@@ -74,6 +127,8 @@ IoTServer::~IoTServer()
 {
     cout << "Running IoTServer destructor" << endl;
     //ClosePins();
+    
+    DeletePlatformInfo();
 }
 
 /**
@@ -163,7 +218,7 @@ void IoTServer::{{path|variablesyntax}}ObserverLoop()
     cout << "{{path}} Observer Callback" << endl;
     shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
     resourceResponse->setResourceRepresentation(get{{path|variablesyntax}}Representation(),
-    EDISON_RESOURCE_INTERFACE);
+    m{{path|variablesyntax}}_RESOURCE_INTERFACE);
     OCStackResult result = OCPlatform::notifyListOfObservers(m{{path|variablesyntax}}Resource,
                                                              m{{path|variablesyntax}}Observers,
                                                              resourceResponse);
@@ -332,6 +387,118 @@ OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_pt
 
 
 
+/**
+*  DeletePlatformInfo
+*  Deletes the allocated platform information
+*/
+void IoTServer::DeletePlatformInfo()
+{
+    delete[] m_platformInfo.platformID;
+    delete[] m_platformInfo.manufacturerName;
+    delete[] m_platformInfo.manufacturerUrl;
+    delete[] m_platformInfo.modelNumber;
+    delete[] m_platformInfo.dateOfManufacture;
+    delete[] m_platformInfo.platformVersion;
+    delete[] m_platformInfo.operatingSystemVersion;
+    delete[] m_platformInfo.hardwareVersion;
+    delete[] m_platformInfo.firmwareVersion;
+    delete[] m_platformInfo.supportUrl;
+    delete[] m_platformInfo.systemTime;
+}
+
+/**
+*  SetPlatformInfo 
+*  Sets the platform information ("oic/p"), from the globals
+
+* @param platformID the platformID
+* @param manufacturerName the manufacturerName
+* @param manufacturerUrl the manufacturerUrl
+* @param modelNumber the modelNumber
+* @param platformVersion the platformVersion
+* @param operatingSystemVersion the operatingSystemVersion
+* @param hardwareVersion the hardwareVersion
+* @param firmwareVersion the firmwareVersion
+* @param supportUrl the supportUrl
+* @param systemTime the systemTime
+*/
+OCStackResult IoTServer::SetPlatformInfo(std::string platformID, std::string manufacturerName,
+        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+        std::string platformVersion, std::string operatingSystemVersion,
+        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
+        std::string systemTime)
+{
+    DuplicateString(&m_platformInfo.platformID, platformID);
+    DuplicateString(&m_platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&m_platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&m_platformInfo.modelNumber, modelNumber);
+    DuplicateString(&m_platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&m_platformInfo.platformVersion, platformVersion);
+    DuplicateString(&m_platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&m_platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&m_platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&m_platformInfo.supportUrl, supportUrl);
+    DuplicateString(&m_platformInfo.systemTime, systemTime);
+
+    return OC_STACK_OK;
+}
+
+/**
+*  SetDeviceInfo
+*  Sets the device information ("oic/d"), from the globals
+*/
+OCStackResult IoTServer::SetDeviceInfo()
+{
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle == NULL)
+    {
+        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        return result;
+    }
+
+    result = OCBindResourceTypeToResource(handle, gDeviceType.c_str());
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to add device type" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set device name" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          gDataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set data model versions" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set spec version" << endl;
+        return result;
+    }
+
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          gProtocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        cout << "Failed to set piid" << endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
+
+
+
 
 // global needs static, otherwise it can be compiled out and then Ctrl-C does not work
 static int quit = 0;
@@ -351,12 +518,16 @@ int main()
     sa.sa_handler = handle_signal;
     sigaction(SIGINT, &sa, NULL);
     cout << "Press Ctrl-C to quit...." << endl;
+    // create the server
     IoTServer server;
     do
     {
         usleep(2000000);
     }
     while (quit != 1);
+    // delete the server
+    delete IoTServer;
+    
     return 0;
 }
 

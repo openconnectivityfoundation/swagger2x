@@ -1,0 +1,15 @@
+# Sample makefile  
+  
+#!include <win32.mak>  
+  
+all: server.exe 
+  
+.c.obj:  
+  $(cc) $(cdebug) $(cflags) $(cvars) $*.c  
+  
+.cpp.obj:  
+  $(cc) $(cdebug) $(cflags) $(cvars) $*.cpp  
+  
+server.exe: server.obj  
+  $(link) $(ldebug) $(conflags) -out:server.exe server.obj $(conlibs) lsapi32.lib  
+ 

@@ -59,55 +59,109 @@ using namespace OC;
 
 class IoTServer
 {
-    shared_ptr<PlatformConfig> m_platformConfig;
-    void initializePlatform();
-    void setupResources();
-    void createResource(string, string, EntityHandler, OCResourceHandle&);
+
 {% for path, path_data in json_data['paths'].items() -%}
+    // path: {{path}}
+    // the resource representation
+    OCRepresentation m{{path|variablesyntax}}Representation;
+    // the resource handle
+    OCResourceHandle m{{path|variablesyntax}}ResourceHandle;
+    // the list of observers
+    ObservationIds m{{path|variablesyntax}}Observers;
+    // the list of observers
+    shared_ptr<IoTObserver> m{{path|variablesyntax}}ObserverLoop;
+    /**
+    *  method for /TemperatureResURI to respond to all observers if something is changed
+    */
+    void f{{path|variablesyntax}}ObserverLoopFunc();
+    /**
+    *  The entity handler for {{path}}
+    * @param Request the request representation.
+    */
+    OCEntityHandlerResult f{{path|variablesyntax}}EntityHandler(shared_ptr<OCResourceRequest> Request);
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %} 
-    // path: {{path}}
-    OCRepresentation m{{path|variablesyntax}}Representation;
-    OCResourceHandle m{{path|variablesyntax}}ResourceHandle;
-    ObservationIds m{{path|variablesyntax}}Observers;
-    shared_ptr<IoTObserver> m{{path|variablesyntax}}ObserverLoop;
-    OCRepresentation get{{path|variablesyntax}}Representation();
-    OCEntityHandlerResult m{{path|variablesyntax}}EntityHandler(shared_ptr<OCResourceRequest>);
+    /**
+    *  get method for {{path}} to assign the values to be returned
+    * @param requestRep the request representation.
+    */
+    OCRepresentation get{{path|variablesyntax}}Representation(OCRepresentation requestRep);
+{% endif -%}
+{% if methodName == "post" %} 
+    /**
+    *  post method for {{path}} to assign the request values to the member values
+    * @param requestRep the request representation.
+    */
+    OCRepresentation post{{path|variablesyntax}}Representation(OCRepresentation requestRep);
 {% endif -%}
 {% endfor -%}
 {% endfor %}
 
     // variables for the resources
-{% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
-    static string m{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}";  // used path
-    static string m{{path|variablesyntax}}_RESOURCE_TYPE[] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (should be an array)
-    static string m{{path|variablesyntax}}_RESOURCE_INTERFACE[] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if  {% endif -%}
+{% for path, path_data in json_data['paths'].items() %}
+    static string m{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}";  // used path for this resource
+    static string m{{path|variablesyntax}}_RESOURCE_TYPE[] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
+    static string m{{path|variablesyntax}}_RESOURCE_INTERFACE[] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array) 
 {% endfor -%}
-{% endfor -%}
-
-
 {% for path, path_data in json_data['paths'].items() %}
     // membervariables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
     static string m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
-    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute{% endfor -%}
-{% endfor %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute {% endfor -%}
+{% endfor -%}    
 
     // OCPlatformInfo Contains all the platform info to be stored
     OCPlatformInfo m_platformInfo;
+    // the platform
+    shared_ptr<PlatformConfig> m_platformConfig;
     
-    // delete the platform information
+    /**
+    *  intialize the platform
+    */
+    void initializePlatform();
+    
+    /**
+    *  set up the resources
+    */
+    void setupResources();
+    
+    /**
+    *  create Resource
+    *  helper function used in initializePlatform()
+    * @param Uri the URI of the resource, must be unique
+    * @param Type the resource type (rt), the first one
+    * @param resourceInterface the resource inteface (if), the first one
+    * @param Cb the entity handler, to handle an incomming request for this resource
+    * @param Handle the resourceHandle
+    */
+    void createResource(string Uri, string Type, string resourceInterface, EntityHandler Cb, OCResourceHandle& Handle);
+    
+    /**
+    *  delete the platform information
+    */
     void DeletePlatformInfo();
     
-    // set the platform information
+    /**
+    *  set the platform information
+    * @param platformID the platformID
+    * @param manufacturerName the manufacturerName
+    * @param manufacturerUrl the manufacturerUrl
+    * @param modelNumber the modelNumber
+    * @param platformVersion the platformVersion
+    * @param operatingSystemVersion the operatingSystemVersion
+    * @param hardwareVersion the hardwareVersion
+    * @param firmwareVersion the firmwareVersion
+    * @param supportUrl the supportUrl
+    * @param systemTime the systemTime
+    */
     OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
         std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
         std::string platformVersion, std::string operatingSystemVersion,
         std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
         std::string systemTime);
       
-    // set the device information      
+    /**
+    *  set the device information
+    */    
     OCStackResult SetDeviceInfo();
 
 public:

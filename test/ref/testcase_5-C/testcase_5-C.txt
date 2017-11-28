@@ -270,29 +270,28 @@ swagger_properties: path: /TemperatureResURI
 swagger_properties: schema {'$ref': '#/definitions/Temperature'}
 convert_to_c_type: json_type: string
 convert_to_c_type: json_type: number
-convert_to_c_type: json_type: string
 convert_to_c_type: json_type: number
+convert_to_c_type: json_type: string
 swagger_properties: path: /TemperatureResURI
 swagger_properties: schema {'$ref': '#/definitions/Temperature'}
 processing: server.h.jinja2
 query_rt_from_path: rt from path: /TemperatureResURI
 swagger_if: path: /TemperatureResURI
 swagger_if: schema {'$ref': '#/definitions/Temperature'}
-swagger_if: found {'readOnly': True, 'description': 'The interface set supported by this resource', 'items': {'type': 'string', 'enum': ['oic.if.baseline', 'oic.if.ll', 'oic.if.b', 'oic.if.lb', 'oic.if.rw', 'oic.if.r', 'oic.if.a', 'oic.if.s']}, 'type': 'array'}
+swagger_if: found {'description': 'The interface set supported by this resource', 'items': {'enum': ['oic.if.baseline', 'oic.if.ll', 'oic.if.b', 'oic.if.lb', 'oic.if.rw', 'oic.if.r', 'oic.if.a', 'oic.if.s'], 'type': 'string'}, 'type': 'array', 'readOnly': True}
 swagger_properties: path: /TemperatureResURI
 swagger_properties: schema {'$ref': '#/definitions/Temperature'}
 convert_to_c_type: json_type: string
+convert_to_c_type: json_type: number
+convert_to_c_type: json_type: number
+convert_to_c_type: json_type: array
 convert_to_c_type: json_type: 
 convert_to_c_type: json_type: array
-convert_to_c_type: json_type: number
 convert_to_c_type: json_type: string
-convert_to_c_type: json_type: array
-convert_to_c_type: json_type: 
 convert_to_c_type: json_type: 
 convert_to_c_type: json_type: array
-convert_to_c_type: json_type: number
+convert_to_c_type: json_type: 
 copying template file:  Makefile
 copying template file:  observer.cpp
 copying template file:  observer.h
-copying template file:  README
 copying template file:  readme.txt

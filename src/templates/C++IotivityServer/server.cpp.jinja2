@@ -108,15 +108,7 @@ IoTServer::IoTServer()
 {
     cout << "Running IoTServer constructor" << endl;
     initializePlatform();
-    setupResources();
-{%- for path, path_data in json_data['paths'].items() -%}
-{%- for methodName, method_data in path_data.items() -%}
-{%- if methodName == "get" %} 
-    // path: {{path}}, todo the actual correct type..
-    OCRepresentation m{{path|variablesyntax}}Representation.setValue(ENDPOINT{{path|variablesyntax}}_RESOURCE_KEY , 0)
-{% endif -%}
-{% endfor -%}
-{% endfor -%}    
+    setupResources();  
 }
 
 /**
@@ -138,16 +130,13 @@ IoTServer::~IoTServer()
 void IoTServer::setupResources()
 {
     cout << "Running setupResources" << endl;
-{%- for path, path_data in json_data['paths'].items() -%}
-{%- for methodName, method_data in path_data.items() -%}
-{%- if methodName == "get" %} 
-    
-    EntityHandler cb1 = bind(&IoTServer::{{path|variablesyntax}}EntityHandler, this, placeholders::_1);
+{%- for path, path_data in json_data['paths'].items() -%}    
+    EntityHandler cb1 = bind(&IoTServer::f{{path|variablesyntax}}EntityHandler, this, placeholders::_1);
     createResource( m{{path|variablesyntax}}_RESOURCE_ENDPOINT, 
                     m{{path|variablesyntax}}_RESOURCE_TYPE[0], 
                     m{{path|variablesyntax}}_RESOURCE_INTERFACE[0], cb1,
                     m{{path|variablesyntax}}ResourceHandle);
-    IoTObserverCb temp{{path|variablesyntax}}Cb = bind(&IoTServer::{{path|variablesyntax}}ObserverLoop, this);
+    IoTObserverCb temp{{path|variablesyntax}}Cb = bind(&IoTServer::f{{path|variablesyntax}}ObserverLoopFunc, this);
     m{{path|variablesyntax}}ObserverLoop = make_shared<IoTObserver>(temp{{path|variablesyntax}}Cb);
     // add the additional interfaces
     for( unsigned int a = 1; a < sizeof(m{{path|variablesyntax}}_RESOURCE_INTERFACE); a++ )
@@ -163,24 +152,18 @@ void IoTServer::setupResources()
         if (result != OC_STACK_OK)
             cerr << "Could not bind resource type:" << m{{path|variablesyntax}}_RESOURCE_INTERFACE[a] << endl;
     }
-    
-    
-{% endif -%}
-{% endfor -%}
-{% endfor -%}    
-
-    // initialize member variables
-{% for path, path_data in json_data['paths'].items() -%}
-{% for var, var_data in query_properties(json_data, path).items() -%}
+ 
+    // initialize member variables for each resource{% for path, path_data in json_data['paths'].items() %}
+    // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() -%}
 {% if var_data.type == "number" %} 
     m{{path|variablesyntax}}{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif -%}
 {% if var_data.type == "integer" %} 
     m{{path|variablesyntax}}{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif -%}
 {% if var_data.type == "string" %} 
     m{{path|variablesyntax}}{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif -%} 
-{% endfor -%}
 {% endfor %}
-
+{% endfor %}
+{% endfor %}
 }
 
 /**
@@ -207,12 +190,10 @@ void IoTServer::createResource(string Uri, string Type, string resourceInterface
 }
 
 {% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
 /**
 *  method for {{path}} to respond to all observers if something is changed
 */
-void IoTServer::{{path|variablesyntax}}ObserverLoop()
+void IoTServer::f{{path|variablesyntax}}ObserverLoopFunc()
 {
     usleep(1500000);
     cout << "{{path}} Observer Callback" << endl;
@@ -228,8 +209,6 @@ void IoTServer::{{path|variablesyntax}}ObserverLoop()
         m{{path|variablesyntax}}ObserverLoop->stop();
     }
 }
-{% endif -%}
-{% endfor -%}
 {% endfor -%}  
 
 {% for path, path_data in json_data['paths'].items() -%}
@@ -300,13 +279,11 @@ OCRepresentation IoTServer::get{{path|variablesyntax}}Representation()
  
 
 {% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
 /**
 *  the entity handler for {{path}}
 * @param Request the incomming request for this resource to handle
 */
-OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_ptr<OCResourceRequest> Request)
+OCEntityHandlerResult IoTServer::f{{path|variablesyntax}}EntityHandler(shared_ptr<OCResourceRequest> Request)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
     if (Request)
@@ -318,6 +295,8 @@ OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_pt
             auto Response = std::make_shared<OC::OCResourceResponse>();
             Response->setRequestHandle(Request->getRequestHandle());
             Response->setResourceHandle(Request->getResourceHandle());
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" %} 
             if (requestType == OC_REST_GET)
             {
                 cout << "GET request for {{path}} reading" << endl;
@@ -330,10 +309,11 @@ OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_pt
                         result = OC_EH_OK;
                     }
                 }
-            }
+            } {% endif -%} {% endfor %}{% for methodName, method_data in path_data.items() -%}{% if methodName == "post" %}             
             else if (requestType == OC_REST_POST)
             {
                 cout << "POST request for {{path}}" << endl;
+                // post function sets the member variables correctly.
                 result = Request->post{{path|variablesyntax}}Representation(requestRep);
                 if (result == OC_EH_OK)
                 {
@@ -352,7 +332,7 @@ OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_pt
                     cerr << "Unsupported request type" << endl;
                     return result;
                 }
-            }
+            } {% endif -%}{% endfor %}  
             else
             {
                 Response->setResponseResult(OC_EH_ERROR);
@@ -381,11 +361,7 @@ OCEntityHandlerResult IoTServer::m{{path|variablesyntax}}EntityHandler(shared_pt
     }
     return result;
 }
-{% endif -%}
-{% endfor -%}
 {% endfor -%}  
-
-
 
 /**
 *  DeletePlatformInfo

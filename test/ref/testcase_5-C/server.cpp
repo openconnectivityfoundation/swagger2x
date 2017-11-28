@@ -36,7 +36,7 @@
 
 // Set of strings for each of platform Info fields
 std::string gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string gManufacturerName = "{{manufactorer}}";
+std::string gManufacturerName = "OCF";
 std::string gManufacturerLink = "https://openconnectivity.org/";
 std::string gModelNumber = "ModelNumber";
 std::string gDateOfManufacture = "2017-12-01";
@@ -51,9 +51,9 @@ std::string gSystemTime = "2017-12-01T12.00";
 std::string  gDeviceName = "OICTemperature";
 std::string  gDeviceType = "oic.wk.tv";
 std::string  gSpecVersion = "ocf.1.3.0";
-//std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.sh.1.3.0"};
+//std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
-std::string  gProtocolIndependentID = "{{uuid}}";
+std::string  gProtocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 
 
 /**
@@ -108,9 +108,7 @@ IoTServer::IoTServer()
 {
     cout << "Running IoTServer constructor" << endl;
     initializePlatform();
-    setupResources(); 
-    // path: /TemperatureResURI, todo the actual correct type..
-    OCRepresentation m_TemperatureResURIRepresentation.setValue(ENDPOINT_TemperatureResURI_RESOURCE_KEY , 0)
+    setupResources();  
 }
 
 /**
@@ -131,14 +129,12 @@ IoTServer::~IoTServer()
 */
 void IoTServer::setupResources()
 {
-    cout << "Running setupResources" << endl; 
-    
-    EntityHandler cb1 = bind(&IoTServer::_TemperatureResURIEntityHandler, this, placeholders::_1);
+    cout << "Running setupResources" << endl;EntityHandler cb1 = bind(&IoTServer::f_TemperatureResURIEntityHandler, this, placeholders::_1);
     createResource( m_TemperatureResURI_RESOURCE_ENDPOINT, 
                     m_TemperatureResURI_RESOURCE_TYPE[0], 
                     m_TemperatureResURI_RESOURCE_INTERFACE[0], cb1,
                     m_TemperatureResURIResourceHandle);
-    IoTObserverCb temp_TemperatureResURICb = bind(&IoTServer::_TemperatureResURIObserverLoop, this);
+    IoTObserverCb temp_TemperatureResURICb = bind(&IoTServer::f_TemperatureResURIObserverLoopFunc, this);
     m_TemperatureResURIObserverLoop = make_shared<IoTObserver>(temp_TemperatureResURICb);
     // add the additional interfaces
     for( unsigned int a = 1; a < sizeof(m_TemperatureResURI_RESOURCE_INTERFACE); a++ )
@@ -154,14 +150,14 @@ void IoTServer::setupResources()
         if (result != OC_STACK_OK)
             cerr << "Could not bind resource type:" << m_TemperatureResURI_RESOURCE_INTERFACE[a] << endl;
     }
-    
-    
-// initialize member variables
  
-    m_TemperatureResURI_id = "";  // current value of property "id"  
-    m_TemperatureResURI_temperature = 0.0; // current value of property "temperature"  
+    // initialize member variables for each resource
+    // initialize member variables /TemperatureResURI 
     m_TemperatureResURI_n = "";  // current value of property "n"  
-    m_TemperatureResURI_precision = 0.0; // current value of property "precision" 
+    m_TemperatureResURI_temperature = 0.0; // current value of property "temperature"  
+    m_TemperatureResURI_precision = 0.0; // current value of property "precision"  
+    m_TemperatureResURI_id = "";  // current value of property "id" 
+
 
 }
 
@@ -188,11 +184,10 @@ void IoTServer::createResource(string Uri, string Type, string resourceInterface
         cout << "Successfully created " << Type << " resource" << endl;
 }
 
- 
 /**
 *  method for /TemperatureResURI to respond to all observers if something is changed
 */
-void IoTServer::_TemperatureResURIObserverLoop()
+void IoTServer::f_TemperatureResURIObserverLoopFunc()
 {
     usleep(1500000);
     cout << "/TemperatureResURI Observer Callback" << endl;
@@ -219,48 +214,18 @@ OCRepresentation IoTServer::post_TemperatureResURIRepresentation(OCRepresentatio
     OCEntityHandlerResult result = OC_EH_OK;  // default ok
     
     // only integer, float and string
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id))
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n))
     {
         try
         {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_id" << endl;
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_n" << endl;
         
         
-            m_TemperatureResURI_id = requestRep.getValue<std::string>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id);
+            m_TemperatureResURI_n = requestRep.getValue<std::string>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n);
         }
         catch (...)
         {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_value))
-    {
-        try
-        {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_value" << endl;
-        
-        
-        
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_value<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_range))
-    {
-        try
-        {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_range" << endl;
-        
-        
-        
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_range<< endl;
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n<< endl;
             result = OC_EH_ERROR;
         }
     }
@@ -279,63 +244,18 @@ OCRepresentation IoTServer::post_TemperatureResURIRepresentation(OCRepresentatio
             result = OC_EH_ERROR;
         }
     }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n))
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision))
     {
         try
         {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_n" << endl;
-        
-        
-            m_TemperatureResURI_n = requestRep.getValue<std::string>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n);
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_if))
-    {
-        try
-        {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_if" << endl;
-        
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_precision" << endl;
+            m_TemperatureResURI_precision = requestRep.getValue<float>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision);
         
         
         }
         catch (...)
         {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_if<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_step))
-    {
-        try
-        {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_step" << endl;
-        
-        
-        
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_step<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_units))
-    {
-        try
-        {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_units" << endl;
-        
-        
-        
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_units<< endl;
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision<< endl;
             result = OC_EH_ERROR;
         }
     }
@@ -354,18 +274,93 @@ OCRepresentation IoTServer::post_TemperatureResURIRepresentation(OCRepresentatio
             result = OC_EH_ERROR;
         }
     }
-    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision))
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_step))
     {
         try
         {
-            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_precision" << endl;
-            m_TemperatureResURI_precision = requestRep.getValue<float>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision);
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_step" << endl;
+        
         
         
         }
         catch (...)
         {
-            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision<< endl;
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_step<< endl;
+            result = OC_EH_ERROR;
+        }
+    }
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_range))
+    {
+        try
+        {
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_range" << endl;
+        
+        
+        
+        }
+        catch (...)
+        {
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_range<< endl;
+            result = OC_EH_ERROR;
+        }
+    }
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id))
+    {
+        try
+        {
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_id" << endl;
+        
+        
+            m_TemperatureResURI_id = requestRep.getValue<std::string>(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id);
+        }
+        catch (...)
+        {
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id<< endl;
+            result = OC_EH_ERROR;
+        }
+    }
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_units))
+    {
+        try
+        {
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_units" << endl;
+        
+        
+        
+        }
+        catch (...)
+        {
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_units<< endl;
+            result = OC_EH_ERROR;
+        }
+    }
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_if))
+    {
+        try
+        {
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_if" << endl;
+        
+        
+        
+        }
+        catch (...)
+        {
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_if<< endl;
+            result = OC_EH_ERROR;
+        }
+    }
+    if (requestRep.hasAttribute(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_value))
+    {
+        try
+        {
+            cout << "IoTServer::post_TemperatureResURIRepresentation setting: m_TemperatureResURI_value" << endl;
+        
+        
+        
+        }
+        catch (...)
+        {
+            cerr << "Client sent invalid resource value type: " << m_TemperatureResURI_RESOURCE_PROPERTY_NAME_value<< endl;
             result = OC_EH_ERROR;
         }
     }
@@ -382,22 +377,21 @@ OCRepresentation IoTServer::get_TemperatureResURIRepresentation()
     
     // Add the attribute name and values in the representation (only integer, number and string)
  
-    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id, m_TemperatureResURI_id ); 
-    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_temperature, m_TemperatureResURI_temperature );  
     rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_n, m_TemperatureResURI_n ); 
-    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision, m_TemperatureResURI_precision ); 
+    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_temperature, m_TemperatureResURI_temperature ); 
+    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_precision, m_TemperatureResURI_precision );  
+    rep.setValue(m_TemperatureResURI_RESOURCE_PROPERTY_NAME_id, m_TemperatureResURI_id ); 
        
     return rep  
 }
    
  
 
- 
 /**
 *  the entity handler for /TemperatureResURI
 * @param Request the incomming request for this resource to handle
 */
-OCEntityHandlerResult IoTServer::m_TemperatureResURIEntityHandler(shared_ptr<OCResourceRequest> Request)
+OCEntityHandlerResult IoTServer::f_TemperatureResURIEntityHandler(shared_ptr<OCResourceRequest> Request)
 {
     OCEntityHandlerResult result = OC_EH_ERROR;
     if (Request)
@@ -409,6 +403,7 @@ OCEntityHandlerResult IoTServer::m_TemperatureResURIEntityHandler(shared_ptr<OCR
             auto Response = std::make_shared<OC::OCResourceResponse>();
             Response->setRequestHandle(Request->getRequestHandle());
             Response->setResourceHandle(Request->getResourceHandle());
+ 
             if (requestType == OC_REST_GET)
             {
                 cout << "GET request for /TemperatureResURI reading" << endl;
@@ -421,10 +416,11 @@ OCEntityHandlerResult IoTServer::m_TemperatureResURIEntityHandler(shared_ptr<OCR
                         result = OC_EH_OK;
                     }
                 }
-            }
+            }              
             else if (requestType == OC_REST_POST)
             {
                 cout << "POST request for /TemperatureResURI" << endl;
+                // post function sets the member variables correctly.
                 result = Request->post_TemperatureResURIRepresentation(requestRep);
                 if (result == OC_EH_OK)
                 {
@@ -443,7 +439,7 @@ OCEntityHandlerResult IoTServer::m_TemperatureResURIEntityHandler(shared_ptr<OCR
                     cerr << "Unsupported request type" << endl;
                     return result;
                 }
-            }
+            }   
             else
             {
                 Response->setResponseResult(OC_EH_ERROR);

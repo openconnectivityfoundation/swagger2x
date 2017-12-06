@@ -509,6 +509,22 @@ def variableforbidden(input_string):
         return "_"+input_string
     return input_string
     
+def convert_to_cplus_type(json_type):
+    """
+    convert the json type to c++ type
+    :param json_type: the json type
+    :return: c++ type.
+    """
+    print ("convert_to_c_type: json_type:", json_type)
+    if json_type in ["number"]:
+        return "float"
+    if json_type in ["integer"]:
+        return "int"  # uint8_t ?
+    if json_type in ["string"]:
+        return "std::string"
+        
+    return "void*"
+    
 def convert_to_c_type(json_type):
     """
     convert the json type to c type
@@ -521,7 +537,7 @@ def convert_to_c_type(json_type):
     if json_type in ["integer"]:
         return "int"  # uint8_t ?
     if json_type in ["string"]:
-        return "std::string"
+        return "char *"
         
     return "void*"
     
@@ -589,6 +605,8 @@ parser.add_argument( "-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e26
                      help="uuid",  nargs='?', const="", required=False)
 parser.add_argument( "-manufactorer"  , "--manufactorer"  , default="ocf.org",
                      help="manufactorer name",  nargs='?', const="", required=False)
+parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
+                     help="device type , e.g. oic.d.xxx",  nargs='?', required=False)
                      
 args = parser.parse_args()
 
@@ -605,6 +623,7 @@ print("template      : " + str(args.template))
 print("template_dir  : " + str(args.template_dir))
 print("")
 print("uuid          : " + str(args.uuid))
+print("device type   : " + str(args.devicetype))
 print("manufactorer  : " + str(args.manufactorer))
 print("")
 
@@ -629,7 +648,8 @@ try:
     env.tests['hasbody'] = ishasbody
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
-    env.filters['convert_to_c_type'] = convert_to_c_type    
+    env.filters['convert_to_c_type'] = convert_to_c_type   
+    env.filters['convert_to_cplus_type'] = convert_to_cplus_type     
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
 
     
@@ -651,6 +671,7 @@ try:
             version=my_version, 
             uuid= str(args.uuid),
             manufactorer= str(args.manufactorer),
+            device_type= str(args.devicetype),
             input_file = args.swagger )
         
         if args.out_dir is not None:

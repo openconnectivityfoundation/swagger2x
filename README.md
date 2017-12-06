@@ -226,7 +226,18 @@ typical usage:
 ```
 {{var|convert_to_c_type}}
 ```
+note string will be mapped to char*
 note does not do array type.
+
+#### convert_to_cplus_type
+convert the json types into c++ types.
+typical usage:
+```
+{{var|convert_to_cplus_type}}
+```
+note string will be mapped to std:string
+note does not do array type.
+
 
 ## TODO list
 

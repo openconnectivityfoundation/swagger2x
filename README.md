@@ -239,6 +239,16 @@ note string will be mapped to std:string
 note does not do array type.
 
 
+#### convert_array_size
+determines the size of the array.
+for single strings, 1 is returned.
+
+typical usage:
+```
+{{var|convert_array_size}}
+```
+
+
 ## TODO list
 
 - template for client code for IOTivity node

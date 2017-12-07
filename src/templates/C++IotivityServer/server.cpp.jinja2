@@ -20,12 +20,22 @@
 #include <signal.h>
 #include <thread>
 #include <functional>
+#include <string>
+#include <iostream>
+#include <memory>
+#include <exception> 
 
-#include "server.h"
-//#include "sensors.h"
-#include "namedefs.h"
-//using namespace Sensors;
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif
 
+#include "ocstack.h"
+#include "OCPlatform.h"
+#include "OCApi.h"
+#include "ocpayload.h"
+
+using namespace OC;
+namespace PH = std::placeholders;
 
 /*
  tool_version          : {{version}}
@@ -49,12 +59,23 @@ std::string gSystemTime = "2017-12-01T12.00";
 
 // Set of strings for each of device info fields
 std::string  gDeviceName = "{{json_data['info']['title']}}";
-std::string  gDeviceType = "oic.wk.tv";
+std::string  gDeviceType = "{{devicetype}}";
 std::string  gSpecVersion = "ocf.1.3.0";
 //std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
 std::string  gProtocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
+// OCPlatformInfo Contains all the platform info to be stored
+OCPlatformInfo platformInfo;
 
+// forward declarations
+void DeletePlatformInfo();
+void initializePlatform();
+OCStackResult SetDeviceInfo();
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
+        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
+        std::string platformVersion, std::string operatingSystemVersion,
+        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
+        std::string systemTime);
 
 /**
 *  DuplicateString
@@ -71,22 +92,257 @@ void DuplicateString(char ** targetString, std::string sourceString)
 }
 
 
+class Resource
+{
+    protected:
+    OCResourceHandle m_resourceHandle;
+    OCRepresentation m_rep;
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)=0;
+};
+
+
+{% for path, path_data in json_data['paths'].items() -%}  
+
+class c{{path|variablesyntax}}Resource : public Resource
+{
+    public:
+        /*
+        * constructor
+        */
+        c{{path|variablesyntax}}Resource()
+        {
+            std::cout << "- Running: c{{path|variablesyntax}}Resource constructor" << std::endl;
+            std::string resourceURI = "{{path}}";
+            
+            // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() -%}
+            {% if var_data.type == "number" %} 
+            m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif -%}
+            {% if var_data.type == "integer" %} 
+            m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif -%}
+            {% if var_data.type == "string" %} 
+            m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif -%} 
+            {% endfor %}
+        
+            EntityHandler cb = std::bind(&c{{path|variablesyntax}}Resource::entityHandler, this,PH::_1);
+            uint8_t resourceProperty = 0;
+            OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
+                resourceURI,
+                m_RESOURCE_TYPE[0],
+                m_RESOURCE_INTERFACE[0],
+                cb,
+                resourceProperty);
+                
+            // add the additional interfaces
+            std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
+            std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
+            for( unsigned int a = 1; a < m_nr_resource_interfaces; a++)
+            {
+                OCStackResult result = OCBindResourceInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
+                if (result != OC_STACK_OK)
+                    std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
+            }
+            // add the additional resource types
+            for( unsigned int a = 1; a < m_nr_resource_types; a++ )
+            {
+                OCStackResult result = OCBindResourceTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
+                if (result != OC_STACK_OK)
+                    std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
+            }    
+
+            if(OC_STACK_OK != result)
+            {
+                throw std::runtime_error(
+                    std::string("c{{path|variablesyntax}}Resource failed to start")+std::to_string(result));
+            }
+        }
+    private:
+    {% for methodName, method_data in path_data.items() -%}
+    {% if methodName == "get" %} 
+        /*
+        * function to make the payload for the retrieve function (e.g. GET)
+        */
+        OCRepresentation get()
+        {
+            {% for var, var_data in query_properties(json_data, path).items() -%}
+            {% if var_data.type == "number" %}
+            m_rep.setValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ); {% endif -%}
+            {% if var_data.type == "integer" %} 
+            m_rep.setValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ); {% endif -%}
+            {% if var_data.type == "string" %} 
+            m_rep.setValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ); {% endif -%}
+            {% endfor %}
+        
+            return m_rep;
+        }
+    {% endif -%}
+    {% endfor -%}
+
+    {% for methodName, method_data in path_data.items() -%}
+    {% if methodName == "post" %} 
+        /*
+        * function to parse the payload for the update function (e.g. POST)
+        */
+        void post(const OCRepresentation& rep)
+        {
+            {% for var, var_data in query_properties(json_data, path).items() -%}
+            {% if var_data.type == "number" %}
+            //rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ); {% endif -%}
+            {% if var_data.type == "integer" %} 
+            try {
+                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                }
+                else
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                }
+            }
+            catch (std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }{% endif -%}
+            {% if var_data.type == "string" %} 
+            try {
+                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}} : " << m_var_value{{var|variablesyntax}} << std::endl;
+                }
+                else
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                }
+            }
+            catch (std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }{% endif -%}
+            {% endfor %}     
+        }
+    {% endif -%}
+    {% endfor -%}
+
+        // resoure types and interfaces as array..
+        std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
+        std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array) 
+        int m_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
+        int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
+        ObservationIds m_interestedObservers;
+        
+        // membervariables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
+        std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
+        {{var_data.type|convert_to_cplus_type}} m_var_value{{var|variablesyntax}}; // the value for the attribute {% endfor -%}
+           
+    protected:
+        /*
+        * the entity handler for this resource
+        */
+        virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+        {
+            OCEntityHandlerResult ehResult = OC_EH_ERROR;
+            if(request)
+            {
+                std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
+                          << request->getResourceUri() << std::endl;
+
+                if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
+                {
+                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
+                    pResponse->setRequestHandle(request->getRequestHandle());
+                    pResponse->setResourceHandle(request->getResourceHandle());
+
+                    if(request->getRequestType() == "GET")
+                    {
+                        std::cout<<"c{{path|variablesyntax}}Resource Get Request"<< std::endl;
+
+                        pResponse->setResourceRepresentation(get(), "");
+                        if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                        {
+                            ehResult = OC_EH_OK;
+                        }
+                    }
+                    else if(request->getRequestType() == "POST")
+                    {
+                        std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
+                        post(request->getResourceRepresentation());
+
+                        pResponse->setResourceRepresentation(get(), "");
+                        if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                        {
+                            ehResult = OC_EH_OK;
+                        }
+                    }
+                    else
+                    {
+                        std::cout << "c{{path|variablesyntax}}Resource unsupported request type"
+                        << request->getRequestType() << std::endl;
+                        pResponse->setResponseResult(OC_EH_ERROR);
+                        OCPlatform::sendResponse(pResponse);
+                        ehResult = OC_EH_ERROR;
+                    }
+                }
+                else if(request->getRequestHandlerFlag() == RequestHandlerFlag::ObserverFlag)
+                {
+                    std::cout << "\t\trequestFlag : Observer\n" << std::endl;
+                }
+                else
+                {
+                    std::cout << "c{{path|variablesyntax}}Resource unsupported request flag" << std::endl;
+                }
+            }
+            return ehResult;
+        }
+};
+{% endfor %}
+
+class IoTServer
+{
+    public:
+        /**
+        *  constructor
+        *  creates all resources from the resource classes.
+        */
+        IoTServer()
+            :
+    {% for path, path_data in json_data['paths'].items() -%}  
+        m{{path|variablesyntax}}Instance()
+    {% endfor %}
+        {
+        
+            std::cout << "Running IoTServer constructor" << std::endl;
+            initializePlatform();
+        }
+
+        /**
+        *  destructor
+        *
+        */
+        ~IoTServer()
+        {
+            std::cout << "Running IoTServer destructor" << std::endl;
+            DeletePlatformInfo();
+        }
+    
+    private:
+{% for path, path_data in json_data['paths'].items() %}  
+        c{{path|variablesyntax}}Resource  m{{path|variablesyntax}}Instance;
+{% endfor -%}
+};
+
+
 /**
 *  intialize platform
-*  TODO: put here the security and introspection loading
+*  initializes the oic/p resource
 */
-void IoTServer::initializePlatform()
+void initializePlatform()
 {
-    cout << "Running initializePlatform" << endl;
-    m_platformConfig = make_shared<PlatformConfig>(ServiceType::InProc, ModeType::Server, "0.0.0.0",
-                                                   0, OC::QualityOfService::HighQos);
-    OCPlatform::Configure(*m_platformConfig);
+    std::cout << "Running initializePlatform" << std::endl;
     
     // initialize "oic/p"
     OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
             gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
             gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
-    result = OCPlatform::registerPlatformInfo(m_platformInfo);
+    result = OCPlatform::registerPlatformInfo(platformInfo);
     if (result != OC_STACK_OK)
     {
         std::cout << "Platform Registration (oic/p) failed\n";
@@ -100,286 +356,24 @@ void IoTServer::initializePlatform()
     }
 }
 
-/**
-*  constructor
-*
-*/
-IoTServer::IoTServer()
-{
-    cout << "Running IoTServer constructor" << endl;
-    initializePlatform();
-    setupResources();  
-}
-
-/**
-*  destructor
-*
-*/
-IoTServer::~IoTServer()
-{
-    cout << "Running IoTServer destructor" << endl;
-    //ClosePins();
-    
-    DeletePlatformInfo();
-}
-
-/**
-*  method to setup all the resources.
-*
-*/
-void IoTServer::setupResources()
-{
-    cout << "Running setupResources" << endl;
-{%- for path, path_data in json_data['paths'].items() -%}    
-    EntityHandler cb1 = bind(&IoTServer::f{{path|variablesyntax}}EntityHandler, this, placeholders::_1);
-    createResource( m{{path|variablesyntax}}_RESOURCE_ENDPOINT, 
-                    m{{path|variablesyntax}}_RESOURCE_TYPE[0], 
-                    m{{path|variablesyntax}}_RESOURCE_INTERFACE[0], cb1,
-                    m{{path|variablesyntax}}ResourceHandle);
-    IoTObserverCb temp{{path|variablesyntax}}Cb = bind(&IoTServer::f{{path|variablesyntax}}ObserverLoopFunc, this);
-    m{{path|variablesyntax}}ObserverLoop = make_shared<IoTObserver>(temp{{path|variablesyntax}}Cb);
-    // add the additional interfaces
-    for( unsigned int a = 1; a < sizeof(m{{path|variablesyntax}}_RESOURCE_INTERFACE); a++ )
-    {
-        OCStackResult result = OCBindResourceInterfaceToResource(m{{path|variablesyntax}}ResourceHandle, m{{path|variablesyntax}}_RESOURCE_INTERFACE[a]);
-        if (result != OC_STACK_OK)
-            cerr << "Could not bind interface:" << m{{path|variablesyntax}}_RESOURCE_INTERFACE[a] << endl;
-    }
-    // add the additional resource types
-    for( unsigned int a = 1; a < sizeof(m{{path|variablesyntax}}_RESOURCE_TYPE); a++1 )
-    {
-        OCStackResult result = OCBindResourceTypeToResource(m{{path|variablesyntax}}ResourceHandle, m{{path|variablesyntax}}_RESOURCE_TYPE[a]);
-        if (result != OC_STACK_OK)
-            cerr << "Could not bind resource type:" << m{{path|variablesyntax}}_RESOURCE_INTERFACE[a] << endl;
-    }
- 
-    // initialize member variables for each resource{% for path, path_data in json_data['paths'].items() %}
-    // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() -%}
-{% if var_data.type == "number" %} 
-    m{{path|variablesyntax}}{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif -%}
-{% if var_data.type == "integer" %} 
-    m{{path|variablesyntax}}{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif -%}
-{% if var_data.type == "string" %} 
-    m{{path|variablesyntax}}{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif -%} 
-{% endfor %}
-{% endfor %}
-{% endfor %}
-}
-
-/**
-*  method to create the resource.
-*
-* @param Uri the URI to use.
-* @param Type the resource type (rt).
-* @param EntityHandler the entity handler for the resource.
-* @param OCResourceHandle the resource handle
-*/
-void IoTServer::createResource(string Uri, string Type, string resourceInterface, EntityHandler Cb, OCResourceHandle& Handle)
-{
-    string resourceUri = Uri;
-    string resourceType = Type;
-    uint8_t resourceFlag = OC_DISCOVERABLE | OC_OBSERVABLE;
-
-    OCStackResult result = OCPlatform::registerResource(Handle, resourceUri, resourceType,
-                                                        resourceInterface, Cb, resourceFlag);
-
-    if (result != OC_STACK_OK)
-        cerr << "Could not create " << Type << " resource" << endl;
-    else
-        cout << "Successfully created " << Type << " resource" << endl;
-}
-
-{% for path, path_data in json_data['paths'].items() -%}
-/**
-*  method for {{path}} to respond to all observers if something is changed
-*/
-void IoTServer::f{{path|variablesyntax}}ObserverLoopFunc()
-{
-    usleep(1500000);
-    cout << "{{path}} Observer Callback" << endl;
-    shared_ptr<OCResourceResponse> resourceResponse(new OCResourceResponse());
-    resourceResponse->setResourceRepresentation(get{{path|variablesyntax}}Representation(),
-    m{{path|variablesyntax}}_RESOURCE_INTERFACE);
-    OCStackResult result = OCPlatform::notifyListOfObservers(m{{path|variablesyntax}}Resource,
-                                                             m{{path|variablesyntax}}Observers,
-                                                             resourceResponse);
-    if (result == OC_STACK_NO_OBSERVERS)
-    {
-        cout << "No more observers..Stopping observer loop..." << endl;
-        m{{path|variablesyntax}}ObserverLoop->stop();
-    }
-}
-{% endfor -%}  
-
-{% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "post" %} 
-/**
-*  post method for {{path}} to assign the returned values to the member values
-* @param requestRep the request representation.
-* TODO: this function is also referenced when only get is implemented, something to fix..
-*/
-OCRepresentation IoTServer::post{{path|variablesyntax}}Representation(OCRepresentation requestRep)
-{
-    OCEntityHandlerResult result = OC_EH_OK;  // default ok
-    
-    // only integer, float and string
-    {% for var, var_data in query_properties(json_data, path).items() -%}
-    if (requestRep.hasAttribute(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}))
-    {
-        try
-        {
-            cout << "IoTServer::post{{path|variablesyntax}}Representation setting: m{{path|variablesyntax}}{{var|variablesyntax}}" << endl;
-        {% if var_data.type == "number" %}    m{{path|variablesyntax}}{{var|variablesyntax}} = requestRep.getValue<{{var_data.type|convert_to_c_type}}>(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}); {%- endif %}
-        {% if var_data.type == "integer" %}    m{{path|variablesyntax}}{{var|variablesyntax}} = requestRep.getValue<{{var_data.type|convert_to_c_type}}>(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}); {%- endif %}
-        {% if var_data.type == "string" %}    m{{path|variablesyntax}}{{var|variablesyntax}} = requestRep.getValue<{{var_data.type|convert_to_c_type}}>(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}); {%- endif %}
-        }
-        catch (...)
-        {
-            cerr << "Client sent invalid resource value type: " << m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}<< endl;
-            result = OC_EH_ERROR;
-        }
-    }
-    {% endfor -%}
-
-    return result;
-}
-{% endif -%}
-{% endfor -%}
-{% endfor -%}  
-
-
-
-{% for path, path_data in json_data['paths'].items() -%}
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
-/**
-*  get method for {{path}} to create an representation from the member values to respond to the call
-
-*/
-OCRepresentation IoTServer::get{{path|variablesyntax}}Representation()
-{
-    OCRepresentation rep;
-    
-    // Add the attribute name and values in the representation (only integer, number and string)
-{% for var, var_data in query_properties(json_data, path).items() -%}
-{% if var_data.type == "number" %}
-    rep.setValue(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, m{{path|variablesyntax}}{{var|variablesyntax}} ); {% endif -%}
-{% if var_data.type == "integer" %} 
-    rep.setValue(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, m{{path|variablesyntax}}{{var|variablesyntax}} ); {% endif -%}
-{% if var_data.type == "string" %} 
-    rep.setValue(m{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, m{{path|variablesyntax}}{{var|variablesyntax}} ); {% endif -%}
-{% endfor %}
-       
-    return rep  
-}
-{% endif -%}
-{% endfor -%}
-{% endfor %}   
- 
-
-{% for path, path_data in json_data['paths'].items() -%}
-/**
-*  the entity handler for {{path}}
-* @param Request the incomming request for this resource to handle
-*/
-OCEntityHandlerResult IoTServer::f{{path|variablesyntax}}EntityHandler(shared_ptr<OCResourceRequest> Request)
-{
-    OCEntityHandlerResult result = OC_EH_ERROR;
-    if (Request)
-    {
-        string requestType = Request->getRequestType();
-        int requestFlag = Request->getRequestHandlerFlag();
-        if (requestFlag & RequestHandlerFlag::RequestFlag)
-        {
-            auto Response = std::make_shared<OC::OCResourceResponse>();
-            Response->setRequestHandle(Request->getRequestHandle());
-            Response->setResourceHandle(Request->getResourceHandle());
-{% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %} 
-            if (requestType == OC_REST_GET)
-            {
-                cout << "GET request for {{path}} reading" << endl;
-                if (Response)
-                {
-                    Response->setResponseResult(OC_EH_OK);
-                    Response->setResourceRepresentation(get{{path|variablesyntax}}Representation());
-                    if (OCPlatform::sendResponse(Response) == OC_STACK_OK)
-                    {
-                        result = OC_EH_OK;
-                    }
-                }
-            } {% endif -%} {% endfor %}{% for methodName, method_data in path_data.items() -%}{% if methodName == "post" %}             
-            else if (requestType == OC_REST_POST)
-            {
-                cout << "POST request for {{path}}" << endl;
-                // post function sets the member variables correctly.
-                result = Request->post{{path|variablesyntax}}Representation(requestRep);
-                if (result == OC_EH_OK)
-                {
-                    // TODO, we might need to return something..
-                    //Response->setResourceRepresentation(get{{path|variablesyntax}}Representation());
-                    Response->setResponseResult(OC_EH_OK);
-                    if (OCPlatform::sendResponse(Response) == OC_STACK_OK)
-                    {
-                        result = OC_EH_OK;
-                    }
-                }
-                else
-                {
-                    Response->setResponseResult(OC_EH_ERROR);
-                    OCPlatform::sendResponse(Response);
-                    cerr << "Unsupported request type" << endl;
-                    return result;
-                }
-            } {% endif -%}{% endfor %}  
-            else
-            {
-                Response->setResponseResult(OC_EH_ERROR);
-                OCPlatform::sendResponse(Response);
-                cerr << "Unsupported request type" << endl;
-                return result;
-            }
-        }
-        if (requestFlag & RequestHandlerFlag::ObserverFlag)
-        {
-            ObservationInfo observationInfo = Request->getObservationInfo();
-            if (ObserveAction::ObserveRegister == observationInfo.action)
-            {
-                cout << "Starting observer for {{path}}" << endl;
-                m{{path|variablesyntax}}Observers.push_back(observationInfo.obsId);
-                m{{path|variablesyntax}}ObserverLoop->start();
-            }
-            else if (ObserveAction::ObserveUnregister == observationInfo.action)
-            {
-                m_temperatureObservers.erase(
-                        remove(m{{path|variablesyntax}}Observers.begin(), m{{path|variablesyntax}}Observers.end(),
-                               observationInfo.obsId),
-                        m{{path|variablesyntax}}Observers.end());
-            }
-        }
-    }
-    return result;
-}
-{% endfor -%}  
 
 /**
 *  DeletePlatformInfo
 *  Deletes the allocated platform information
 */
-void IoTServer::DeletePlatformInfo()
+void DeletePlatformInfo()
 {
-    delete[] m_platformInfo.platformID;
-    delete[] m_platformInfo.manufacturerName;
-    delete[] m_platformInfo.manufacturerUrl;
-    delete[] m_platformInfo.modelNumber;
-    delete[] m_platformInfo.dateOfManufacture;
-    delete[] m_platformInfo.platformVersion;
-    delete[] m_platformInfo.operatingSystemVersion;
-    delete[] m_platformInfo.hardwareVersion;
-    delete[] m_platformInfo.firmwareVersion;
-    delete[] m_platformInfo.supportUrl;
-    delete[] m_platformInfo.systemTime;
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
 }
 
 /**
@@ -397,23 +391,23 @@ void IoTServer::DeletePlatformInfo()
 * @param supportUrl the supportUrl
 * @param systemTime the systemTime
 */
-OCStackResult IoTServer::SetPlatformInfo(std::string platformID, std::string manufacturerName,
+OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
         std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
         std::string platformVersion, std::string operatingSystemVersion,
         std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
         std::string systemTime)
 {
-    DuplicateString(&m_platformInfo.platformID, platformID);
-    DuplicateString(&m_platformInfo.manufacturerName, manufacturerName);
-    DuplicateString(&m_platformInfo.manufacturerUrl, manufacturerUrl);
-    DuplicateString(&m_platformInfo.modelNumber, modelNumber);
-    DuplicateString(&m_platformInfo.dateOfManufacture, dateOfManufacture);
-    DuplicateString(&m_platformInfo.platformVersion, platformVersion);
-    DuplicateString(&m_platformInfo.operatingSystemVersion, operatingSystemVersion);
-    DuplicateString(&m_platformInfo.hardwareVersion, hardwareVersion);
-    DuplicateString(&m_platformInfo.firmwareVersion, firmwareVersion);
-    DuplicateString(&m_platformInfo.supportUrl, supportUrl);
-    DuplicateString(&m_platformInfo.systemTime, systemTime);
+    DuplicateString(&platformInfo.platformID, platformID);
+    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
+    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    DuplicateString(&platformInfo.modelNumber, modelNumber);
+    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    DuplicateString(&platformInfo.platformVersion, platformVersion);
+    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    DuplicateString(&platformInfo.supportUrl, supportUrl);
+    DuplicateString(&platformInfo.systemTime, systemTime);
 
     return OC_STACK_OK;
 }
@@ -422,59 +416,63 @@ OCStackResult IoTServer::SetPlatformInfo(std::string platformID, std::string man
 *  SetDeviceInfo
 *  Sets the device information ("oic/d"), from the globals
 */
-OCStackResult IoTServer::SetDeviceInfo()
+OCStackResult SetDeviceInfo()
 {
     OCStackResult result = OC_STACK_ERROR;
 
     OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
     if (handle == NULL)
     {
-        cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << endl;
+        std::cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << std::endl;
         return result;
     }
-
     result = OCBindResourceTypeToResource(handle, gDeviceType.c_str());
     if (result != OC_STACK_OK)
     {
-        cout << "Failed to add device type" << endl;
+        std::cout << "Failed to add device type" << std::endl;
         return result;
     }
-
     result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName);
     if (result != OC_STACK_OK)
     {
-        cout << "Failed to set device name" << endl;
+        std::cout << "Failed to set device name" << std::endl;
         return result;
     }
-
     result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
                                           gDataModelVersions);
     if (result != OC_STACK_OK)
     {
-        cout << "Failed to set data model versions" << endl;
+        std::cout << "Failed to set data model versions" << std::endl;
         return result;
     }
-
     result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion);
     if (result != OC_STACK_OK)
     {
-        cout << "Failed to set spec version" << endl;
+        std::cout << "Failed to set spec version" << std::endl;
         return result;
     }
-
     result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
                                           gProtocolIndependentID);
     if (result != OC_STACK_OK)
     {
-        cout << "Failed to set piid" << endl;
+        std::cout << "Failed to set piid" << std::endl;
         return result;
     }
 
     return OC_STACK_OK;
 }
 
-
-
+FILE* server_fopen(const char* path, const char* mode)
+{
+    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        return fopen("server_introspection.dat", mode);
+    }
+    else
+    {
+        return fopen(path, mode);
+    }
+}
 
 // global needs static, otherwise it can be compiled out and then Ctrl-C does not work
 static int quit = 0;
@@ -488,12 +486,25 @@ void handle_signal(int signal)
 // starts the server 
 int main()
 {
+    // Create persistent storage handlers
+    OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
+    // create the platform
+    PlatformConfig cfg
+    {
+        ServiceType::InProc,
+        ModeType::Server,
+        nullptr
+    };
+    OCPlatform::Configure(cfg);
+    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+
+#ifdef LINUX
     struct sigaction sa;
     sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
     sa.sa_handler = handle_signal;
     sigaction(SIGINT, &sa, NULL);
-    cout << "Press Ctrl-C to quit...." << endl;
+    std::cout << "Press Ctrl-C to quit...." << std::endl;
     // create the server
     IoTServer server;
     do
@@ -503,6 +514,16 @@ int main()
     while (quit != 1);
     // delete the server
     delete IoTServer;
+#endif
+    
+    
+//#ifdef WIN
+    IoTServer server;
+    std::cout << "Press Ctrl-C to quit...." << std::endl;
+    // we will keep the server alive for at most 30 minutes
+    std::this_thread::sleep_for(std::chrono::minutes(30));
+    OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
+//#endif    
     
     return 0;
 }

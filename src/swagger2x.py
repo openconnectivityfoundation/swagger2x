@@ -567,6 +567,27 @@ def convert_to_cplus_string_array(my_array):
     return my_ret
     
     
+    
+def convert_array_size(my_array):
+    """
+    convert the json type to c type
+    :param json_type: the json type
+    :return: c type.
+    """
+    counter = 0
+    if isinstance(my_array, str):
+        return 1
+    elif isinstance(my_array, list):
+        return len(my_array)
+    else:
+        pass
+        
+    my_ret += '}'
+    
+        
+    return 0
+    
+    
 #
 #   main of script
 #
@@ -606,7 +627,7 @@ parser.add_argument( "-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e26
 parser.add_argument( "-manufactorer"  , "--manufactorer"  , default="ocf.org",
                      help="manufactorer name",  nargs='?', const="", required=False)
 parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
-                     help="device type , e.g. oic.d.xxx",  nargs='?', required=False)
+                     help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
                      
 args = parser.parse_args()
 
@@ -651,8 +672,8 @@ try:
     env.filters['convert_to_c_type'] = convert_to_c_type   
     env.filters['convert_to_cplus_type'] = convert_to_cplus_type     
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
+    env.filters['convert_array_size'] = convert_array_size
 
-    
     for template_file in template_files:
         print ("processing:", template_file)
         template_environment = env.get_template(template_file)

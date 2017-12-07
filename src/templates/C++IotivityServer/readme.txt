@@ -7,31 +7,69 @@ The generated code acts as an simulator:
     - respond on GET by giving out the stored values
 
 what is generated:
-- server.h header file 
-    - list all resources
-        - create functions for: get, put, observe, entity handler
-        - list all names of the properties in the resources
-        - create member variable of properties in the resources
         
 - server.cpp implementation code
-    - get_XXX_Representation() : function to convert the  member variables to the response document
-    - put_XXX_Representation() : function to convert the input request document to the member variables
-    - XXXEntityHandler() : function to handle the incomming request 
-    - xxx_observeloopFunc() : function to update the observed clients
+    - per resource an class is generated.
+        - constructor
+            - creates the resource
+            - has entity handler
+            - get function to use the variables to create the return payload
+            - post function to assign the variables from the request payload
 
-    
-- straigh copies:
-    observer.h/cpp
-    - this is code to update the list of observers, thanks to Intel.
 
 what is missing/incorrect:
-- handling query params
+- handling query params and interfaces
+- security
+- introspection
+- handling observe
+- only int and boolean properties are used and stored.
 - creation/deletion of resources (PUT/DELETE functions)
 - no correct makefile/scons file, so we do not yet know how to insert this in the IOTivity tree and then compile
 
-Notes:
-- based on low level api.
+notes:
+- only tested on windows
+
+## SCONS adaption in resource/examples
+
+######################################################################
+# Source files and Targets
+######################################################################
+example_names = [
+    'simpleserver', 'simpleclient', 'server',
+    'simpleclientserver',
+    'directpairingclient',
+    'devicediscoveryserver', 'devicediscoveryclient',
+    'simpleserverHQ', 'simpleclientHQ',
+    ]
+
+if target_os not in ['windows', 'msys_nt']:
+    example_names += [
+        'fridgeserver', 'fridgeclient',
+        'presenceserver', 'presenceclient',
+        'roomserver', 'roomclient',
+        'garageserver',
+        'garageclient',
+        'groupserver',
+        'groupclient',
+        'lightserver',
+        'threadingsample',
+        'server',
+        'observer',
+        ]
+    if 'CLIENT' in examples_env.get('RD_MODE'):
+        examples_env.AppendUnique(CPPPATH = ['../csdk/resource-directory/include'])
+        examples_env.AppendUnique(LIBS = ['resource_directory'])
+        example_names += ['rdclient']
+
+examples = map(make_single_file_cpp_program, example_names)
 
 
+## WINDOWS run.bat changes:
 
+REM *** BUILD OPTIONS ***
 
+if "!RUN_ARG!"=="server" (
+  cd %BUILD_DIR%\resource\examples
+  REM %DEBUG% simpleserver.exe
+  %DEBUG% server.exe
+) else if "!RUN_ARG!"=="client" (

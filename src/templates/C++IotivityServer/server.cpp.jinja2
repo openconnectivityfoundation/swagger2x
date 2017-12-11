@@ -160,8 +160,9 @@ class c{{path|variablesyntax}}Resource : public Resource
     {% if methodName == "get" %} 
         /*
         * function to make the payload for the retrieve function (e.g. GET)
+        * @param queries  the query parameters for this call
         */
-        OCRepresentation get()
+        OCRepresentation get(QueryParamsMap queries)
         {
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "number" %}
@@ -181,8 +182,11 @@ class c{{path|variablesyntax}}Resource : public Resource
     {% if methodName == "post" %} 
         /*
         * function to parse the payload for the update function (e.g. POST)
+        * @param queries  the query parameters for this call
+        * @param rep  the reponse to get the property values from
+        * 
         */
-        void post(const OCRepresentation& rep)
+        void post(QueryParamsMap queries,const OCRepresentation& rep)
         {
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "number" %}
@@ -244,6 +248,18 @@ class c{{path|variablesyntax}}Resource : public Resource
             {
                 std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
                           << request->getResourceUri() << std::endl;
+                          
+                // Check for query params (if any)
+                QueryParamsMap queries = request->getQueryParameters();
+                if (!queries.empty())
+                {
+                    std::cout << "\nQuery processing upto entityHandler" << std::endl;
+                }
+                for (auto it : queries)
+                {
+                    std::cout << "Query key: " << it.first << " value : " << it.second
+                            << std::endl;
+                }                               
 
                 if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
                 {
@@ -255,7 +271,7 @@ class c{{path|variablesyntax}}Resource : public Resource
                     {
                         std::cout<<"c{{path|variablesyntax}}Resource Get Request"<< std::endl;
 
-                        pResponse->setResourceRepresentation(get(), "");
+                        pResponse->setResourceRepresentation(get(queries), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
                             ehResult = OC_EH_OK;
@@ -264,18 +280,24 @@ class c{{path|variablesyntax}}Resource : public Resource
                     else if(request->getRequestType() == "POST")
                     {
                         std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
-                        post(request->getResourceRepresentation());
+                        post(queries, request->getResourceRepresentation());
 
-                        pResponse->setResourceRepresentation(get(), "");
+                        pResponse->setResourceRepresentation(get(queries), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
+                            OCStackResult sResult;
                             ehResult = OC_EH_OK;
+                            // update all observers with the new value
+                            // not sure if this is an blocking call
+                            sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
+                                                                           m_interestedObservers,
+                                                                           pResponse);
                         }
                     }
                     else
                     {
                         std::cout << "c{{path|variablesyntax}}Resource unsupported request type"
-                        << request->getRequestType() << std::endl;
+                            << request->getRequestType() << std::endl;
                         pResponse->setResponseResult(OC_EH_ERROR);
                         OCPlatform::sendResponse(pResponse);
                         ehResult = OC_EH_ERROR;
@@ -284,6 +306,21 @@ class c{{path|variablesyntax}}Resource : public Resource
                 else if(request->getRequestHandlerFlag() == RequestHandlerFlag::ObserverFlag)
                 {
                     std::cout << "\t\trequestFlag : Observer\n" << std::endl;
+                    ObservationInfo observationInfo = request->getObservationInfo();
+                    if(ObserveAction::ObserveRegister == observationInfo.action)
+                    {
+                        // add observer
+                        m_interestedObservers.push_back(observationInfo.obsId);
+                    }
+                    else if(ObserveAction::ObserveUnregister == observationInfo.action)
+                    {
+                        // delete observer
+                        m_interestedObservers.erase(std::remove(
+                                                                    m_interestedObservers.begin(),
+                                                                    m_interestedObservers.end(),
+                                                                    observationInfo.obsId),
+                                                                    m_interestedObservers.end());
+                    }  
                 }
                 else
                 {
@@ -308,7 +345,6 @@ class IoTServer
         m{{path|variablesyntax}}Instance()
     {% endfor %}
         {
-        
             std::cout << "Running IoTServer constructor" << std::endl;
             initializePlatform();
         }

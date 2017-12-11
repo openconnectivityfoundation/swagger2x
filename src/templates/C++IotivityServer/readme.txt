@@ -16,11 +16,12 @@ what is generated:
             - get function to use the variables to create the return payload
             - post function to assign the variables from the request payload
 
-
-what is missing/incorrect:
-- handling query params and interfaces
+what is not checked:            
 - security
 - introspection
+            
+what is missing/incorrect:
+- handling query params and interfaces
 - handling observe
 - only int and boolean properties are used and stored.
 - creation/deletion of resources (PUT/DELETE functions)

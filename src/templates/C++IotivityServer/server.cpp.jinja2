@@ -536,13 +536,13 @@ int main()
 #endif
     
     
-//#ifdef WIN
+#if defined(_WIN32)
     IoTServer server;
     std::cout << "Press Ctrl-C to quit...." << std::endl;
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
     OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
-//#endif    
+#endif    
     
     return 0;
 }

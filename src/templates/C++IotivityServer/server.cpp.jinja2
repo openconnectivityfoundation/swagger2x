@@ -390,6 +390,7 @@ void DeletePlatformInfo()
 * @param firmwareVersion the firmwareVersion
 * @param supportUrl the supportUrl
 * @param systemTime the systemTime
+* @return OC_STACK_ERROR or OC_STACK_OK
 */
 OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
         std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
@@ -415,6 +416,8 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
 /**
 *  SetDeviceInfo
 *  Sets the device information ("oic/d"), from the globals
+
+* @return OC_STACK_ERROR or OC_STACK_OK
 */
 OCStackResult SetDeviceInfo()
 {
@@ -461,11 +464,27 @@ OCStackResult SetDeviceInfo()
 
     return OC_STACK_OK;
 }
-
+/**
+*  server_fopen
+*  opens file
+*  implements redirection to open:
+* - initial security settings
+* - introspection file
+* @param path path+filename of the file to open
+* @param mode mode of the file to open
+* @return the filehandle of the opened file (or error)
+*/
 FILE* server_fopen(const char* path, const char* mode)
 {
-    if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+
+    if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
+        // reading the security initial setup file
+        return fopen("server_security.dat", mode);
+    }
+    else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
+    {
+        // reading the introspection file
         return fopen("server_introspection.dat", mode);
     }
     else

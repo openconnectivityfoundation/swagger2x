@@ -517,7 +517,7 @@ def convert_to_cplus_type(json_type):
     """
     print ("convert_to_c_type: json_type:", json_type)
     if json_type in ["number"]:
-        return "float"
+        return "double"
     if json_type in ["integer"]:
         return "int"  # uint8_t ?
     if json_type in ["string"]:
@@ -533,7 +533,7 @@ def convert_to_c_type(json_type):
     """
     print ("convert_to_c_type: json_type:", json_type)
     if json_type in ["number"]:
-        return "float"
+        return "double"
     if json_type in ["integer"]:
         return "int"  # uint8_t ?
     if json_type in ["string"]:

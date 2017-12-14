@@ -23,7 +23,7 @@ what is not checked:
 what is missing/incorrect:
 - handling query params and interfaces
 - handling observe
-- only int and boolean properties are used and stored.
+- only double, int and boolean properties are used and stored.
 - creation/deletion of resources (PUT/DELETE functions)
 - no correct makefile/scons file, so we do not yet know how to insert this in the IOTivity tree and then compile
 

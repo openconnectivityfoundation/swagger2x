@@ -59,7 +59,7 @@ std::string gSystemTime = "2017-12-01T12.00";
 
 // Set of strings for each of device info fields
 std::string  gDeviceName = "{{json_data['info']['title']}}";
-std::string  gDeviceType = "{{devicetype}}";
+std::string  gDeviceType = "{{device_type}}";
 std::string  gSpecVersion = "ocf.1.3.0";
 //std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
@@ -124,13 +124,13 @@ class c{{path|variablesyntax}}Resource : public Resource
             {% endfor %}
         
             EntityHandler cb = std::bind(&c{{path|variablesyntax}}Resource::entityHandler, this,PH::_1);
-            uint8_t resourceProperty = 0;
+            //uint8_t resourceProperty = 0;
             OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
                 resourceURI,
                 m_RESOURCE_TYPE[0],
                 m_RESOURCE_INTERFACE[0],
                 cb,
-                resourceProperty);
+                OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
                 
             // add the additional interfaces
             std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
@@ -190,7 +190,20 @@ class c{{path|variablesyntax}}Resource : public Resource
         {
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "number" %}
-            //rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ); {% endif -%}
+            try {
+                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                }
+                else
+                {
+                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                }
+            }
+            catch (std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }{% endif -%}
             {% if var_data.type == "integer" %} 
             try {
                 if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
@@ -244,6 +257,8 @@ class c{{path|variablesyntax}}Resource : public Resource
         virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
         {
             OCEntityHandlerResult ehResult = OC_EH_ERROR;
+            std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
+                          
             if(request)
             {
                 std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
@@ -375,6 +390,8 @@ void initializePlatform()
     std::cout << "Running initializePlatform" << std::endl;
     
     // initialize "oic/p"
+    
+    std::cout << "oic/p" << std::endl;
     OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
             gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
             gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
@@ -385,6 +402,7 @@ void initializePlatform()
     }
     
     // initialize "oic/d"
+    std::cout << "oic/d" << std::endl;
     result = SetDeviceInfo();
     if (result != OC_STACK_OK)
     {
@@ -512,16 +530,22 @@ OCStackResult SetDeviceInfo()
 */
 FILE* server_fopen(const char* path, const char* mode)
 {
+    FILE* fileptr = NULL;
+    std::cout << "persistent storage - server_fopen: " << path << std::endl;
 
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
         // reading the security initial setup file
-        return fopen("server_security.dat", mode);
+        fileptr = fopen("server_security.dat", mode);
+        std::cout << "reading security file ptr: " << fileptr << std::endl;
+        return fileptr;
     }
     else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
         // reading the introspection file
-        return fopen("server_introspection.dat", mode);
+        fileptr = fopen("server_introspection.dat", mode);
+        std::cout << "reading introspection file  ptr: " << fileptr << std::endl;
+        return fileptr;
     }
     else
     {
@@ -548,10 +572,15 @@ int main()
     {
         ServiceType::InProc,
         ModeType::Server,
-        nullptr
+        &ps
     };
     OCPlatform::Configure(cfg);
     OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+    
+    std::cout << "device type: " <<  gDeviceType << std::endl;
+    std::cout << "platformID: " <<  gPlatformId << std::endl;
+    std::cout << "platform independent: " <<  gProtocolIndependentID << std::endl;
+
 
 #ifdef LINUX
     struct sigaction sa;

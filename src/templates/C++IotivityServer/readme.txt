@@ -2,7 +2,7 @@ Template: IOTivity C++ server
 
 The generated code acts as an simulator:
 - it creates values at start update
-- handles incomming requests, 
+- handles incoming requests, 
     - stores the values on POST
     - respond on GET by giving out the stored values
 
@@ -15,7 +15,11 @@ what is generated:
             - has entity handler
             - get function to use the variables to create the return payload
             - post function to assign the variables from the request payload
-
+- svr_server.json
+    default json definition of the secure virtual resources (svr)
+    - just works
+    - not onboarded
+            
 what is not checked:            
 - security
 - introspection

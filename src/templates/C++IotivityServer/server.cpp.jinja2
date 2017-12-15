@@ -292,6 +292,8 @@ class c{{path|variablesyntax}}Resource : public Resource
                             ehResult = OC_EH_OK;
                         }
                     }
+    {% for methodName, method_data in path_data.items() -%}
+    {% if methodName == "post" %} 
                     else if(request->getRequestType() == "POST")
                     {
                         std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
@@ -309,6 +311,8 @@ class c{{path|variablesyntax}}Resource : public Resource
                                                                            pResponse);
                         }
                     }
+    {% endif -%}
+    {% endfor -%}                
                     else
                     {
                         std::cout << "c{{path|variablesyntax}}Resource unsupported request type"
@@ -357,7 +361,7 @@ class IoTServer
         IoTServer()
             :
     {% for path, path_data in json_data['paths'].items() -%}  
-        m{{path|variablesyntax}}Instance()
+        m{{path|variablesyntax}}Instance(){{ "," if not loop.last }}
     {% endfor %}
         {
             std::cout << "Running IoTServer constructor" << std::endl;
@@ -531,24 +535,24 @@ OCStackResult SetDeviceInfo()
 FILE* server_fopen(const char* path, const char* mode)
 {
     FILE* fileptr = NULL;
-    std::cout << "persistent storage - server_fopen: " << path << std::endl;
 
     if (0 == strcmp(path, OC_SECURITY_DB_DAT_FILE_NAME))
     {
         // reading the security initial setup file
         fileptr = fopen("server_security.dat", mode);
-        std::cout << "reading security file ptr: " << fileptr << std::endl;
+        std::cout << "reading security file 'server_security.dat' ptr: " << fileptr << std::endl;
         return fileptr;
     }
     else if (0 == strcmp(path, OC_INTROSPECTION_FILE_NAME))
     {
         // reading the introspection file
         fileptr = fopen("server_introspection.dat", mode);
-        std::cout << "reading introspection file  ptr: " << fileptr << std::endl;
+        std::cout << "reading introspection file  'server_introspection.dat' ptr: " << fileptr << std::endl;
         return fileptr;
     }
     else
     {
+        std::cout << "persistent storage - server_fopen: " << path << std::endl;
         return fopen(path, mode);
     }
 }

@@ -91,7 +91,9 @@ void DuplicateString(char ** targetString, std::string sourceString)
     strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
 }
 
-
+/*
+* default class, so that we have to define less variables/functions.
+*/
 class Resource
 {
     protected:
@@ -101,7 +103,7 @@ class Resource
 };
 
 
-{% for path, path_data in json_data['paths'].items() -%}  
+{% for path, path_data in json_data['paths'].items() %}  
 
 class c{{path|variablesyntax}}Resource : public Resource
 {
@@ -311,8 +313,7 @@ class c{{path|variablesyntax}}Resource : public Resource
                                                                            pResponse);
                         }
                     }
-    {% endif -%}
-    {% endfor -%}                
+                    {% endif -%}{% endfor -%}                
                     else
                     {
                         std::cout << "c{{path|variablesyntax}}Resource unsupported request type"

@@ -46,15 +46,15 @@ namespace PH = std::placeholders;
 
 // Set of strings for each of platform Info fields
 std::string gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string gManufacturerName = "OCF";
-std::string gManufacturerLink = "https://openconnectivity.org/";
+std::string gManufacturerName = "{{manufacturer}}";
+std::string gManufacturerLink = "https://{{manufacturer}}.org/";
 std::string gModelNumber = "ModelNumber";
 std::string gDateOfManufacture = "2017-12-01";
 std::string gPlatformVersion = "1.0";
 std::string gOperatingSystemVersion = "myOS";
 std::string gHardwareVersion = "1.0";
 std::string gFirmwareVersion = "1.0";
-std::string gSupportLink = "https://openconnectivity.org/";
+std::string gSupportLink = "https://{{manufacturer}}.org/";
 std::string gSystemTime = "2017-12-01T12.00";
 
 // Set of strings for each of device info fields
@@ -165,7 +165,7 @@ class c{{path|variablesyntax}}Resource : public Resource
     {% for methodName, method_data in path_data.items() -%}
     {% if methodName == "get" %} 
         /*
-        * function to make the payload for the retrieve function (e.g. GET)
+        * function to make the payload for the retrieve function (e.g. GET) {{path}}
         * @param queries  the query parameters for this call
         */
         OCRepresentation get(QueryParamsMap queries)
@@ -187,9 +187,9 @@ class c{{path|variablesyntax}}Resource : public Resource
     {% for methodName, method_data in path_data.items() -%}
     {% if methodName == "post" %} 
         /*
-        * function to parse the payload for the update function (e.g. POST)
+        * function to parse the payload for the update function (e.g. POST) {{path}}
         * @param queries  the query parameters for this call
-        * @param rep  the reponse to get the property values from
+        * @param rep  the response to get the property values from
         * 
         */
         void post(QueryParamsMap queries, const OCRepresentation& rep)
@@ -197,13 +197,13 @@ class c{{path|variablesyntax}}Resource : public Resource
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "number" %}
             try {
-                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -212,13 +212,13 @@ class c{{path|variablesyntax}}Resource : public Resource
             }{% endif -%}
             {% if var_data.type == "integer" %} 
             try {
-                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -227,13 +227,13 @@ class c{{path|variablesyntax}}Resource : public Resource
             }{% endif -%}
             {% if var_data.type == "string" %} 
             try {
-                if (rep.getValue(m_var_name{{var|variablesyntax}},m_var_value{{var|variablesyntax}} ))
+                if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}} : " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property {{var}} : " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -262,7 +262,7 @@ class c{{path|variablesyntax}}Resource : public Resource
         virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
         {
             OCEntityHandlerResult ehResult = OC_EH_ERROR;
-            std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
+            //std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
                           
             if(request)
             {
@@ -307,13 +307,13 @@ class c{{path|variablesyntax}}Resource : public Resource
                         pResponse->setResourceRepresentation(get(queries), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
-                            OCStackResult sResult;
-                            ehResult = OC_EH_OK;
+                            //OCStackResult sResult;
+                            //ehResult = OC_EH_OK;
                             // update all observers with the new value
                             // not sure if this is an blocking call
-                            sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
-                                                                           m_interestedObservers,
-                                                                           pResponse);
+                            //sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
+                            //                                               m_interestedObservers,
+                            //                                               pResponse);
                         }
                     }
                     {% endif -%}{% endfor -%}                

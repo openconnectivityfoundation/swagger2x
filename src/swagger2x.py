@@ -333,9 +333,9 @@ def swagger_if(json_data, input_path):
     :return: list of if values
     """
     if_values = []
+    schema = None
     print("swagger_if: path:", input_path)
     for path, path_item in json_data["paths"].items():
-        schema = None
         if input_path == path:
             try:
                 schema = path_item["get"]["responses"]["200"]["schema"]
@@ -344,22 +344,22 @@ def swagger_if(json_data, input_path):
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
                     pass
-        if schema is not None:
-            print("swagger_if: schema", schema) 
-            def_data = json_data["definitions"]
-            for def_name, def_item in def_data.items():
-                full_def_name = "#/definitions/" + def_name
-                if full_def_name == schema["$ref"]:
-                    #print("swagger_if: found", def_item)
-                    if_block = find_key_link(def_data, "if")
-                    print("swagger_if: found", if_block) 
-                    if if_block is not None:
-                        enum_values = if_block["items"]["enum"]
-                        for enum_value in enum_values:
-                            if_values.append(enum_value)
-                            
-        else:
-            print("swagger_if: schema not found:", input_path)
+            if schema is not None:
+                print("swagger_if: schema", schema) 
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name == schema["$ref"]:
+                        #print("swagger_if: found", def_item)
+                        if_block = find_key_link(def_item, "if")
+                        print("swagger_if: found", if_block) 
+                        if if_block is not None:
+                            enum_values = if_block["items"]["enum"]
+                            for enum_value in enum_values:
+                                if_values.append(enum_value)
+                                
+            else:
+                print("swagger_if: schema not found:", input_path)
     
     return if_values
     
@@ -372,9 +372,9 @@ def swagger_property_names(json_data, input_path):
     :return: list of if values
     """
     prop_values = []
+    schema = None
     print("swagger_property_names: path:", input_path)
     for path, path_item in json_data["paths"].items():
-        schema = None
         if input_path == path:
             try:
                 schema = path_item["get"]["responses"]["200"]["schema"]
@@ -383,21 +383,21 @@ def swagger_property_names(json_data, input_path):
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
                     pass
-        if schema is not None:
-            print("swagger_property_names: schema", schema) 
-            def_data = json_data["definitions"]
-            for def_name, def_item in def_data.items():
-                full_def_name = "#/definitions/" + def_name
-                if full_def_name == schema["$ref"]:
-                    #print("swagger_property_names: found", def_item)
-                    prop_block = find_key_link(def_data, "properties")
-                    print("swagger_property_names: found", prop_block) 
-                    if prop_block is not None:
-                        for prop_name, prop in prop_block.items():
-                            prop_values.append(prop_name)
-                            
-        else:
-            print("swagger_property_names: schema not found:", input_path)
+            if schema is not None:
+                print("swagger_property_names: schema", schema) 
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name == schema["$ref"]:
+                        #print("swagger_property_names: found", def_item)
+                        prop_block = find_key_link(def_item, "properties")
+                        print("swagger_property_names: found", prop_block) 
+                        if prop_block is not None:
+                            for prop_name, prop in prop_block.items():
+                                prop_values.append(prop_name)
+                                
+            else:
+                print("swagger_property_names: schema not found:", input_path)
     
     return prop_values
     
@@ -412,8 +412,8 @@ def swagger_properties(json_data, input_path):
     """
     prop_block = []
     print("swagger_properties: path:", input_path)
+    schema = None
     for path, path_item in json_data["paths"].items():
-        schema = None
         if input_path == path:
             try:
                 schema = path_item["get"]["responses"]["200"]["schema"]
@@ -422,16 +422,20 @@ def swagger_properties(json_data, input_path):
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
                     pass
-        if schema is not None:
-            print("swagger_properties: schema", schema) 
-            def_data = json_data["definitions"]
-            for def_name, def_item in def_data.items():
-                full_def_name = "#/definitions/" + def_name
-                if full_def_name == schema["$ref"]:
-                    #print("swagger_properties: found", def_item)
-                    prop_block = find_key_link(def_data, "properties")
-        else:
-            print("swagger_properties: schema not found:", input_path)
+            if schema is not None:
+                schema_ref = schema["$ref"]
+                print("swagger_properties: schema", schema, schema_ref) 
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name in [schema_ref]:
+                        #print("swagger_properties: found", def_item)
+                        prop_block = find_key_link(def_item, "properties")
+                        for var, var_data in prop_block.items():
+                            print ("  var:", var)
+                        return prop_block
+            else:
+                print("swagger_properties: schema not found:", input_path)
     
     return prop_block
         
@@ -624,16 +628,12 @@ parser.add_argument( "-out_dir"  , "--out_dir"  , default=".",
 # generation values
 parser.add_argument( "-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
                      help="uuid",  nargs='?', const="", required=False)
-parser.add_argument( "-manufactorer"  , "--manufactorer"  , default="ocf.org",
-                     help="manufactorer name",  nargs='?', const="", required=False)
+parser.add_argument( "-manufacturer"  , "--manufacturer"  , default="ocf",
+                     help="manufacturer name",  nargs='?', const="", required=False)
 parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
                      help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
                      
 args = parser.parse_args()
-
-
-
-
 
 
 print("file          : " + str(args.swagger))
@@ -645,7 +645,7 @@ print("template_dir  : " + str(args.template_dir))
 print("")
 print("uuid          : " + str(args.uuid))
 print("device type   : " + str(args.devicetype))
-print("manufactorer  : " + str(args.manufactorer))
+print("manufacturer  : " + str(args.manufacturer))
 print("")
 
 try: 
@@ -691,7 +691,7 @@ try:
         text = template_environment.render( json_data=json_data, 
             version=my_version, 
             uuid= str(args.uuid),
-            manufactorer= str(args.manufactorer),
+            manufacturer= str(args.manufacturer),
             device_type= str(args.devicetype),
             input_file = args.swagger )
         

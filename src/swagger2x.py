@@ -520,6 +520,8 @@ def convert_to_cplus_type(json_type):
     :return: c++ type.
     """
     print ("convert_to_c_type: json_type:", json_type)
+    if json_type in ["boolean"]:
+        return "bool"
     if json_type in ["number"]:
         return "double"
     if json_type in ["integer"]:
@@ -536,6 +538,9 @@ def convert_to_c_type(json_type):
     :return: c type.
     """
     print ("convert_to_c_type: json_type:", json_type)
+    
+    if json_type in ["boolean"]:
+        return "bool"
     if json_type in ["number"]:
         return "double"
     if json_type in ["integer"]:

@@ -332,11 +332,23 @@ def swagger_if(json_data, input_path):
     :param input_path: the path to which the if should be queried
     :return: list of if values
     """
-    if_values = []
+    return swagger_property_data_schema(json_data, input_path, "if")
+    
+    
+def swagger_property_data_schema(json_data, input_path, name):
+    """
+    get the if value from the schema that is referenced by the path in get (or put)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    data_values = []
     schema = None
-    print("swagger_if: path:", input_path)
+    example = None
+    print("swagger_property_data_schema: path:", input_path)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
+            # get the schemea
             try:
                 schema = path_item["get"]["responses"]["200"]["schema"]
             except:
@@ -344,24 +356,52 @@ def swagger_if(json_data, input_path):
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
                     pass
+            # get the example       
+            try:
+                example = path_item["get"]["responses"]["200"]["x-example"]
+            except:
+                try:
+                    example = path_item["post"]["responses"]["200"]["x-example"]
+                except:
+                    pass        
+                    
+                    
             if schema is not None:
-                print("swagger_if: schema", schema) 
+                print("swagger_property_data_schema: schema", schema) 
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
-                        #print("swagger_if: found", def_item)
-                        if_block = find_key_link(def_item, "if")
-                        print("swagger_if: found", if_block) 
-                        if if_block is not None:
-                            enum_values = if_block["items"]["enum"]
-                            for enum_value in enum_values:
-                                if_values.append(enum_value)
+                        #print("swagger_property_data_schema: found", def_item)
+                        name_block = find_key_link(def_item, name)
+                        print("swagger_property_data_schema: found", name_block) 
+                        if name_block is not None:
+                            # get it from the schema::enum
+                            try: 
+                                enum_values = name_block["items"]["enum"]
+                                for enum_value in enum_values:
+                                    data_values.append(enum_value)
+                            except:
+                                # get it from the schema::default
+                                try:
+                                    default_values = name_block["default"]
+                                    for default_value in default_values:
+                                        data_values.append(default_value)
+                                
+                                except:
+                                    # get it from the example
+                                    if example is not None:
+                                        try:
+                                            default_values = example[name]
+                                            for default_value in default_values:
+                                                data_values.append(default_value)
+                                        except:
+                                            pass
                                 
             else:
-                print("swagger_if: schema not found:", input_path)
+                print("swagger_property_data: schema not found:", input_path)
     
-    return if_values
+    return data_values
     
     
 def swagger_property_names(json_data, input_path):
@@ -531,6 +571,21 @@ def convert_to_cplus_type(json_type):
         
     return "void*"
     
+    
+def convert_to_cplus_array_type(json_data):
+    """
+    convert the json type to c++ type
+    :param json_type: the json type
+    :return: c++ type.
+    """
+    print ("convert_to_c_type: json_data:", json_data)
+    try:
+        return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
+    except:
+        pass
+        
+    return "void*"
+    
 def convert_to_c_type(json_type):
     """
     convert the json type to c type
@@ -590,10 +645,7 @@ def convert_array_size(my_array):
         return len(my_array)
     else:
         pass
-        
-    my_ret += '}'
-    
-        
+              
     return 0
     
     
@@ -676,6 +728,8 @@ try:
     env.filters['variableforbidden'] = variableforbidden
     env.filters['convert_to_c_type'] = convert_to_c_type   
     env.filters['convert_to_cplus_type'] = convert_to_cplus_type     
+    env.filters['convert_to_cplus_array_type'] =convert_to_cplus_array_type
+    
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
     env.filters['convert_array_size'] = convert_array_size
 
@@ -689,6 +743,7 @@ try:
         template_environment.globals['query_rt'] = query_rt_from_path
         template_environment.globals['query_if'] = swagger_if
         template_environment.globals['query_property_names'] = swagger_property_names
+        template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties
         
         template_environment.globals['retrieve_path_value'] = retrieve_path_value

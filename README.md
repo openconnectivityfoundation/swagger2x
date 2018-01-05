@@ -221,7 +221,7 @@ it will be prefixed with "_"
 all other names will be kept intact (e.g. just pass through)
 
 #### convert_to_c_type
-convert the json types into c types.
+convert the json types into C types.
 typical usage:
 ```
 {{var|convert_to_c_type}}
@@ -230,13 +230,23 @@ note string will be mapped to char*
 note does not do array type.
 
 #### convert_to_cplus_type
-convert the json types into c++ types.
+convert the json types into C++ types.
 typical usage:
 ```
 {{var|convert_to_cplus_type}}
 ```
 note string will be mapped to std:string
 note does not do array type.
+
+
+#### convert_to_cplus_array_type
+convert the json array types into C++ vector types.
+typical usage:
+```
+{% if var_data.type == "array" %}
+        {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
+{% endif -%}
+```
 
 
 #### convert_array_size
@@ -252,9 +262,8 @@ typical usage:
 ## TODO list
 
 - template for client code for IOTivity node
-- template for server code for IOTivity c++ (in progress)
 - template for client code for IOTivity c++
-- wheel instalation of the tool
+- wheel installation of the tool
 - rename option for generated files
 
 ## Fixes

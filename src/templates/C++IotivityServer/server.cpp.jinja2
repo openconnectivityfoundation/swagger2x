@@ -213,11 +213,11 @@ class c{{path|variablesyntax}}Resource : public Resource
             try {
                 if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -228,11 +228,11 @@ class c{{path|variablesyntax}}Resource : public Resource
             try {
                 if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -243,11 +243,11 @@ class c{{path|variablesyntax}}Resource : public Resource
             try {
                 if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t" << "property {{var}}: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -258,11 +258,11 @@ class c{{path|variablesyntax}}Resource : public Resource
             try {
                 if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                 {
-                    std::cout << "\t\t" << "property {{var}} : " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
                 }
                 else
                 {
-                    std::cout << "\t\t" << "property {{var}} not found in the representation" << std::endl;
+                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
                 }
             }
             catch (std::exception& e)
@@ -313,10 +313,13 @@ class c{{path|variablesyntax}}Resource : public Resource
                 {
                     std::cout << "Query key: " << it.first << " value : " << it.second
                             << std::endl;
-                }                               
+                } 
+                // get the value, so that we can AND it to check which flags are set
+                int requestFlag = request->getRequestHandlerFlag();                
 
-                if(request->getRequestHandlerFlag() == RequestHandlerFlag::RequestFlag)
+                if(requestFlag & RequestHandlerFlag::RequestFlag)
                 {
+                    // request flag is set
                     auto pResponse = std::make_shared<OC::OCResourceResponse>();
                     pResponse->setRequestHandle(request->getRequestHandle());
                     pResponse->setResourceHandle(request->getResourceHandle());
@@ -341,8 +344,10 @@ class c{{path|variablesyntax}}Resource : public Resource
                         pResponse->setResourceRepresentation(get(queries), "");
                         if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                         {
+                            ehResult = OC_EH_OK;
+                            
+                            // TODO: if there are observers inform the observers
                             //OCStackResult sResult;
-                            //ehResult = OC_EH_OK;
                             // update all observers with the new value
                             // not sure if this is an blocking call
                             //sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
@@ -360,8 +365,10 @@ class c{{path|variablesyntax}}Resource : public Resource
                         ehResult = OC_EH_ERROR;
                     }
                 }
-                else if(request->getRequestHandlerFlag() == RequestHandlerFlag::ObserverFlag)
+                
+                if(requestFlag & RequestHandlerFlag::ObserverFlag)
                 {
+                    // observe flag is set
                     std::cout << "\t\trequestFlag : Observer\n" << std::endl;
                     ObservationInfo observationInfo = request->getObservationInfo();
                     if(ObserveAction::ObserveRegister == observationInfo.action)
@@ -377,11 +384,8 @@ class c{{path|variablesyntax}}Resource : public Resource
                                                                     m_interestedObservers.end(),
                                                                     observationInfo.obsId),
                                                                     m_interestedObservers.end());
-                    }  
-                }
-                else
-                {
-                    std::cout << "c{{path|variablesyntax}}Resource unsupported request flag" << std::endl;
+                    } 
+                    ehResult = OC_EH_OK;                    
                 }
             }
             return ehResult;

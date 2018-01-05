@@ -72,7 +72,7 @@ the following structure is defined:
 
 ### C++IotivityServer
 - generates an c++ server for the v1.3.1 IOTivity stack
-- more details:  https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
+- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
 
 
 ### NodeIotivityServer

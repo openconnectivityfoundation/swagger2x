@@ -26,9 +26,9 @@ To run the tool enter this on the command line:
 
 use -h to see all the options.
 
-```
-note: see/use https://github.com/openconnectivityfoundation/DeviceBuilder for usage in the development chain.
-```
+
+__note: see/use https://github.com/openconnectivityfoundation/DeviceBuilder for usage in the development chain.__
+
 
 # templates
 

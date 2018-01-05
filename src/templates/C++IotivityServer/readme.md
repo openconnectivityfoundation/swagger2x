@@ -1,4 +1,4 @@
-Template: IOTivity C++ server
+# Template: IOTivity C++ server
 
 The generated code acts as an simulator:
 - it creates values at start update
@@ -6,7 +6,7 @@ The generated code acts as an simulator:
     - stores the values on POST
     - respond on GET by giving out the stored values
 
-what is generated:
+## what is generated:
         
 - server.cpp implementation code
     - per resource an class is generated.
@@ -44,7 +44,7 @@ what is generated:
  
             
             
-what is missing/incorrect:
+## what is missing/incorrect:
 - handling query params (none interfaces)
 - handling observe
 - manual update of resource data, e.g. out of bounds so that one can trigger this to pass CTT.
@@ -52,7 +52,7 @@ what is missing/incorrect:
 - no correct makefile/scons file, so we do not yet know how to insert this in the IOTivity tree and then compile
     - see for manual changes below
 
-notes:
+# notes:
 - only tested on windows
 
 
@@ -125,7 +125,7 @@ examples = map(make_single_file_cpp_program, example_names)
 ```
 
 ## WINDOWS run.bat changes:
-
+```
 REM *** BUILD OPTIONS ***
 
 if "!RUN_ARG!"=="server" (
@@ -133,14 +133,19 @@ if "!RUN_ARG!"=="server" (
   REM %DEBUG% simpleserver.exe
   %DEBUG% server.exe
 ) else if "!RUN_ARG!"=="client" (
+```
 
 # build on windows
 in top directory:
+```
 run.bat build server -noTest
+```
 
 # run on windows
 in top directory:
+```
 run.bat server
+```
 
 
 ## CTT info

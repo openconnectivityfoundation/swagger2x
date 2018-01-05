@@ -12,10 +12,27 @@ what is generated:
     - per resource an class is generated.
         - constructor
             - creates the resource
-            - has entity handler
+        - has entity handler
             - get function to use the variables to create the return payload
             - post function to assign the variables from the request payload
-- svr_server.json
+                - single type: integer, number and strings 
+                - arrays 
+                    - only arrays of a single type are handled.
+                        e.g. array of int, array of strings, array of number
+                        NOT handled: array of objects.
+                    - array members are NOT set by an POST
+                - checks on minimum, maximum and readOnly, no update of the value if this occurs
+                    - TODO: do all the checks first before updating any variable   
+                - check if the correct interface is used (oic.if.a or oic.if.rw)
+    - main 
+        - creates all classes
+        - creates the device
+        - installs the reader for
+            - introspection device data file (IDD)
+            - security file (SVR) contents
+            these files needs to be installed/copied where the the executable is.
+           
+- svr_server.json  - not used !!!
     default json definition of the secure virtual resources (svr)
     - just works
     - not onboarded
@@ -28,18 +45,16 @@ what is generated:
             
             
 what is missing/incorrect:
-- handling query params and interfaces
+- handling query params (none interfaces)
 - handling observe
-- only double, int and boolean properties are used and stored.
-    - missing: array of int, number, string
+- manual update of resource data, e.g. out of bounds so that one can trigger this to pass CTT.
 - creation/deletion of resources (PUT/DELETE functions)
 - no correct makefile/scons file, so we do not yet know how to insert this in the IOTivity tree and then compile
     - see for manual changes below
 
 notes:
 - only tested on windows
-- what is not checked:            
-    - introspection
+
 
 ## SCONS adaption in resource/examples
 
@@ -119,11 +134,37 @@ if "!RUN_ARG!"=="server" (
   %DEBUG% server.exe
 ) else if "!RUN_ARG!"=="client" (
 
+# build on windows
+in top directory:
+run.bat build server -noTest
+
+# run on windows
+in top directory:
+run.bat server
+
+
 ## CTT info
 
 When CTT pops up:
 "reset to onboarding state" means one needs to: 
 1. Stop your device
-2 Reset/replace databases with a new/unowned one.
+2. Reset/replace security databases with a new/unowned one.
+    e.g. copy the ORIGINAL security file to the executable directory.
 3. Start your device.
+
+Note if the IUT crashes during testing one has to reset the security state to not onboarded.
+this is mentioned in the test case log of CTT when the CTT can't reset the device state properly.
+
+
+# CTT PICS information
+
+- IOTivity implements the next optional virtual security resources
+    currently there is no mechanism available to remove those from the implementatino.
+    hence they must be listed in the PICS:
+    - oic.r.crl, oic.r.csr, oic.r.roles 
+- oic/res
+    This resource must be listed as none observable.
+    
+    
+
 

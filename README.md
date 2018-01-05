@@ -4,14 +4,14 @@ python tool
 generate implementations based on templates from json swagger2.0 file.
 templates engine: jinga2
 
-## instalation
+## installation
 This tool is python3 based.
 
 run ```src\install.py``` to install the dependencies.
 
 
 Installation of the tool is making a clone of the repository.
-use the tool relative of where the respository is located on your system.
+use the tool relative of where the repository is located on your system.
 
 see the test directory as examples of how to use the tool.
 Note that the test directory is set up for bash.
@@ -25,6 +25,10 @@ To run the tool enter this on the command line:
 ```python3 swagger2x.py <options>```
 
 use -h to see all the options.
+
+```
+note: see/use https://github.com/openconnectivityfoundation/DeviceBuilder for usage in the development chain.
+```
 
 # templates
 
@@ -80,15 +84,14 @@ the following structure is defined:
 - generates an node.js server for the IOTivity stack
 - OCF specific based  on:
 https://github.com/otcshare/iotivity-node
-- Requires iotivity-node v1.2.1 or later
-- work in progress:
-    - adding security
-    - adding introspection
-    
+- Requires iotivity-node v1.3.1 or later
+- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/NodeIotivityServer
+
+     
     
 ### C++IotivityServer
 - generates an c++ server for the v1.3.1 IOTivity stack
-- more details https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
+- more details:  https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
 
     
     

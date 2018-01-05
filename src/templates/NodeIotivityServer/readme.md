@@ -1,7 +1,8 @@
-# Template: IOtivity node server
+# Template: IOTivity node server
 
 generates an IOTivity node server based on:
 https://github.com/otcshare/iotivity-node
+
 documentation available at:
 https://github.com/01org/iot-js-api/tree/master/api/ocf
 
@@ -29,14 +30,14 @@ https://github.com/01org/iot-js-api/tree/master/api/ocf
 - translation for interfaces
   now uses an fixed constant from the API
 
-what is possibly wrong with node.js
+what is possibly wrong with node.js implementation
 - rt and if values are single strings: API should be an array
     (not sure what the impact is though)
     
     
 ## work in progress:
-    - adding security
-    - adding introspection
+- adding security
+- adding introspection
 
 
 

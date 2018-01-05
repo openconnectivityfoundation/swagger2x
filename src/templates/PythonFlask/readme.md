@@ -1,6 +1,8 @@
-template: PythonFlask
+# template: PythonFlask
 
 generates an http/json server based on python Flask
+
+used as demonstration that the code generation from swagger2.0 files works
 
 Flask:
 see http://flask.pocoo.org/

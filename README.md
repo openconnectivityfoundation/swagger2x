@@ -69,15 +69,10 @@ the following structure is defined:
 
 ## Available Templates
 
-### PythonFlask
-- generates an python Flask server
-    - this is an http server
-- __NO OCF implemenation__
-- used as demonstration that the code generation from swagger2.0 files works:
-   - call back generation per endpoint-method
-   - code to obtain the body of an PUT/POST
-   - code to obtain the query parameters
-   - code to create the return payload (from the supplied example)
+
+### C++IotivityServer
+- generates an c++ server for the v1.3.1 IOTivity stack
+- more details:  https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
 
 
 ### NodeIotivityServer
@@ -87,11 +82,13 @@ https://github.com/otcshare/iotivity-node
 - Requires iotivity-node v1.3.1 or later
 - more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/NodeIotivityServer
 
-     
+
+### PythonFlask
+- generates an python Flask server
+    - this is an HTTP server
+- __NO OCF implemenation__
+- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask     
     
-### C++IotivityServer
-- generates an c++ server for the v1.3.1 IOTivity stack
-- more details:  https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
 
     
     
@@ -224,7 +221,7 @@ typical usage:
 {% endfor -%}
 ```
 #### variableforbidden
-if the varialbe is "if", "var", "function", "null"
+if the variable is "if", "var", "function", "null"
 it will be prefixed with "_" 
 all other names will be kept intact (e.g. just pass through)
 

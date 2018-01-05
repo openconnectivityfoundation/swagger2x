@@ -84,6 +84,11 @@ https://github.com/otcshare/iotivity-node
 - work in progress:
     - adding security
     - adding introspection
+    
+    
+### C++IotivityServer
+- generates an c++ server for the v1.3.1 IOTivity stack
+- more details https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
 
     
     

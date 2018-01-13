@@ -1,0 +1,29 @@
+{
+    "device": "test1",
+    "company": "Open Connectivity Foundation",
+    "role": "Server",
+    "supportedVerticalProfile": [
+        "Smart Home"
+    ],
+    "supportedDeviceTypes": [
+        "{{device_type}}"
+    ],
+    "icv": "ocf.1.0.0",
+    "dmv": "ocf.res.1.3.0, ocf.sh.1.3.0",
+    "resources": [
+    
+{% for path, path_data in json_data['paths'].items() %}  
+"{{query_rt(json_data, path)}}"{{ "," if not loop.last }}
+{% endfor -%}
+    ],
+    "jurisdictionSwitch": false,
+    "OTM": [
+        "oic.sec.doxm.jw"
+    ],
+    "contentFormatVersion": [ "1.0.0" ],
+    "acceptVersion": [ "1.0.0" ],
+
+    "multiValueQuerySupport": false,
+    "observableOICRES": true,
+    "persistentDeviceuuid": false
+}

@@ -338,7 +338,7 @@ class c{{path|variablesyntax}}Resource : public Resource
         // resource types and interfaces as array..
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
         std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array) 
-        std::string m_IF_UPDATE[2] = {"oic.if.a", "oic.if.rw"}; // updateble interfaces
+        std::string m_IF_UPDATE[3] = {"oic.if.a", "oic.if.rw", "oic.if.baseline"}; // updateble interfaces
         int m_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
         int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
         ObservationIds m_interestedObservers;        
@@ -354,13 +354,13 @@ class c{{path|variablesyntax}}Resource : public Resource
            
     protected:
         /*
-        * function to check if the interface is updateble
+        * function to check if the interface is
         * @param  interface_name the interface name used during the request
-        * @return true: updateble interface
+        * @return true: updatable interface
         */
         bool in_updatable_interfaces(std::string interface_name)
         {
-            for (int i=0; i<2; i++)
+            for (int i=0; i<3; i++)
             {
                 if (m_IF_UPDATE[i].compare(interface_name) == 0)
                     return true;

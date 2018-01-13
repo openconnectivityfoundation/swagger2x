@@ -39,10 +39,13 @@ The generated code acts as an simulator:
     - not tested, not used yet.
 - oic_svr_db_server_mvjustworks.dat
     - copy from iotivity-1.3.1\resource\csdk\security\provisioning
-    - just works
+    - security: just works
     - used in CTT testing (e.g. it can onboard the device!), and CTT can talk to the device.
+- PICS.json
+    - pics for CTT testing
+    - security: just works.
  
-            
+          
             
 ## what is missing/incorrect:
 - handling query params (none interfaces)

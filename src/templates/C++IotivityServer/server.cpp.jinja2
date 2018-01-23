@@ -89,7 +89,7 @@ OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerNa
 *  DuplicateString
 *
 * @param targetString  destination string, will be allocated
-* @param sourceString  soruce string, e.g. will be copied
+* @param sourceString  source string, e.g. will be copied
 
 *  TODO: don't use strncpy
 */
@@ -124,7 +124,7 @@ class c{{path|variablesyntax}}Resource : public Resource
             std::cout << "- Running: c{{path|variablesyntax}}Resource constructor" << std::endl;
             std::string resourceURI = "{{path}}";
             
-            // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() -%}
+            // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
             {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {% endif %}
             {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif %}
             {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif %}
@@ -209,24 +209,7 @@ class c{{path|variablesyntax}}Resource : public Resource
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "boolean" %}
             try {
-                if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                {
-                    std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
-                }
-                else
-                {
-                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                }
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif -%}
-            {% if var_data.type == "number" %}
-            try {
-                bool update_ok = true;
-                {{var_data.type|convert_to_cplus_type}} value;
-                if ( rep.getValue(m_var_name{{var|variablesyntax}}, value) )
+                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
                 {
                     // value exist in payload
                     {% if var_data.readOnly -%}
@@ -234,35 +217,41 @@ class c{{path|variablesyntax}}Resource : public Resource
                     // check if it is read only
                     ehResult = OC_EH_ERROR;
                     std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-                    update_ok = false;
                     {% endif %}{% endif %}
-                   
+                }  
+            }
+            catch (std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }{% endif -%}
+            {% if var_data.type == "number" %}
+            try {
+                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+                {
+                    // allocate the variable
+                    {{var_data.type|convert_to_cplus_type}} value;
+                    // get the actual value from the payload
+                    rep.getValue(m_var_name{{var|variablesyntax}}, value);
+                    // value exist in payload
+                    {% if var_data.readOnly -%}
+                    {% if var_data.readOnly == true %}
+                    // check if it is read only
+                    ehResult = OC_EH_ERROR;
+                    std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+                    {% endif %}{% endif %}
                     {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
                     {
                         // check the minimum range
-                        update_ok = false;
                         std::cout << "\t\t" << "property '{{var}}' value smaller than minimum" << {{var_data.minimum}} << " value: " << value << std::endl;
                         ehResult = OC_EH_ERROR;
                     } {% endif %}
                     {% if var_data.maximum %}if (value > {{var_data.maximum}} )
                     {
                         // check the maximum range
-                        update_ok = false;
                         std::cout << "\t\t" << "property '{{var}}' value exceed max" << {{var_data.minimum}} << " value: " << value << std::endl;
                         ehResult = OC_EH_ERROR;
                     }{% endif %}
-                    if (update_ok)
-                    {
-                        if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                        {
-                            std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
-                        }
-                    }
-                }    
-                else
-                {
-                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                }
+                }  
             }
             catch (std::exception& e)
             {
@@ -270,33 +259,47 @@ class c{{path|variablesyntax}}Resource : public Resource
             }{% endif -%}
             {% if var_data.type == "integer" %} 
             try {
-                bool update_ok = true;
-                {{var_data.type|convert_to_cplus_type}} value;
-                rep.getValue(m_var_name{{var|variablesyntax}}, value);
-                // value exist in payload
-                {% if var_data.readOnly -%}
-                {% if var_data.readOnly == true %}
-                // check if it is read only
-                ehResult = OC_EH_ERROR;
-                std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-                update_ok = false;
-                {% endif %}{% endif %}
-                {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
+                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
                 {
-                    // check the minimum range
-                    update_ok = false;
-                    std::cout << "\t\t" << "property '{{var}}' value smaller than minimum :" << {{var_data.minimum}} << " value: " << value << std::endl;
+                    // allocate the variable
+                    {{var_data.type|convert_to_cplus_type}} value;
+                    // get the actual value from the payload
+                    rep.getValue(m_var_name{{var|variablesyntax}}, value);
+            
+                    // value exist in payload
+                    {% if var_data.readOnly -%}
+                    {% if var_data.readOnly == true %}
+                    // check if it is read only
                     ehResult = OC_EH_ERROR;
-                }{% endif %}
-                {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-                {
-                    // check the maximum range
-                    update_ok = false;
-                    std::cout << "\t\t" << "property '{{var}}' value exceed max :" << {{var_data.maximum}} << " value: " <<value << std::endl;
-                    ehResult = OC_EH_ERROR;
-                }{% endif %}
-                if (update_ok)
-                {
+                    std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+                    {% endif %}{% endif %}
+                    {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
+                    {
+                        // check the minimum range
+                        std::cout << "\t\t" << "property '{{var}}' value smaller than minimum :" << {{var_data.minimum}} << " value: " << value << std::endl;
+                        ehResult = OC_EH_ERROR;
+                    }{% endif %}
+                    {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
+                    {
+                        // check the maximum range
+                        std::cout << "\t\t" << "property '{{var}}' value exceed max :" << {{var_data.maximum}} << " value: " <<value << std::endl;
+                        ehResult = OC_EH_ERROR;
+                    }{% endif %}
+                }
+            }
+            catch (std::exception& e)
+            {
+                std::cout << e.what() << std::endl;
+            }{% endif %} 
+            {% endfor %} 
+            // TODO add check on array contents out of range, etc..
+            
+            if (ehResult == OC_EH_OK)
+            {
+                // no error: assign the variables
+                {% for var, var_data in query_properties(json_data, path).items() -%}
+                {% if var_data.type == "boolean" %}
+                try {
                     if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
                     {
                         std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
@@ -306,34 +309,95 @@ class c{{path|variablesyntax}}Resource : public Resource
                         std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
                     }
                 }
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif -%}
-            {% if var_data.type == "string" %} 
-            try {
-                if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+                catch (std::exception& e)
                 {
-                    std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
+                    std::cout << e.what() << std::endl;
+                }{% endif -%}
+                {% if var_data.type == "number" %}
+                try {
+                    // value exist in payload
+                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
+                    }  
+                    else
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+                    }
                 }
-                else
+                catch (std::exception& e)
                 {
-                    std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+                    std::cout << e.what() << std::endl;
+                }{% endif -%}
+                {% if var_data.type == "integer" %} 
+                try {
+                    // value exist in payload
+                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+                    {
+                        std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+                    }
                 }
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif -%}
-            
-            // TODO array            
-            
-            {% endfor %} 
-
+                catch (std::exception& e)
+                {
+                    std::cout << e.what() << std::endl;
+                }{% endif -%}
+                {% if var_data.type == "string" %} 
+                try {
+                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+                    }
+                }
+                catch (std::exception& e)
+                {
+                    std::cout << e.what() << std::endl;
+                }{% endif -%}
+                {% if var_data.type == "array" %} 
+                // array only works for integer, boolean, numbers and strings
+                // TODO: make it also work with array of objects
+                try {
+                    if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+                    {
+                        rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}});
+                        int first = 1;
+                        std::cout << "\t\t" << "property '{{var}}' : " ;
+                        for(auto myvar: m_var_value{{var|variablesyntax}})
+                        {
+                            if(first)
+                            {
+                                std::cout << myvar;
+                                first = 0;
+                            }
+                            else
+                            {
+                                std::cout << "," << myvar;
+                            }
+                        }
+                        std::cout <<  std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+                    }
+                }
+                catch (std::exception& e)
+                {
+                    std::cout << e.what() << std::endl;
+                }{% endif %}
+            {% endfor %}
+            }            
             return ehResult;            
         }
     {% endif -%}
+    
         {% endfor -%}
         // resource types and interfaces as array..
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
@@ -343,7 +407,7 @@ class c{{path|variablesyntax}}Resource : public Resource
         int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
         ObservationIds m_interestedObservers;        
         
-        // membervariables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
+        // member variables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
         {% if var_data.type == "array" %}
         {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
         {% else -%}
@@ -444,7 +508,14 @@ class c{{path|variablesyntax}}Resource : public Resource
                         if (handle_post)
                         {
                             ehResult = post(queries, request->getResourceRepresentation());
-                            pResponse->setResourceRepresentation(get(queries), "");
+                            if (ehResult == OC_EH_OK)
+                            {
+                                pResponse->setResourceRepresentation(get(queries), "");
+                            }
+                            else
+                            {
+                                 pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                            }
                             if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                             {                                
                                 // TODO: if there are observers inform the observers

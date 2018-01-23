@@ -17,12 +17,13 @@ The generated code acts as an simulator:
             - post function to assign the variables from the request payload
                 - single type: integer, number and strings 
                 - arrays 
+                    - array members are set for an GET
+                    - array members are retrieved from an POST
                     - only arrays of a single type are handled.
                         e.g. array of int, array of strings, array of number
                         NOT handled: array of objects.
-                    - array members are NOT set by an POST
-                - checks on minimum, maximum and readOnly, no update of the value if this occurs
-                    - TODO: do all the checks first before updating any variable   
+                        - TODO: add complex objecs, see garage example of how to next objects (see client and server side)
+                - checks on minimum, maximum and readOnly, no update of the value if this occurs 
                 - check if the correct interface is used (oic.if.a or oic.if.rw)
     - main 
         - creates all classes
@@ -57,6 +58,8 @@ The generated code acts as an simulator:
 
 # notes:
 - only tested on windows
+- readOnly params like: "precision", "maximumsaturation" from oic.r.colour.chroma is crashing the device when running the CTT
+    - to avoid this: remove these properties from the generated device.
 
 
 ## SCONS adaption in resource/examples

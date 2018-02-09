@@ -65,11 +65,15 @@ std::string  gDeviceName = "{{json_data['info']['title']}}";
 std::string  gDeviceType = "{{device_type}}";
 std::string  gSpecVersion = "ocf.1.0.0";
 //std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
+#if defined(_WIN32)
 #pragma warning( push ) 
 #pragma warning( disable : 4592)
+#endif
 std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.sh.1.3.0"};
 //std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
+#if defined(_WIN32)
 #pragma warning( pop )
+#endif
 
 std::string  gProtocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 // OCPlatformInfo Contains all the platform info to be stored
@@ -177,6 +181,7 @@ class c{{path|variablesyntax}}Resource : public Resource
         */
         OCRepresentation get(QueryParamsMap queries)
         {        
+            OC_UNUSED(queries);
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "boolean" %}
             m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
@@ -206,6 +211,7 @@ class c{{path|variablesyntax}}Resource : public Resource
         OCEntityHandlerResult post(QueryParamsMap queries, const OCRepresentation& rep)
         {
             OCEntityHandlerResult ehResult = OC_EH_OK;
+            OC_UNUSED(queries);
             {% for var, var_data in query_properties(json_data, path).items() -%}
             {% if var_data.type == "boolean" %}
             try {
@@ -601,7 +607,7 @@ class IoTServer
 
 
 /**
-*  intialize platform
+*  initialize platform
 *  initializes the oic/p resource
 */
 void initializePlatform()
@@ -773,12 +779,13 @@ FILE* server_fopen(const char* path, const char* mode)
 }
 
 
-#ifdef LINUX
+#ifdef __unix__
 // global needs static, otherwise it can be compiled out and then Ctrl-C does not work
 static int quit = 0;
 // handler for the signal to stop the application
 void handle_signal(int signal)
 {
+    OC_UNUSED(signal);
     quit = 1;
 }
 #endif
@@ -804,7 +811,7 @@ int main()
     std::cout << "platform independent: " <<  gProtocolIndependentID << std::endl;
 
 
-#ifdef LINUX
+#ifdef __unix__
     struct sigaction sa;
     sigfillset(&sa.sa_mask);
     sa.sa_flags = 0;
@@ -818,8 +825,7 @@ int main()
         usleep(2000000);
     }
     while (quit != 1);
-    // delete the server
-    delete IoTServer;
+    
 #endif
     
     

@@ -8,7 +8,7 @@
 #    2.  Redistributions in binary form must reproduce the above copyright notice,
 #        this list of conditions and the following disclaimer in the documentation and/or other materials provided
 #        with the distribution.
-#         
+#
 #    THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
 #    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
 #    WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
@@ -21,8 +21,8 @@
 #############################
 
 
-import time 
-import os    
+import time
+import os
 import json
 import random
 import sys
@@ -40,7 +40,7 @@ from shutil import copyfile
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
                     (sys.version_info[0], sys.version_info[1]))
-#try: 
+#try:
 #    from swagger_spec_validator.validator20 import validate_spec
 #except:
 #    print("missing swagger_parser:")
@@ -48,7 +48,7 @@ if sys.version_info < (3, 5):
 #    os.system('python3 -m pip install swagger_spec_validator.validator20')
 #from swagger_spec_validator.validator20 import validate_spec
 
-#try: 
+#try:
 #    from swagger_parser import SwaggerParser
 #except:
 #    print("missing swagger_parser:")
@@ -58,7 +58,7 @@ if sys.version_info < (3, 5):
 #
 # jinja2 imports
 #
-try: 
+try:
     from jinja2 import Environment, FileSystemLoader
 except:
     print("missing jinja2:")
@@ -79,7 +79,7 @@ def load_json_schema(filename, my_dir=None):
         full_path = os.path.join(my_dir, filename)
     if os.path.isfile(full_path) is False:
         print ("json file does not exist:", full_path)
-            
+
     linestring = open(full_path, 'r').read()
     json_dict = json.loads(linestring)
 
@@ -100,8 +100,8 @@ def get_dir_list(dir, ext=None):
         cur_list = new_list
         new_list = [x for x in cur_list if x.endswith(ext)]
     return new_list
-    
-    
+
+
 def find_key(rec_dict, target, depth=0):
     """
     find key "target" in recursive dict
@@ -161,7 +161,7 @@ def find_key_link(rec_dict, target, depth=0):
             if r is not None:
                 return r #[list(r.items())]
 
-                
+
 def get_value_by_path_name( parse_tree, path_name, target):
     """
     retrieve the target key below the path_name
@@ -175,7 +175,7 @@ def get_value_by_path_name( parse_tree, path_name, target):
     value = find_key_link(json_path_dict, target)
     return value
 
-    
+
 def get_dict_by_path_name( parse_tree, path_name):
     """
     retrieve the target key below the path_name
@@ -207,8 +207,8 @@ def replace_chars(a, chars):
        string = copy_string
     return string
 
-    
-    
+
+
 def retrieve_path_value(parse_tree, path, value):
     """
     retrieves the parameter values of an path instance
@@ -226,14 +226,14 @@ def retrieve_path_value(parse_tree, path, value):
         ret_my_tree = get_dict_by_path_name(my_tree, key)
         my_tree = ret_my_tree
         #print ("Tree after:", my_tree)
-    
+
     ret_value = None
     if my_tree is not None:
         ret_value = my_tree[value]
         #print ("found value:",ret_value)
     return ret_value
-    
-    
+
+
 def retrieve_path_dict(parse_tree, path):
     """
     retrieves the parameter values of an path instance
@@ -250,10 +250,10 @@ def retrieve_path_dict(parse_tree, path):
         ret_my_tree = get_dict_by_path_name(my_tree, key)
         my_tree = ret_my_tree
         #print ("Tree after:", my_tree)
-    
+
     return my_tree
-    
-    
+
+
 def parameter_names(parse_tree, path, value):
     """
     retrieves the parameter values of an path instance
@@ -274,16 +274,16 @@ def parameter_names(parse_tree, path, value):
         #    else:
         #        path_names += ", " + parameter_data["name"]
     return path_names
-    
-    
+
+
 def path_names(parse_tree, path):
     return parameter_names(parse_tree, path, "path")
 
-    
+
 def query_names(parse_tree, path):
     return parameter_names(parse_tree, path, "query")
-    
-    
+
+
 def query_ref(parse_tree, parameter_ref, value):
     """
     find the reference of the query value
@@ -300,7 +300,7 @@ def query_ref(parse_tree, parameter_ref, value):
         return parameter_block[value]
     except:
         return ""
-        
+
 
 def swagger_rt(json_data):
     """
@@ -323,8 +323,8 @@ def swagger_rt(json_data):
             except:
                 pass
     return rt_values
-    
-    
+
+
 def swagger_if(json_data, input_path):
     """
     get the if value from the schema that is referenced by the path in get (or put)
@@ -333,8 +333,8 @@ def swagger_if(json_data, input_path):
     :return: list of if values
     """
     return swagger_property_data_schema(json_data, input_path, "if")
-    
-    
+
+
 def swagger_property_data_schema(json_data, input_path, name):
     """
     get the if value from the schema that is referenced by the path in get (or put)
@@ -356,28 +356,28 @@ def swagger_property_data_schema(json_data, input_path, name):
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
                     pass
-            # get the example       
+            # get the example
             try:
                 example = path_item["get"]["responses"]["200"]["x-example"]
             except:
                 try:
                     example = path_item["post"]["responses"]["200"]["x-example"]
                 except:
-                    pass        
-                    
-                    
+                    pass
+
+
             if schema is not None:
-                print("swagger_property_data_schema: schema", schema) 
+                print("swagger_property_data_schema: schema", schema)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
                         #print("swagger_property_data_schema: found", def_item)
                         name_block = find_key_link(def_item, name)
-                        print("swagger_property_data_schema: found", name_block) 
+                        print("swagger_property_data_schema: found", name_block)
                         if name_block is not None:
                             # get it from the schema::enum
-                            try: 
+                            try:
                                 enum_values = name_block["items"]["enum"]
                                 for enum_value in enum_values:
                                     data_values.append(enum_value)
@@ -387,7 +387,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                                     default_values = name_block["default"]
                                     for default_value in default_values:
                                         data_values.append(default_value)
-                                
+
                                 except:
                                     # get it from the example
                                     if example is not None:
@@ -397,13 +397,13 @@ def swagger_property_data_schema(json_data, input_path, name):
                                                 data_values.append(default_value)
                                         except:
                                             pass
-                                
+
             else:
                 print("swagger_property_data: schema not found:", input_path)
-    
+
     return data_values
-    
-    
+
+
 def swagger_property_names(json_data, input_path):
     """
     get the properties  from the schema that is referenced by the path in get (or put)
@@ -424,25 +424,25 @@ def swagger_property_names(json_data, input_path):
                 except:
                     pass
             if schema is not None:
-                print("swagger_property_names: schema", schema) 
+                print("swagger_property_names: schema", schema)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
                         #print("swagger_property_names: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
-                        print("swagger_property_names: found", prop_block) 
+                        print("swagger_property_names: found", prop_block)
                         if prop_block is not None:
                             for prop_name, prop in prop_block.items():
                                 prop_values.append(prop_name)
-                                
+
             else:
                 print("swagger_property_names: schema not found:", input_path)
-    
+
     return prop_values
-    
-    
-    
+
+
+
 def swagger_properties(json_data, input_path):
     """
     get the properties  from the schema that is referenced by the path in get (or put)
@@ -464,7 +464,7 @@ def swagger_properties(json_data, input_path):
                     pass
             if schema is not None:
                 schema_ref = schema["$ref"]
-                print("swagger_properties: schema", schema, schema_ref) 
+                print("swagger_properties: schema", schema, schema_ref)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
@@ -476,9 +476,9 @@ def swagger_properties(json_data, input_path):
                         return prop_block
             else:
                 print("swagger_properties: schema not found:", input_path)
-    
+
     return prop_block
-        
+
 def query_rt_from_path(parse_tree, path):
     """
     find the rt from path level
@@ -491,10 +491,10 @@ def query_rt_from_path(parse_tree, path):
     found_values = swagger_rt(parse_tree)
     for value in found_values:
         if value[0] == path:
-            return value[1] 
+            return value[1]
     return ""
 
-    
+
 
 def query_path(parse_tree, my_path, value):
     """
@@ -512,10 +512,10 @@ def query_path(parse_tree, my_path, value):
         return parameter_block[value]
     except:
         return ""
-        
+
 #
 #  jinga custom functions : tests
-#       
+#
 def ishasbody(method):
     """
     check if the method can have an body: e.g. put, post and patch
@@ -524,12 +524,11 @@ def ishasbody(method):
     """
     if method in ["put", "post", "patch"]:
         return True
-    return False  
-    
-  
+    return False
+
 #
 #  jinga custom functions: filter
-#       
+#
 def variablesyntax(input_string):
     """
     replace chars so that it can be used as an variable
@@ -538,11 +537,10 @@ def variablesyntax(input_string):
     """
     chars_to_replace = "/\  +-*^|%$=~@()[].,"
     return "_"+replace_chars(input_string, chars_to_replace )
-    
-  
+
 #
 #  jinga custom functions: filter
-#       
+#
 def variableforbidden(input_string):
     """
     replace chars so that it can be used as an variable
@@ -552,7 +550,7 @@ def variableforbidden(input_string):
     if input_string in ["if", "var", "function", "null"]:
         return "_"+input_string
     return input_string
-    
+
 def convert_to_cplus_type(json_type):
     """
     convert the json type to c++ type
@@ -568,10 +566,10 @@ def convert_to_cplus_type(json_type):
         return "int"  # uint8_t ?
     if json_type in ["string"]:
         return "std::string"
-        
+
     return "void*"
-    
-    
+
+
 def convert_to_cplus_array_type(json_data):
     """
     convert the json type to c++ type
@@ -583,9 +581,9 @@ def convert_to_cplus_array_type(json_data):
         return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
     except:
         pass
-        
+
     return "void*"
-    
+
 def convert_to_c_type(json_type):
     """
     convert the json type to c type
@@ -593,7 +591,7 @@ def convert_to_c_type(json_type):
     :return: c type.
     """
     print ("convert_to_c_type: json_type:", json_type)
-    
+
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -602,10 +600,10 @@ def convert_to_c_type(json_type):
         return "int"  # uint8_t ?
     if json_type in ["string"]:
         return "char *"
-        
+
     return "void*"
-    
-    
+
+
 def convert_to_cplus_string_array(my_array):
     """
     convert the json type to c type
@@ -619,19 +617,19 @@ def convert_to_cplus_string_array(my_array):
     elif isinstance(my_array, list):
         for item in my_array:
             if counter  > 0:
-               my_ret += ',' 
+               my_ret += ','
             my_ret += '"'+str(item)+'"'
             counter +=1
     else:
         pass
-        
+
     my_ret += '}'
-    
-        
+
+
     return my_ret
-    
-    
-    
+
+
+
 def convert_array_size(my_array):
     """
     convert the json type to c type
@@ -645,10 +643,10 @@ def convert_array_size(my_array):
         return len(my_array)
     else:
         pass
-              
+
     return 0
-    
-    
+
+
 #
 #   main of script
 #
@@ -689,7 +687,7 @@ parser.add_argument( "-manufacturer"  , "--manufacturer"  , default="ocf",
                      help="manufacturer name",  nargs='?', const="", required=False)
 parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
                      help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
-                     
+
 args = parser.parse_args()
 
 
@@ -705,31 +703,31 @@ print("device type   : " + str(args.devicetype))
 print("manufacturer  : " + str(args.manufacturer))
 print("")
 
-try: 
+try:
     #if os.path.isfile(args.swagger) is False:
     #    print( "swagger file not found:", args.swagger)
-   
+
     if os.path.exists(args.template_dir) is False:
-        print( "template_dir not found:", args.template_dir) 
-   
+        print( "template_dir not found:", args.template_dir)
+
     full_path = os.path.join(args.template_dir, args.template)
     #if os.path.exists((full_path) is False:
-    #    print( "template not found:", args.template) 
-   
-    json_data = load_json_schema(args.swagger)    
+    #    print( "template not found:", args.template)
+
+    json_data = load_json_schema(args.swagger)
     object_string = json.dumps(json_data, sort_keys=True, indent=2, separators=(',', ': '))
     print ("parse tree of input file:")
     print (object_string)
-    
+
     template_files = get_dir_list(full_path, ".jinja2")
     env = Environment(loader=FileSystemLoader(full_path))
     env.tests['hasbody'] = ishasbody
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
-    env.filters['convert_to_c_type'] = convert_to_c_type   
-    env.filters['convert_to_cplus_type'] = convert_to_cplus_type     
+    env.filters['convert_to_c_type'] = convert_to_c_type
+    env.filters['convert_to_cplus_type'] = convert_to_cplus_type
     env.filters['convert_to_cplus_array_type'] =convert_to_cplus_array_type
-    
+
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
     env.filters['convert_array_size'] = convert_array_size
 
@@ -745,23 +743,23 @@ try:
         template_environment.globals['query_property_names'] = swagger_property_names
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties
-        
+
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
-        text = template_environment.render( json_data=json_data, 
-            version=my_version, 
+        text = template_environment.render( json_data=json_data,
+            version=my_version,
             uuid= str(args.uuid),
             manufacturer= str(args.manufacturer),
             device_type= str(args.devicetype),
             input_file = args.swagger )
-        
+
         if args.out_dir is not None:
             outputfile = template_file.replace(".jinja2", "")
             out_file = os.path.join(args.out_dir, outputfile)
             f = open(out_file, 'w')
             f.write(text)
             f.close()
-            
+
     # copy none jinja2 files from Template dir
     all_files = get_dir_list(full_path)
     for file in all_files:
@@ -773,10 +771,9 @@ try:
         destination_file =  os.path.join(args.out_dir, file)
         print ("copying template file: ", file)
         copyfile(source_file, destination_file)
-     
+
 
 except:
     print ("error in ", args.swagger)
     traceback.print_exc()
     pass
-    

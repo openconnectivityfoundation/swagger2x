@@ -529,6 +529,18 @@ def ishasbody(method):
 #
 #  jinga custom functions: filter
 #
+def classsyntax(input_string):
+    """
+    replace invalid chars so that it can be used and capitalize first char
+    :param input_string: string to be adjusted
+    :return: adjusted string
+    """
+    chars_to_replace = "/\  +-*^|%$=~@()[].,"
+    return replace_chars(input_string, chars_to_replace).capitalize()
+
+#
+#  jinga custom functions: filter
+#
 def variablesyntax(input_string):
     """
     replace chars so that it can be used as an variable
@@ -722,6 +734,7 @@ try:
     template_files = get_dir_list(full_path, ".jinja2")
     env = Environment(loader=FileSystemLoader(full_path))
     env.tests['hasbody'] = ishasbody
+    env.filters['classsyntax'] = classsyntax
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
     env.filters['convert_to_c_type'] = convert_to_c_type

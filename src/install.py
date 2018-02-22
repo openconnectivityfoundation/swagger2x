@@ -26,10 +26,9 @@ import os
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
                     (sys.version_info[0], sys.version_info[1]))
-try: 
+try:
     from jinja2 import Environment, FileSystemLoader
 except:
     print("missing jinja2:")
     print ("Trying to Install required module: jinja2")
-    os.system('python3 -m pip install jinja2')
-
+    os.system('python3 -m pip install --user jinja2')

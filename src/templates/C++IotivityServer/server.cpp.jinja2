@@ -23,7 +23,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
-#include <exception> 
+#include <exception>
 
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
@@ -66,7 +66,7 @@ std::string  gDeviceType = "{{device_type}}";
 std::string  gSpecVersion = "ocf.1.0.0";
 //std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
 #if defined(_WIN32)
-#pragma warning( push ) 
+#pragma warning( push )
 #pragma warning( disable : 4592)
 #endif
 std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.sh.1.3.0"};
@@ -110,309 +110,43 @@ class Resource
 {
     protected:
     OCResourceHandle m_resourceHandle;
-    OCRepresentation m_rep;
-    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)=0;
+    OC::OCRepresentation m_rep;
+    virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request)=0;
 };
 
 
-{% for path, path_data in json_data['paths'].items() %}  
+{% for path, path_data in json_data['paths'].items() %}
 
 class c{{path|variablesyntax}}Resource : public Resource
 {
     public:
         /*
-        * constructor
-        */
-        c{{path|variablesyntax}}Resource()
-        {
-            std::cout << "- Running: c{{path|variablesyntax}}Resource constructor" << std::endl;
-            std::string resourceURI = "{{path}}";
-            
-            // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
-            {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {% endif %}
-            {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif %}
-            {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif %}
-            {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif %} 
-            {% if var_data.type == "array" %}// initialize vector {{var}}
-            {% for var_value in swagger_property_data_schema(json_data, path, var)  %}
-            {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}"); {% else %}
-            m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif -%} {% endfor %}
-            {% endif -%} 
-            {% endfor %}
-        
-            EntityHandler cb = std::bind(&c{{path|variablesyntax}}Resource::entityHandler, this,PH::_1);
-            //uint8_t resourceProperty = 0;
-            OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
-                resourceURI,
-                m_RESOURCE_TYPE[0],
-                m_RESOURCE_INTERFACE[0],
-                cb,
-                OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
-                
-            // add the additional interfaces
-            std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
-            std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
-            for( int a = 1; a < m_nr_resource_interfaces; a++)
-            {
-                OCStackResult result1 = OCBindResourceInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
-                if (result1 != OC_STACK_OK)
-                    std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
-            }
-            // add the additional resource types
-            for( int a = 1; a < m_nr_resource_types; a++ )
-            {
-                OCStackResult result2 = OCBindResourceTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
-                if (result2 != OC_STACK_OK)
-                    std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
-            }    
-
-            if(OC_STACK_OK != result)
-            {
-                throw std::runtime_error(
-                    std::string("c{{path|variablesyntax}}Resource failed to start")+std::to_string(result));
-            }
-        }
+         * constructor
+         */
+        c{{path|variablesyntax}}Resource();
     private:
-    {% for methodName, method_data in path_data.items() -%}
-    {% if methodName == "get" %} 
         /*
-        * function to make the payload for the retrieve function (e.g. GET) {{path}}
-        * @param queries  the query parameters for this call
-        */
-        OCRepresentation get(QueryParamsMap queries)
-        {        
-            OC_UNUSED(queries);
-            {% for var, var_data in query_properties(json_data, path).items() -%}
-            {% if var_data.type == "boolean" %}
-            m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-            {% if var_data.type == "number" %}
-            m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-            {% if var_data.type == "integer" %} 
-            m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-            {% if var_data.type == "string" %} 
-            m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-            {% if var_data.type == "array" %} 
-            m_rep.setValue(m_var_name{{var|variablesyntax}},  m_var_value{{var|variablesyntax}} ); {% endif -%}
-            {% endfor %}
-        
-            return m_rep;
-        }
-    {% endif -%}
-    {% endfor -%}
+         * function to make the payload for the retrieve function (e.g. GET) {{path}}
+         * @param queries  the query parameters for this call
+         */
+        OCRepresentation get(OC::QueryParamsMap queries);
 
-    {% for methodName, method_data in path_data.items() -%}
-    {% if methodName == "post" %} 
         /*
-        * function to parse the payload for the update function (e.g. POST) {{path}}
-        * @param queries  the query parameters for this call
-        * @param rep  the response to get the property values from
-        * @return OCEntityHandlerResult ok or not ok indication
-        */
-        OCEntityHandlerResult post(QueryParamsMap queries, const OCRepresentation& rep)
-        {
-            OCEntityHandlerResult ehResult = OC_EH_OK;
-            OC_UNUSED(queries);
-            {% for var, var_data in query_properties(json_data, path).items() -%}
-            {% if var_data.type == "boolean" %}
-            try {
-                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-                {
-                    // value exist in payload
-                    {% if var_data.readOnly -%}
-                    {% if var_data.readOnly == true %}
-                    // check if it is read only
-                    ehResult = OC_EH_ERROR;
-                    std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-                    {% endif %}{% endif %}
-                }  
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif -%}
-            {% if var_data.type == "number" %}
-            try {
-                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-                {
-                    // allocate the variable
-                    {{var_data.type|convert_to_cplus_type}} value;
-                    // get the actual value from the payload
-                    rep.getValue(m_var_name{{var|variablesyntax}}, value);
-                    // value exist in payload
-                    {% if var_data.readOnly -%}
-                    {% if var_data.readOnly == true %}
-                    // check if it is read only
-                    ehResult = OC_EH_ERROR;
-                    std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-                    {% endif %}{% endif %}
-                    {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-                    {
-                        // check the minimum range
-                        std::cout << "\t\t" << "property '{{var}}' value smaller than minimum" << {{var_data.minimum}} << " value: " << value << std::endl;
-                        ehResult = OC_EH_ERROR;
-                    } {% endif %}
-                    {% if var_data.maximum %}if (value > {{var_data.maximum}} )
-                    {
-                        // check the maximum range
-                        std::cout << "\t\t" << "property '{{var}}' value exceed max" << {{var_data.minimum}} << " value: " << value << std::endl;
-                        ehResult = OC_EH_ERROR;
-                    }{% endif %}
-                }  
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif -%}
-            {% if var_data.type == "integer" %} 
-            try {
-                if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-                {
-                    // allocate the variable
-                    {{var_data.type|convert_to_cplus_type}} value;
-                    // get the actual value from the payload
-                    rep.getValue(m_var_name{{var|variablesyntax}}, value);
-            
-                    // value exist in payload
-                    {% if var_data.readOnly -%}
-                    {% if var_data.readOnly == true %}
-                    // check if it is read only
-                    ehResult = OC_EH_ERROR;
-                    std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-                    {% endif %}{% endif %}
-                    {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-                    {
-                        // check the minimum range
-                        std::cout << "\t\t" << "property '{{var}}' value smaller than minimum :" << {{var_data.minimum}} << " value: " << value << std::endl;
-                        ehResult = OC_EH_ERROR;
-                    }{% endif %}
-                    {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-                    {
-                        // check the maximum range
-                        std::cout << "\t\t" << "property '{{var}}' value exceed max :" << {{var_data.maximum}} << " value: " <<value << std::endl;
-                        ehResult = OC_EH_ERROR;
-                    }{% endif %}
-                }
-            }
-            catch (std::exception& e)
-            {
-                std::cout << e.what() << std::endl;
-            }{% endif %} 
-            {% endfor %} 
-            // TODO add check on array contents out of range, etc..
-            
-            if (ehResult == OC_EH_OK)
-            {
-                // no error: assign the variables
-                {% for var, var_data in query_properties(json_data, path).items() -%}
-                {% if var_data.type == "boolean" %}
-                try {
-                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                    {
-                        std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                    }
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << e.what() << std::endl;
-                }{% endif -%}
-                {% if var_data.type == "number" %}
-                try {
-                    // value exist in payload
-                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
-                    }  
-                    else
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                    }
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << e.what() << std::endl;
-                }{% endif -%}
-                {% if var_data.type == "integer" %} 
-                try {
-                    // value exist in payload
-                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                    {
-                        std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                    }
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << e.what() << std::endl;
-                }{% endif -%}
-                {% if var_data.type == "string" %} 
-                try {
-                    if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                    }
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << e.what() << std::endl;
-                }{% endif -%}
-                {% if var_data.type == "array" %} 
-                // array only works for integer, boolean, numbers and strings
-                // TODO: make it also work with array of objects
-                try {
-                    if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-                    {
-                        rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}});
-                        int first = 1;
-                        std::cout << "\t\t" << "property '{{var}}' : " ;
-                        for(auto myvar: m_var_value{{var|variablesyntax}})
-                        {
-                            if(first)
-                            {
-                                std::cout << myvar;
-                                first = 0;
-                            }
-                            else
-                            {
-                                std::cout << "," << myvar;
-                            }
-                        }
-                        std::cout <<  std::endl;
-                    }
-                    else
-                    {
-                        std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-                    }
-                }
-                catch (std::exception& e)
-                {
-                    std::cout << e.what() << std::endl;
-                }{% endif %}
-            {% endfor %}
-            }            
-            return ehResult;            
-        }
-    {% endif -%}
-    
-        {% endfor -%}
+         * function to parse the payload for the update function (e.g. POST) {{path}}
+         * @param queries  the query parameters for this call
+         * @param rep  the response to get the property values from
+         * @return OCEntityHandlerResult ok or not ok indication
+         */
+        OCEntityHandlerResult post(OC::QueryParamsMap queries, const OC::OCRepresentation& rep);
+
         // resource types and interfaces as array..
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
-        std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array) 
+        std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array)
         std::string m_IF_UPDATE[3] = {"oic.if.a", "oic.if.rw", "oic.if.baseline"}; // updateble interfaces
         int m_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
         int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
-        ObservationIds m_interestedObservers;        
-        
+        ObservationIds m_interestedObservers;
+
         // member variables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
         {% if var_data.type == "array" %}
         {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
@@ -421,190 +155,478 @@ class c{{path|variablesyntax}}Resource : public Resource
         {% endif -%}
         std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
         {% endfor -%}
-           
+
     protected:
         /*
-        * function to check if the interface is
-        * @param  interface_name the interface name used during the request
-        * @return true: updatable interface
-        */
-        bool in_updatable_interfaces(std::string interface_name)
-        {
-            for (int i=0; i<3; i++)
-            {
-                if (m_IF_UPDATE[i].compare(interface_name) == 0)
-                    return true;
-            }
-            return false;
-        }
-    
+         * function to check if the interface is
+         * @param  interface_name the interface name used during the request
+         * @return true: updatable interface
+         */
+        bool in_updatable_interfaces(std::string interface_name);
+
         /*
-        * the entity handler for this resource
-        * @param request the incoming request to handle
-        * @return OCEntityHandlerResult ok or not ok indication
-        */
-        virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OCResourceRequest> request)
+         * the entity handler for this resource
+         * @param request the incoming request to handle
+         * @return OCEntityHandlerResult ok or not ok indication
+         */
+        virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
+};
+
+c{{path|variablesyntax}}Resource::c{{path|variablesyntax}}Resource()
+{
+    std::cout << "- Running: c{{path|variablesyntax}}Resource constructor" << std::endl;
+    std::string resourceURI = "{{path}}";
+
+    // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
+    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {% endif %}
+    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif %}
+    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif %}
+    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif %}
+    {% if var_data.type == "array" %}// initialize vector {{var}}
+    {% for var_value in swagger_property_data_schema(json_data, path, var)  %}
+    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}"); {% else %}
+    m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif -%} {% endfor %}
+    {% endif -%}
+    {% endfor %}
+
+    EntityHandler cb = std::bind(&c{{path|variablesyntax}}Resource::entityHandler, this,PH::_1);
+    //uint8_t resourceProperty = 0;
+    OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
+        resourceURI,
+        m_RESOURCE_TYPE[0],
+        m_RESOURCE_INTERFACE[0],
+        cb,
+        OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
+
+    // add the additional interfaces
+    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
+    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
+    for( int a = 1; a < m_nr_resource_interfaces; a++)
+    {
+        OCStackResult result1 = OCBindResourceInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
+        if (result1 != OC_STACK_OK)
+            std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
+    }
+    // add the additional resource types
+    for( int a = 1; a < m_nr_resource_types; a++ )
+    {
+        OCStackResult result2 = OCBindResourceTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
+        if (result2 != OC_STACK_OK)
+            std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
+    }
+
+    if(OC_STACK_OK != result)
+    {
+        throw std::runtime_error(
+            std::string("c{{path|variablesyntax}}Resource failed to start")+std::to_string(result));
+    }
+}
+
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" %}
+/*
+* function to make the payload for the retrieve function (e.g. GET) {{path}}
+* @param queries  the query parameters for this call
+*/
+OCRepresentation c{{path|variablesyntax}}Resource::get(QueryParamsMap queries)
+{
+    OC_UNUSED(queries);
+    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {% if var_data.type == "boolean" %}
+    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
+    {% if var_data.type == "number" %}
+    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
+    {% if var_data.type == "integer" %}
+    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
+    {% if var_data.type == "string" %}
+    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
+    {% if var_data.type == "array" %}
+    m_rep.setValue(m_var_name{{var|variablesyntax}},  m_var_value{{var|variablesyntax}} ); {% endif -%}
+    {% endfor %}
+
+    return m_rep;
+}
+{% endif -%}
+{% endfor -%}
+
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "post" %}
+/*
+* function to parse the payload for the update function (e.g. POST) {{path}}
+* @param queries  the query parameters for this call
+* @param rep  the response to get the property values from
+* @return OCEntityHandlerResult ok or not ok indication
+*/
+OCEntityHandlerResult c{{path|variablesyntax}}Resource::post(QueryParamsMap queries, const OCRepresentation& rep)
+{
+    OCEntityHandlerResult ehResult = OC_EH_OK;
+    OC_UNUSED(queries);
+    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {% if var_data.type == "boolean" %}
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
         {
-            OCEntityHandlerResult ehResult = OC_EH_ERROR;
-            //std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
-                          
-            if(request)
+            // value exist in payload
+            {% if var_data.readOnly -%}
+            {% if var_data.readOnly == true %}
+            // check if it is read only
+            ehResult = OC_EH_ERROR;
+            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+            {% endif %}{% endif %}
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }{% endif -%}
+    {% if var_data.type == "number" %}
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+        {
+            // allocate the variable
+            {{var_data.type|convert_to_cplus_type}} value;
+            // get the actual value from the payload
+            rep.getValue(m_var_name{{var|variablesyntax}}, value);
+            // value exist in payload
+            {% if var_data.readOnly -%}
+            {% if var_data.readOnly == true %}
+            // check if it is read only
+            ehResult = OC_EH_ERROR;
+            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+            {% endif %}{% endif %}
+            {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
             {
-                std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
-                          << request->getResourceUri() << std::endl;
-                          
-                // Check for query params (if any)
-                QueryParamsMap queries = request->getQueryParameters();
-                if (!queries.empty())
-                {
-                    std::cout << "\nQuery processing up to entityHandler" << std::endl;
-                }
-                for (auto it : queries)
-                {
-                    std::cout << "Query key: " << it.first << " value : " << it.second
-                            << std::endl;
-                } 
-                // get the value, so that we can AND it to check which flags are set
-                int requestFlag = request->getRequestHandlerFlag();                
+                // check the minimum range
+                std::cout << "\t\t" << "property '{{var}}' value smaller than minimum" << {{var_data.minimum}} << " value: " << value << std::endl;
+                ehResult = OC_EH_ERROR;
+            } {% endif %}
+            {% if var_data.maximum %}if (value > {{var_data.maximum}} )
+            {
+                // check the maximum range
+                std::cout << "\t\t" << "property '{{var}}' value exceed max" << {{var_data.minimum}} << " value: " << value << std::endl;
+                ehResult = OC_EH_ERROR;
+            }{% endif %}
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }{% endif -%}
+    {% if var_data.type == "integer" %}
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+        {
+            // allocate the variable
+            {{var_data.type|convert_to_cplus_type}} value;
+            // get the actual value from the payload
+            rep.getValue(m_var_name{{var|variablesyntax}}, value);
 
-                if(requestFlag & RequestHandlerFlag::RequestFlag)
-                {
-                    // request flag is set
-                    auto pResponse = std::make_shared<OC::OCResourceResponse>();
-                    pResponse->setRequestHandle(request->getRequestHandle());
-                    pResponse->setResourceHandle(request->getResourceHandle());
+            // value exist in payload
+            {% if var_data.readOnly -%}
+            {% if var_data.readOnly == true %}
+            // check if it is read only
+            ehResult = OC_EH_ERROR;
+            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+            {% endif %}{% endif %}
+            {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
+            {
+                // check the minimum range
+                std::cout << "\t\t" << "property '{{var}}' value smaller than minimum :" << {{var_data.minimum}} << " value: " << value << std::endl;
+                ehResult = OC_EH_ERROR;
+            }{% endif %}
+            {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
+            {
+                // check the maximum range
+                std::cout << "\t\t" << "property '{{var}}' value exceed max :" << {{var_data.maximum}} << " value: " <<value << std::endl;
+                ehResult = OC_EH_ERROR;
+            }{% endif %}
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }{% endif %}
+    {% endfor %}
+    // TODO add check on array contents out of range, etc..
 
-                    if(request->getRequestType() == "GET")
+    if (ehResult == OC_EH_OK)
+    {
+        // no error: assign the variables
+        {% for var, var_data in query_properties(json_data, path).items() -%}
+        {% if var_data.type == "boolean" %}
+        try {
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            {
+                std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
+            }
+            else
+            {
+                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }{% endif -%}
+        {% if var_data.type == "number" %}
+        try {
+            // value exist in payload
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            {
+                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
+            }
+            else
+            {
+                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }{% endif -%}
+        {% if var_data.type == "integer" %}
+        try {
+            // value exist in payload
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            {
+                std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
+            }
+            else
+            {
+                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }{% endif -%}
+        {% if var_data.type == "string" %}
+        try {
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            {
+                std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
+            }
+            else
+            {
+                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }{% endif -%}
+        {% if var_data.type == "array" %}
+        // array only works for integer, boolean, numbers and strings
+        // TODO: make it also work with array of objects
+        try {
+            if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+            {
+                rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}});
+                int first = 1;
+                std::cout << "\t\t" << "property '{{var}}' : " ;
+                for(auto myvar: m_var_value{{var|variablesyntax}})
+                {
+                    if(first)
                     {
-                        std::cout<<"c{{path|variablesyntax}}Resource Get Request"<< std::endl;
-
-                        pResponse->setResourceRepresentation(get(queries), "");
-                        if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                        {
-                            ehResult = OC_EH_OK;
-                        }
+                        std::cout << myvar;
+                        first = 0;
                     }
-    {% for methodName, method_data in path_data.items() -%}
-    {% if methodName == "post" %} 
-                    else if(request->getRequestType() == "POST")
-                    {
-                        std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
-                        bool  handle_post = true; 
-
-                        if (queries.size() > 0)
-                        {
-                            for (const auto &eachQuery : queries)
-                            {
-                                std::string key = eachQuery.first;
-                                if (key.compare(INTERFACE_KEY) == 0)
-                                {
-                                    std::string value = eachQuery.second;
-                                    if (in_updatable_interfaces(value) == false)
-                                    {
-                                        std::cout << "Update request received via interface: " << value
-                                                    << " . This interface is not authorized to update resource!!" << std::endl;
-                                        pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
-                                        handle_post = false;
-                                        ehResult = OC_EH_ERROR;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (handle_post)
-                        {
-                            ehResult = post(queries, request->getResourceRepresentation());
-                            if (ehResult == OC_EH_OK)
-                            {
-                                pResponse->setResourceRepresentation(get(queries), "");
-                            }
-                            else
-                            {
-                                 pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                            }
-                            if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                            {                                
-                                // TODO: if there are observers inform the observers
-                                //OCStackResult sResult;
-                                // update all observers with the new value
-                                // not sure if this is an blocking call
-                                //sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
-                                //                                               m_interestedObservers,
-                                //                                               pResponse);
-                            }
-                        }
-                    }
-                    {% endif -%}{% endfor -%}                
                     else
                     {
-                        std::cout << "c{{path|variablesyntax}}Resource unsupported request type (delete,put,..)"
-                            << request->getRequestType() << std::endl;
-                        pResponse->setResponseResult(OC_EH_ERROR);
-                        OCPlatform::sendResponse(pResponse);
-                        ehResult = OC_EH_ERROR;
+                        std::cout << "," << myvar;
                     }
                 }
-                
-                if(requestFlag & RequestHandlerFlag::ObserverFlag)
+                std::cout <<  std::endl;
+            }
+            else
+            {
+                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
+            }
+        }
+        catch (std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }{% endif %}
+    {% endfor %}
+    }
+    return ehResult;
+}
+{% endif -%}
+{% endfor -%}
+
+bool c{{path|variablesyntax}}Resource::in_updatable_interfaces(std::string interface_name)
+{
+    for (int i=0; i<3; i++)
+    {
+        if (m_IF_UPDATE[i].compare(interface_name) == 0)
+            return true;
+    }
+    return false;
+}
+
+OCEntityHandlerResult c{{path|variablesyntax}}Resource::entityHandler(std::shared_ptr<OCResourceRequest> request)
+{
+    OCEntityHandlerResult ehResult = OC_EH_ERROR;
+    //std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
+
+    if(request)
+    {
+        std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
+                  << request->getResourceUri() << std::endl;
+
+        // Check for query params (if any)
+        QueryParamsMap queries = request->getQueryParameters();
+        if (!queries.empty())
+        {
+            std::cout << "\nQuery processing up to entityHandler" << std::endl;
+        }
+        for (auto it : queries)
+        {
+            std::cout << "Query key: " << it.first << " value : " << it.second
+                    << std::endl;
+        }
+        // get the value, so that we can AND it to check which flags are set
+        int requestFlag = request->getRequestHandlerFlag();
+
+        if(requestFlag & RequestHandlerFlag::RequestFlag)
+        {
+            // request flag is set
+            auto pResponse = std::make_shared<OC::OCResourceResponse>();
+            pResponse->setRequestHandle(request->getRequestHandle());
+            pResponse->setResourceHandle(request->getResourceHandle());
+
+            if(request->getRequestType() == "GET")
+            {
+                std::cout<<"c{{path|variablesyntax}}Resource Get Request"<< std::endl;
+
+                pResponse->setResourceRepresentation(get(queries), "");
+                if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
                 {
-                    // observe flag is set
-                    std::cout << "\t\trequestFlag : Observer\n" << std::endl;
-                    ObservationInfo observationInfo = request->getObservationInfo();
-                    if(ObserveAction::ObserveRegister == observationInfo.action)
-                    {
-                        // add observer
-                        m_interestedObservers.push_back(observationInfo.obsId);
-                    }
-                    else if(ObserveAction::ObserveUnregister == observationInfo.action)
-                    {
-                        // delete observer
-                        m_interestedObservers.erase(std::remove(
-                                                                    m_interestedObservers.begin(),
-                                                                    m_interestedObservers.end(),
-                                                                    observationInfo.obsId),
-                                                                    m_interestedObservers.end());
-                    } 
-                    ehResult = OC_EH_OK;                    
+                    ehResult = OC_EH_OK;
                 }
             }
-            return ehResult;
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "post" %}
+            else if(request->getRequestType() == "POST")
+            {
+                std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
+                bool  handle_post = true;
+
+                if (queries.size() > 0)
+                {
+                    for (const auto &eachQuery : queries)
+                    {
+                        std::string key = eachQuery.first;
+                        if (key.compare(INTERFACE_KEY) == 0)
+                        {
+                            std::string value = eachQuery.second;
+                            if (in_updatable_interfaces(value) == false)
+                            {
+                                std::cout << "Update request received via interface: " << value
+                                            << " . This interface is not authorized to update resource!!" << std::endl;
+                                pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_FORBIDDEN);
+                                handle_post = false;
+                                ehResult = OC_EH_ERROR;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (handle_post)
+                {
+                    ehResult = post(queries, request->getResourceRepresentation());
+                    if (ehResult == OC_EH_OK)
+                    {
+                        pResponse->setResourceRepresentation(get(queries), "");
+                    }
+                    else
+                    {
+                         pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                    }
+                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                    {
+                        // TODO: if there are observers inform the observers
+                        //OCStackResult sResult;
+                        // update all observers with the new value
+                        // not sure if this is an blocking call
+                        //sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
+                        //                                               m_interestedObservers,
+                        //                                               pResponse);
+                    }
+                }
+            }
+            {% endif -%}{% endfor -%}
+            else
+            {
+                std::cout << "c{{path|variablesyntax}}Resource unsupported request type (delete,put,..)"
+                    << request->getRequestType() << std::endl;
+                pResponse->setResponseResult(OC_EH_ERROR);
+                OCPlatform::sendResponse(pResponse);
+                ehResult = OC_EH_ERROR;
+            }
         }
-};
+
+        if(requestFlag & RequestHandlerFlag::ObserverFlag)
+        {
+            // observe flag is set
+            std::cout << "\t\trequestFlag : Observer\n" << std::endl;
+            ObservationInfo observationInfo = request->getObservationInfo();
+            if(ObserveAction::ObserveRegister == observationInfo.action)
+            {
+                // add observer
+                m_interestedObservers.push_back(observationInfo.obsId);
+            }
+            else if(ObserveAction::ObserveUnregister == observationInfo.action)
+            {
+                // delete observer
+                m_interestedObservers.erase(std::remove(
+                                                            m_interestedObservers.begin(),
+                                                            m_interestedObservers.end(),
+                                                            observationInfo.obsId),
+                                                            m_interestedObservers.end());
+            }
+            ehResult = OC_EH_OK;
+        }
+    }
+    return ehResult;
+}
 {% endfor %}
 
 class IoTServer
 {
     public:
         /**
-        *  constructor
-        *  creates all resources from the resource classes.
-        */
-        IoTServer()
-            :
-    {% for path, path_data in json_data['paths'].items() -%}  
-        m{{path|variablesyntax}}Instance(){{ "," if not loop.last }}
-    {% endfor %}
-        {
-            std::cout << "Running IoTServer constructor" << std::endl;
-            initializePlatform();
-        }
+         *  constructor
+         *  creates all resources from the resource classes.
+         */
+        IoTServer();
 
         /**
-        *  destructor
-        *
-        */
-        ~IoTServer()
-        {
-            std::cout << "Running IoTServer destructor" << std::endl;
-            DeletePlatformInfo();
-        }
-    
+         *  destructor
+         *
+         */
+        ~IoTServer();
+
     private:
-{% for path, path_data in json_data['paths'].items() %}  
+{% for path, path_data in json_data['paths'].items() %}
         c{{path|variablesyntax}}Resource  m{{path|variablesyntax}}Instance;
 {% endfor -%}
 };
 
+IoTServer::IoTServer()
+    :{% for path, path_data in json_data['paths'].items() -%}
+{{"     " if not loop.first}}m{{path|variablesyntax}}Instance(){{ "," if not loop.last }}
+{% endfor -%}
+{
+    std::cout << "Running IoTServer constructor" << std::endl;
+    initializePlatform();
+}
+
+IoTServer::~IoTServer()
+{
+    std::cout << "Running IoTServer destructor" << std::endl;
+    DeletePlatformInfo();
+}
 
 /**
 *  initialize platform
@@ -613,9 +635,9 @@ class IoTServer
 void initializePlatform()
 {
     std::cout << "Running initializePlatform" << std::endl;
-    
+
     // initialize "oic/p"
-    
+
     std::cout << "oic/p" << std::endl;
     OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
             gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
@@ -625,7 +647,7 @@ void initializePlatform()
     {
         std::cout << "Platform Registration (oic/p) failed\n";
     }
-    
+
     // initialize "oic/d"
     std::cout << "oic/d" << std::endl;
     result = SetDeviceInfo();
@@ -656,7 +678,7 @@ void DeletePlatformInfo()
 }
 
 /**
-*  SetPlatformInfo 
+*  SetPlatformInfo
 *  Sets the platform information ("oic/p"), from the globals
 
 * @param platformID the platformID
@@ -791,7 +813,7 @@ void handle_signal(int signal)
 #endif
 
 // main application
-// starts the server 
+// starts the server
 int main()
 {
     // Create persistent storage handlers
@@ -805,7 +827,7 @@ int main()
     };
     OCPlatform::Configure(cfg);
     OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
-    
+
     std::cout << "device type: " <<  gDeviceType << std::endl;
     std::cout << "platformID: " <<  gPlatformId << std::endl;
     std::cout << "platform independent: " <<  gProtocolIndependentID << std::endl;
@@ -825,18 +847,17 @@ int main()
         usleep(2000000);
     }
     while (quit != 1);
-    
+
 #endif
-    
-    
+
+
 #if defined(_WIN32)
     IoTServer server;
     std::cout << "Press Ctrl-C to quit...." << std::endl;
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));
     OC_VERIFY(OCPlatform::stop() == OC_STACK_OK);
-#endif    
-    
+#endif
+
     return 0;
 }
-

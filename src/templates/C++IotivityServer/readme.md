@@ -2,12 +2,12 @@
 
 The generated code acts as an simulator:
 - it creates values at start update
-- handles incoming requests, 
+- handles incoming requests,
     - stores the values on POST
     - respond on GET by giving out the stored values
 
 ## what is generated:
-        
+
 - server.cpp implementation code
     - per resource an class is generated.
         - constructor
@@ -15,24 +15,26 @@ The generated code acts as an simulator:
         - has entity handler
             - get function to use the variables to create the return payload
             - post function to assign the variables from the request payload
-                - single type: integer, number and strings 
-                - arrays 
+                - single type: integer, number and strings
+                - arrays
                     - array members are set for an GET
                     - array members are retrieved from an POST
                     - only arrays of a single type are handled.
                         e.g. array of int, array of strings, array of number
                         NOT handled: array of objects.
                         - TODO: add complex objecs, see garage example of how to next objects (see client and server side)
-                - checks on minimum, maximum and readOnly, no update of the value if this occurs 
+                - checks on minimum, maximum and readOnly, no update of the value if this occurs
+                - tells the notify thread to send out a notification when a member is UPDATED
                 - check if the correct interface is used (oic.if.a or oic.if.rw)
-    - main 
+        - has a notifyObservers function that is run in a thread at startup.
+    - main
         - creates all classes
         - creates the device
         - installs the reader for
             - introspection device data file (IDD)
             - security file (SVR) contents
             these files needs to be installed/copied where the the executable is.
-           
+
 - svr_server.json  - not used !!!
     default json definition of the secure virtual resources (svr)
     - just works
@@ -45,19 +47,17 @@ The generated code acts as an simulator:
 - PICS.json
     - pics for CTT testing
     - security: just works.
- 
-          
-            
+
+
+
 ## what is missing/incorrect:
 - handling query params (none interfaces)
-- handling observe
 - manual update of resource data, e.g. out of bounds so that one can trigger this to pass CTT.
 - creation/deletion of resources (PUT/DELETE functions)
 - no correct makefile/scons file, so we do not yet know how to insert this in the IOTivity tree and then compile
     - see for manual changes below
 
 # notes:
-- only tested on windows
 - readOnly params like: "precision", "maximumsaturation" from oic.r.colour.chroma is crashing the device when running the CTT
     - to avoid this: remove these properties from the generated device.
 
@@ -105,7 +105,7 @@ new :
 # Source files and Targets
 ######################################################################
 example_names = [
-    'server', 
+    'server',
     ]
 
 if target_os not in ['windows', 'msys_nt']:
@@ -157,7 +157,7 @@ run.bat server
 ## CTT info
 
 When CTT pops up:
-"reset to onboarding state" means one needs to: 
+"reset to onboarding state" means one needs to:
 1. Stop your device
 2. Reset/replace security databases with a new/unowned one.
     e.g. copy the ORIGINAL security file to the executable directory.
@@ -172,10 +172,6 @@ this is mentioned in the test case log of CTT when the CTT can't reset the devic
 - IOTivity implements the next optional virtual security resources
     currently there is no mechanism available to remove those from the implementatino.
     hence they must be listed in the PICS:
-    - oic.r.crl, oic.r.csr, oic.r.roles 
+    - oic.r.crl, oic.r.csr, oic.r.roles
 - oic/res
     This resource must be listed as none observable.
-    
-    
-
-

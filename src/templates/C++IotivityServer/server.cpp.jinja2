@@ -18,7 +18,9 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <signal.h>
+#include <atomic>
 #include <thread>
+#include <condition_variable>
 #include <functional>
 #include <string>
 #include <iostream>
@@ -124,6 +126,11 @@ class {{path|classsyntax}}Resource : public Resource
          * constructor
          */
         {{path|classsyntax}}Resource();
+
+        /*
+         * destructor
+         */
+         virtual ~{{path|classsyntax}}Resource();
     private:
         /*
          * function to make the payload for the retrieve function (e.g. GET) {{path}}
@@ -138,6 +145,23 @@ class {{path|classsyntax}}Resource : public Resource
          * @return OCEntityHandlerResult ok or not ok indication
          */
         OCEntityHandlerResult post(OC::QueryParamsMap queries, const OC::OCRepresentation& rep);
+
+        std::atomic<bool> m_notify_thread_active;
+        std::thread* m_notify_thread;
+
+        std::atomic<bool> m_send_notification_flag;
+        std::mutex m_cv_mutex;
+        std::condition_variable m_cv;
+
+        /*
+         * Function responsible for notifying all observers when a property
+         * on the resource has been changed.
+         * this function is running in a thread. Send a notification the
+         * m_send_notification_flag must be set to true and then m_cv.notify_all()
+         * must be called. This should automatically be handled by the code when
+         * PUT or POST is sent to the entityHandler.
+         */
+        void notifyObservers(void);
 
         // resource types and interfaces as array..
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
@@ -172,7 +196,12 @@ class {{path|classsyntax}}Resource : public Resource
         virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
 };
 
-{{path|classsyntax}}Resource::{{path|classsyntax}}Resource()
+{{path|classsyntax}}Resource::{{path|classsyntax}}Resource():
+    m_notify_thread_active(true),
+    m_notify_thread(nullptr),
+    m_send_notification_flag(false),
+    m_cv_mutex{},
+    m_cv{}
 {
     std::cout << "- Running: {{path|classsyntax}}Resource constructor" << std::endl;
     std::string resourceURI = "{{path}}";
@@ -219,6 +248,20 @@ class {{path|classsyntax}}Resource : public Resource
     {
         throw std::runtime_error(
             std::string("{{path|classsyntax}}Resource failed to start")+std::to_string(result));
+    }
+
+    m_send_notification_flag = false;
+    m_notify_thread_active = true;
+    m_notify_thread = new std::thread(&{{path|classsyntax}}Resource::notifyObservers, this);
+}
+
+{{path|classsyntax}}Resource::~{{path|classsyntax}}Resource()
+{
+    m_notify_thread_active = false;
+    m_cv.notify_all();
+    if(m_notify_thread->joinable())
+    {
+        m_notify_thread->join();
     }
 }
 
@@ -357,7 +400,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         try {
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
             {
-                std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
+                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << ((m_var_value{{var|variablesyntax}}) ? "true" : "false") << std::endl;
+                m_send_notification_flag = true;
             }
             else
             {
@@ -374,6 +418,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
             {
                 std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
+                m_send_notification_flag = true;
             }
             else
             {
@@ -389,7 +434,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // value exist in payload
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
             {
-                std::cout << "\t\t" << "property '{{var}}': " << m_var_value{{var|variablesyntax}} << std::endl;
+                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
+                m_send_notification_flag = true;
             }
             else
             {
@@ -404,7 +450,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         try {
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
             {
-                std::cout << "\t\t" << "property '{{var}}' : " << m_var_value{{var|variablesyntax}} << std::endl;
+                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
+                m_send_notification_flag = true;
             }
             else
             {
@@ -423,7 +470,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             {
                 rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}});
                 int first = 1;
-                std::cout << "\t\t" << "property '{{var}}' : " ;
+                std::cout << "\t\t" << "property '{{var}}' UPDATED: " ;
                 for(auto myvar: m_var_value{{var|variablesyntax}})
                 {
                     if(first)
@@ -437,6 +484,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
                     }
                 }
                 std::cout <<  std::endl;
+                m_send_notification_flag = true;
             }
             else
             {
@@ -448,6 +496,10 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             std::cout << e.what() << std::endl;
         }{% endif %}
     {% endfor %}
+        if (m_send_notification_flag)
+        {
+            m_cv.notify_all();
+        }
     }
     return ehResult;
 }
@@ -590,6 +642,23 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
     }
     return ehResult;
 }
+
+void {{path|classsyntax}}Resource::notifyObservers(void)
+{
+    std::unique_lock<std::mutex> cv_lock(m_cv_mutex);
+    while (m_notify_thread_active)
+    {
+        m_cv.wait(cv_lock);
+        if (m_send_notification_flag)
+        {
+            m_send_notification_flag = false;
+            std::cout << "Send NOTIFICATION to all observers" << std::endl;
+
+            OCPlatform::notifyAllObservers(this->m_resourceHandle);
+        }
+    }
+}
+
 {% endfor %}
 
 class IoTServer

@@ -220,6 +220,19 @@ typical usage:
 {{path|variablesyntax}}
 {% endfor -%}
 ```
+
+#### classsyntax
+replace chars so that the data can be used for an class name.
+note that it capitalizes the first letter of the string.
+this also solves issue with keywords like "if" won't occur.
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{{path|classsyntax}}
+{% endfor -%}
+```
+
 #### variableforbidden
 if the variable is "if", "var", "function", "null"
 it will be prefixed with "_" 

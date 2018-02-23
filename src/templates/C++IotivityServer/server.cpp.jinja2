@@ -117,13 +117,13 @@ class Resource
 
 {% for path, path_data in json_data['paths'].items() %}
 
-class c{{path|variablesyntax}}Resource : public Resource
+class {{path|classsyntax}}Resource : public Resource
 {
     public:
         /*
          * constructor
          */
-        c{{path|variablesyntax}}Resource();
+        {{path|classsyntax}}Resource();
     private:
         /*
          * function to make the payload for the retrieve function (e.g. GET) {{path}}
@@ -172,9 +172,9 @@ class c{{path|variablesyntax}}Resource : public Resource
         virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
 };
 
-c{{path|variablesyntax}}Resource::c{{path|variablesyntax}}Resource()
+{{path|classsyntax}}Resource::{{path|classsyntax}}Resource()
 {
-    std::cout << "- Running: c{{path|variablesyntax}}Resource constructor" << std::endl;
+    std::cout << "- Running: {{path|classsyntax}}Resource constructor" << std::endl;
     std::string resourceURI = "{{path}}";
 
     // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
@@ -189,7 +189,7 @@ c{{path|variablesyntax}}Resource::c{{path|variablesyntax}}Resource()
     {% endif -%}
     {% endfor %}
 
-    EntityHandler cb = std::bind(&c{{path|variablesyntax}}Resource::entityHandler, this,PH::_1);
+    EntityHandler cb = std::bind(&{{path|classsyntax}}Resource::entityHandler, this,PH::_1);
     //uint8_t resourceProperty = 0;
     OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
         resourceURI,
@@ -218,7 +218,7 @@ c{{path|variablesyntax}}Resource::c{{path|variablesyntax}}Resource()
     if(OC_STACK_OK != result)
     {
         throw std::runtime_error(
-            std::string("c{{path|variablesyntax}}Resource failed to start")+std::to_string(result));
+            std::string("{{path|classsyntax}}Resource failed to start")+std::to_string(result));
     }
 }
 
@@ -228,7 +228,7 @@ c{{path|variablesyntax}}Resource::c{{path|variablesyntax}}Resource()
 * function to make the payload for the retrieve function (e.g. GET) {{path}}
 * @param queries  the query parameters for this call
 */
-OCRepresentation c{{path|variablesyntax}}Resource::get(QueryParamsMap queries)
+OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {
     OC_UNUSED(queries);
     {% for var, var_data in query_properties(json_data, path).items() -%}
@@ -257,7 +257,7 @@ OCRepresentation c{{path|variablesyntax}}Resource::get(QueryParamsMap queries)
 * @param rep  the response to get the property values from
 * @return OCEntityHandlerResult ok or not ok indication
 */
-OCEntityHandlerResult c{{path|variablesyntax}}Resource::post(QueryParamsMap queries, const OCRepresentation& rep)
+OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries, const OCRepresentation& rep)
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OC_UNUSED(queries);
@@ -454,7 +454,7 @@ OCEntityHandlerResult c{{path|variablesyntax}}Resource::post(QueryParamsMap quer
 {% endif -%}
 {% endfor -%}
 
-bool c{{path|variablesyntax}}Resource::in_updatable_interfaces(std::string interface_name)
+bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface_name)
 {
     for (int i=0; i<3; i++)
     {
@@ -464,14 +464,14 @@ bool c{{path|variablesyntax}}Resource::in_updatable_interfaces(std::string inter
     return false;
 }
 
-OCEntityHandlerResult c{{path|variablesyntax}}Resource::entityHandler(std::shared_ptr<OCResourceRequest> request)
+OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
-    //std::cout << "In entity handler for c{{path|variablesyntax}}Resource " << std::endl;
+    //std::cout << "In entity handler for {{path|classsyntax}}Resource " << std::endl;
 
     if(request)
     {
-        std::cout << "In entity handler for c{{path|variablesyntax}}Resource, URI is : "
+        std::cout << "In entity handler for {{path|classsyntax}}Resource, URI is : "
                   << request->getResourceUri() << std::endl;
 
         // Check for query params (if any)
@@ -497,7 +497,7 @@ OCEntityHandlerResult c{{path|variablesyntax}}Resource::entityHandler(std::share
 
             if(request->getRequestType() == "GET")
             {
-                std::cout<<"c{{path|variablesyntax}}Resource Get Request"<< std::endl;
+                std::cout<<"{{path|classsyntax}}Resource Get Request"<< std::endl;
 
                 pResponse->setResourceRepresentation(get(queries), "");
                 if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
@@ -509,7 +509,7 @@ OCEntityHandlerResult c{{path|variablesyntax}}Resource::entityHandler(std::share
 {% if methodName == "post" %}
             else if(request->getRequestType() == "POST")
             {
-                std::cout <<"c{{path|variablesyntax}}Resource Post Request"<<std::endl;
+                std::cout <<"{{path|classsyntax}}Resource Post Request"<<std::endl;
                 bool  handle_post = true;
 
                 if (queries.size() > 0)
@@ -558,7 +558,7 @@ OCEntityHandlerResult c{{path|variablesyntax}}Resource::entityHandler(std::share
             {% endif -%}{% endfor -%}
             else
             {
-                std::cout << "c{{path|variablesyntax}}Resource unsupported request type (delete,put,..)"
+                std::cout << "{{path|classsyntax}}Resource unsupported request type (delete,put,..)"
                     << request->getRequestType() << std::endl;
                 pResponse->setResponseResult(OC_EH_ERROR);
                 OCPlatform::sendResponse(pResponse);
@@ -609,7 +609,7 @@ class IoTServer
 
     private:
 {% for path, path_data in json_data['paths'].items() %}
-        c{{path|variablesyntax}}Resource  m{{path|variablesyntax}}Instance;
+        {{path|classsyntax}}Resource  m{{path|variablesyntax}}Instance;
 {% endfor -%}
 };
 

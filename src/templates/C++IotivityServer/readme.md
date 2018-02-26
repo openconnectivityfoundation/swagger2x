@@ -24,6 +24,7 @@ The generated code acts as an simulator:
                         NOT handled: array of objects.
                         - TODO: add complex objecs, see garage example of how to next objects (see client and server side)
                 - checks on minimum, maximum and readOnly, no update of the value if this occurs
+                    - arrays: no min/max check
                 - tells the notify thread to send out a notification when a member is UPDATED
                 - check if the correct interface is used (oic.if.a or oic.if.rw)
         - has a notifyObservers function that is run in a thread at startup.

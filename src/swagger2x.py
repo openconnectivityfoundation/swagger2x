@@ -207,7 +207,30 @@ def replace_chars(a, chars):
        string = copy_string
     return string
 
+def add_justification_smart( depth, input_string, no_dot_split=False):
 
+        """
+        add the spaces for an correct indentation of the generated RAML code section
+        for descriptions in the RAML definitions
+        :param depth: character depth, e.g. an string prefix
+        :param input_string: string to be adjusted
+        :return:  adjusted string
+        """
+        ret_string = ""
+        all_lines = input_string.splitlines()
+        for x_line in all_lines:
+            if no_dot_split is False:
+                lines = x_line.split(". ")
+                for line in lines:
+                    string1 = depth + line + "\n"
+                    if len(line) > 0:
+                        ret_string = ret_string + string1
+            else:
+                string1 = depth + x_line + "\n"
+                ret_string = ret_string + string1
+        return ret_string
+    
+    
 
 def retrieve_path_value(parse_tree, path, value):
     """
@@ -658,6 +681,15 @@ def convert_array_size(my_array):
 
     return 0
 
+def code_indent(input_string, indent_str):
+    """
+    replace chars so that it can be used as an variable
+    :param input_string: string to be adjusted
+    :return: adjusted string
+    """    
+    return_string = add_justification_smart(indent_str, input_string, no_dot_split = True )
+    return return_string    
+    
 
 #
 #   main of script
@@ -743,6 +775,7 @@ try:
 
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
     env.filters['convert_array_size'] = convert_array_size
+    env.filters['code_indent'] = code_indent
 
     for template_file in template_files:
         print ("processing:", template_file)

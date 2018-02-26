@@ -276,6 +276,15 @@ typical usage:
 {{var|convert_array_size}}
 ```
 
+#### code_indent
+indents the descriptions with an prefix per line.
+
+typical usage:
+```
+{{ method_data["description"] | code_indent(" * ")}}
+```
+
+
 
 ## TODO list
 

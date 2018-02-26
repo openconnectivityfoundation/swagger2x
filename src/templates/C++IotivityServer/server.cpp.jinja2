@@ -60,6 +60,14 @@ class Resource
 };
 
 {% for path, path_data in json_data['paths'].items() %}
+/*
+ * class definition for class that handles {{path}}
+ *
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" -%}
+ {{ method_data["description"] | code_indent(" * ")}}
+{% endif %}{% endfor -%}
+ */
 class {{path|classsyntax}}Resource : public Resource
 {
     public:
@@ -73,25 +81,30 @@ class {{path|classsyntax}}Resource : public Resource
          */
          virtual ~{{path|classsyntax}}Resource();
     private:
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "get" %}
         /*
          * function to make the payload for the retrieve function (e.g. GET) {{path}}
+{{method_data["description"] | code_indent("         * ")}}
          * @param queries  the query parameters for this call
          */
         OCRepresentation get(OC::QueryParamsMap queries);
-
+{% endif -%}
+{% if methodName == "post" %}
         /*
          * function to parse the payload for the update function (e.g. POST) {{path}}
+{{method_data["description"] | code_indent("         * ")}}
          * @param queries  the query parameters for this call
          * @param rep  the response to get the property values from
          * @return OCEntityHandlerResult ok or not ok indication
          */
         OCEntityHandlerResult post(OC::QueryParamsMap queries, const OC::OCRepresentation& rep);
-
-        std::atomic<bool> m_notify_thread_active;
-        std::thread* m_notify_thread;
-
-        std::atomic<bool> m_send_notification_flag;
-        std::mutex m_cv_mutex;
+{% endif -%}{% endfor %}
+        
+        std::atomic<bool> m_notify_thread_active;       // signal if the thread should run 
+        std::thread* m_notify_thread;                   // the thread running in the background to update the observe listeners
+        std::atomic<bool> m_send_notification_flag;     // signal if the thread should update all registered listeners
+        std::mutex m_cv_mutex;                          // mutex to lock the sending of the notification
         std::condition_variable m_cv;
 
         /*
@@ -112,14 +125,14 @@ class {{path|classsyntax}}Resource : public Resource
         int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
         ObservationIds m_interestedObservers;
 
-        // member variables for path: {{path}}
+        // member variables for path: "{{path}}"
         {% for var, var_data in query_properties(json_data, path).items() -%}
         {% if var_data.type == "array" -%}
-        {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
+        {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}}; // the value for the array attribute "{{var}}": {{var_data["description"]}}
         {% else -%}
-        {{var_data.type|convert_to_cplus_type}} m_var_value{{var|variablesyntax}}; // the value for the attribute
+        {{var_data.type|convert_to_cplus_type}} m_var_value{{var|variablesyntax}}; // the value for the attribute "{{var}}": {{var_data["description"]}}
         {% endif -%}
-        std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
+        std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute "{{var}}" 
         {% endfor %}
     protected:
         /*
@@ -137,6 +150,9 @@ class {{path|classsyntax}}Resource : public Resource
         virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request);
 };
 
+/*
+* Constructor code
+*/
 {{path|classsyntax}}Resource::{{path|classsyntax}}Resource():
     m_notify_thread_active(true),
     m_notify_thread(nullptr),
@@ -149,16 +165,16 @@ class {{path|classsyntax}}Resource : public Resource
 
     // initialize member variables {{path}}
     {% for var, var_data in query_properties(json_data, path).items() -%}
-    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}"
+    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}"
+    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}"  {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}"
+    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}"
+    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
     {% if var_data.type == "array" -%}
-    // initialize vector {{var}}
+    // initialize vector {{var}}  {{var_data["description"]}}
     {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
     {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");{% else %}
     m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif %}
@@ -202,6 +218,9 @@ class {{path|classsyntax}}Resource : public Resource
     m_notify_thread = new std::thread(&{{path|classsyntax}}Resource::notifyObservers, this);
 }
 
+/*
+* Destructor code
+*/
 {{path|classsyntax}}Resource::~{{path|classsyntax}}Resource()
 {
     m_notify_thread_active = false;
@@ -269,49 +288,16 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
     {
         std::cout << e.what() << std::endl;
     }{% endif -%}
-    {% if var_data.type == "number" %}
-    try {
-        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-        {
-            // allocate the variable
-            {{var_data.type|convert_to_cplus_type}} value;
-            // get the actual value from the payload
-            rep.getValue(m_var_name{{var|variablesyntax}}, value);
-            // value exist in payload
-            {% if var_data.readOnly -%}
-            {% if var_data.readOnly == true %}
-            // check if it is read only
-            ehResult = OC_EH_ERROR;
-            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-            {% endif %}{% endif %}
-            {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-            {
-                // check the minimum range
-                std::cout << "\t\t" << "property '{{var}}' value smaller than minimum" << {{var_data.minimum}} << " value: " << value << std::endl;
-                ehResult = OC_EH_ERROR;
-            } {% endif %}
-            {% if var_data.maximum %}if (value > {{var_data.maximum}} )
-            {
-                // check the maximum range
-                std::cout << "\t\t" << "property '{{var}}' value exceed max" << {{var_data.minimum}} << " value: " << value << std::endl;
-                ehResult = OC_EH_ERROR;
-            }{% endif %}
-        }
-    }
-    catch (std::exception& e)
-    {
-        std::cout << e.what() << std::endl;
-    }{% endif -%}
-    {% if var_data.type == "integer" %}
-    try {
-        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
-        {
-            // allocate the variable
-            {{var_data.type|convert_to_cplus_type}} value;
-            // get the actual value from the payload
-            rep.getValue(m_var_name{{var|variablesyntax}}, value);
 
+    {% if var_data.type in ["integer", "number"] %}
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+        {
             // value exist in payload
+            // allocate the variable
+            {{var_data.type|convert_to_cplus_type}} value;
+            // get the actual value from the payload
+            rep.getValue(m_var_name{{var|variablesyntax}}, value);
             {% if var_data.readOnly -%}
             {% if var_data.readOnly == true %}
             // check if it is read only
@@ -336,9 +322,43 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
     {
         std::cout << e.what() << std::endl;
     }{% endif %}
-    {%- endfor -%}
+    {% if var_data.type == "string" %}
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+        {
+            // value exist in payload
+            {% if var_data.readOnly -%}
+            {% if var_data.readOnly == true %}
+            // check if it is read only
+            ehResult = OC_EH_ERROR;
+            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+            {% endif -%}{% endif %}
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }{% endif -%}
+    {% if var_data.type == "array" %}
     // TODO add check on array contents out of range, etc..
+    try {
+        if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
+        {
+            // value exist in payload
+            {% if var_data.readOnly -%}
+            {% if var_data.readOnly == true %}
+            // check if it is read only
+            ehResult = OC_EH_ERROR;
+            std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
+            {% endif -%}{% endif %}
+        }
+    }
+    catch (std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }{% endif -%}
 
+    {%- endfor -%}
     if (ehResult == OC_EH_OK)
     {
         // no error: assign the variables
@@ -359,7 +379,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif -%}
-        {% if var_data.type == "number" %}
+        {% if var_data.type in ["number", "integer" ] %}
         try {
             // value exist in payload
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
@@ -376,23 +396,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif -%}
-        {% if var_data.type == "integer" %}
-        try {
-            // value exist in payload
-            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-            {
-                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
-                m_send_notification_flag = true;
-            }
-            else
-            {
-                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-            }
-        }
-        catch (std::exception& e)
-        {
-            std::cout << e.what() << std::endl;
-        }{% endif -%}
+       
         {% if var_data.type == "string" %}
         try {
             if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
@@ -454,6 +458,9 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
 {% endif -%}
 {% endfor -%}
 
+/*
+* function to check if the interface name is an registered interface name
+*/
 bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface_name)
 {
     for (int i=0; i<3; i++)
@@ -464,6 +471,9 @@ bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface
     return false;
 }
 
+/*
+* the entity handler
+*/
 OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_ptr<OCResourceRequest> request)
 {
     OCEntityHandlerResult ehResult = OC_EH_ERROR;
@@ -543,16 +553,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
                     {
                          pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
                     }
-                    if(OC_STACK_OK == OCPlatform::sendResponse(pResponse))
-                    {
-                        // TODO: if there are observers inform the observers
-                        //OCStackResult sResult;
-                        // update all observers with the new value
-                        // not sure if this is an blocking call
-                        //sResult = OCPlatform::notifyListOfObservers(   m_resourceHandle,
-                        //                                               m_interestedObservers,
-                        //                                               pResponse);
-                    }
+                    OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
                 }
             }
             {% endif -%}{% endfor -%}
@@ -591,6 +592,9 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
     return ehResult;
 }
 
+/*
+* the function running in the thread to update the registered observers
+*/
 void {{path|classsyntax}}Resource::notifyObservers(void)
 {
     std::unique_lock<std::mutex> cv_lock(m_cv_mutex);
@@ -793,6 +797,9 @@ FILE* server_fopen(const char* path, const char* mode)
 // Create persistent storage handlers
 OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
 
+/*
+* Platform Constructor
+*/
 Platform::Platform(void)
 {
     std::cout << "Running Platform constructor" << std::endl;
@@ -813,6 +820,9 @@ Platform::Platform(void)
                     m_firmwareVersion, m_supportLink, m_systemTime);
 }
 
+/*
+* Platform Destructor
+*/
 Platform::~Platform(void)
 {
     std::cout << "Running Platform destructor" << std::endl;

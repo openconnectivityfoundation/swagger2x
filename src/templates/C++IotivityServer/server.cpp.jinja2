@@ -46,64 +46,7 @@ namespace PH = std::placeholders;
  title of input_file   : {{json_data['info']['title']}}
 */
 
-
 #define INTERFACE_KEY "if"
-
-// Set of strings for each of platform Info fields
-std::string gPlatformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
-std::string gManufacturerName = "{{manufacturer}}";
-std::string gManufacturerLink = "https://{{manufacturer}}.org/";
-std::string gModelNumber = "ModelNumber";
-std::string gDateOfManufacture = "2017-12-01";
-std::string gPlatformVersion = "1.0";
-std::string gOperatingSystemVersion = "myOS";
-std::string gHardwareVersion = "1.0";
-std::string gFirmwareVersion = "1.0";
-std::string gSupportLink = "https://{{manufacturer}}.org/";
-std::string gSystemTime = "2017-12-01T12:00:00.52Z";
-
-// Set of strings for each of device info fields
-std::string  gDeviceName = "{{json_data['info']['title']}}";
-std::string  gDeviceType = "{{device_type}}";
-std::string  gSpecVersion = "ocf.1.0.0";
-//std::vector<std::string> gDataModelVersions = {"ocf.res.1.1.0", "ocf.sh.1.1.0"};
-#if defined(_WIN32)
-#pragma warning( push )
-#pragma warning( disable : 4592)
-#endif
-std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.sh.1.3.0"};
-//std::vector<std::string> gDataModelVersions = {"ocf.res.1.3.0", "ocf.dev.1.3.0"};
-#if defined(_WIN32)
-#pragma warning( pop )
-#endif
-
-std::string  gProtocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
-// OCPlatformInfo Contains all the platform info to be stored
-OCPlatformInfo platformInfo;
-
-// forward declarations
-void DeletePlatformInfo();
-void initializePlatform();
-OCStackResult SetDeviceInfo();
-OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
-        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
-        std::string platformVersion, std::string operatingSystemVersion,
-        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
-        std::string systemTime);
-
-/**
-*  DuplicateString
-*
-* @param targetString  destination string, will be allocated
-* @param sourceString  source string, e.g. will be copied
-
-*  TODO: don't use strncpy
-*/
-void DuplicateString(char ** targetString, std::string sourceString)
-{
-    *targetString = new char[sourceString.length() + 1];
-    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
-}
 
 /*
 * default class, so that we have to define less variables/functions.
@@ -116,9 +59,7 @@ class Resource
     virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request)=0;
 };
 
-
 {% for path, path_data in json_data['paths'].items() %}
-
 class {{path|classsyntax}}Resource : public Resource
 {
     public:
@@ -171,15 +112,15 @@ class {{path|classsyntax}}Resource : public Resource
         int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
         ObservationIds m_interestedObservers;
 
-        // member variables for path: {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
-        {% if var_data.type == "array" %}
+        // member variables for path: {{path}}
+        {% for var, var_data in query_properties(json_data, path).items() -%}
+        {% if var_data.type == "array" -%}
         {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
         {% else -%}
         {{var_data.type|convert_to_cplus_type}} m_var_value{{var|variablesyntax}}; // the value for the attribute
         {% endif -%}
         std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute
-        {% endfor -%}
-
+        {% endfor %}
     protected:
         /*
          * function to check if the interface is
@@ -206,26 +147,32 @@ class {{path|classsyntax}}Resource : public Resource
     std::cout << "- Running: {{path|classsyntax}}Resource constructor" << std::endl;
     std::string resourceURI = "{{path}}";
 
-    // initialize member variables {{path}}{% for var, var_data in query_properties(json_data, path).items() %}
-    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {% endif %}
-    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}" {% endif %}
-    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {% endif %}
-    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {% endif %}
-    {% if var_data.type == "array" %}// initialize vector {{var}}
-    {% for var_value in swagger_property_data_schema(json_data, path, var)  %}
-    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}"); {% else %}
-    m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif -%} {% endfor %}
+    // initialize member variables {{path}}
+    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}"
     {% endif -%}
-    {% endfor %}
+    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}"
+    {% endif -%}
+    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}"
+    {% endif -%}
+    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}"
+    {% endif -%}
+    {% if var_data.type == "array" -%}
+    // initialize vector {{var}}
+    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");{% else %}
+    m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif %}
+    {% endfor -%}
+    {% endif -%}
+    {% endfor -%}
 
     EntityHandler cb = std::bind(&{{path|classsyntax}}Resource::entityHandler, this,PH::_1);
-    //uint8_t resourceProperty = 0;
     OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
-        resourceURI,
-        m_RESOURCE_TYPE[0],
-        m_RESOURCE_INTERFACE[0],
-        cb,
-        OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
+                                                        resourceURI,
+                                                        m_RESOURCE_TYPE[0],
+                                                        m_RESOURCE_INTERFACE[0],
+                                                        cb,
+                                                        OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
 
     // add the additional interfaces
     std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
@@ -266,7 +213,7 @@ class {{path|classsyntax}}Resource : public Resource
 }
 
 {% for methodName, method_data in path_data.items() -%}
-{% if methodName == "get" %}
+{% if methodName == "get" -%}
 /*
 * function to make the payload for the retrieve function (e.g. GET) {{path}}
 * @param queries  the query parameters for this call
@@ -274,7 +221,7 @@ class {{path|classsyntax}}Resource : public Resource
 OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {
     OC_UNUSED(queries);
-    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {%- for var, var_data in query_properties(json_data, path).items() -%}
     {% if var_data.type == "boolean" %}
     m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
     {% if var_data.type == "number" %}
@@ -304,7 +251,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
 {
     OCEntityHandlerResult ehResult = OC_EH_OK;
     OC_UNUSED(queries);
-    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {%- for var, var_data in query_properties(json_data, path).items() -%}
     {% if var_data.type == "boolean" %}
     try {
         if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
@@ -315,7 +262,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // check if it is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-            {% endif %}{% endif %}
+            {% endif -%}{% endif %}
         }
     }
     catch (std::exception& e)
@@ -370,7 +317,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // check if it is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
-            {% endif %}{% endif %}
+            {% endif -%}{% endif %}
             {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
             {
                 // check the minimum range
@@ -389,7 +336,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
     {
         std::cout << e.what() << std::endl;
     }{% endif %}
-    {% endfor %}
+    {%- endfor -%}
     // TODO add check on array contents out of range, etc..
 
     if (ehResult == OC_EH_OK)
@@ -495,7 +442,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif %}
-    {% endfor %}
+    {%- endfor %}
+
         if (m_send_notification_flag)
         {
             m_cv.notify_all();
@@ -672,14 +620,13 @@ class IoTServer
 
         /**
          *  destructor
-         *
          */
         ~IoTServer();
 
     private:
-{% for path, path_data in json_data['paths'].items() %}
+{%- for path, path_data in json_data['paths'].items() %}
         {{path|classsyntax}}Resource  m{{path|variablesyntax}}Instance;
-{% endfor -%}
+{%- endfor -%}
 };
 
 IoTServer::IoTServer()
@@ -688,152 +635,126 @@ IoTServer::IoTServer()
 {% endfor -%}
 {
     std::cout << "Running IoTServer constructor" << std::endl;
-    initializePlatform();
 }
 
 IoTServer::~IoTServer()
 {
     std::cout << "Running IoTServer destructor" << std::endl;
-    DeletePlatformInfo();
 }
 
-/**
-*  initialize platform
-*  initializes the oic/p resource
-*/
-void initializePlatform()
+class Platform
 {
-    std::cout << "Running initializePlatform" << std::endl;
+public:
+    /*
+     * Platform constructor
+     */
+    Platform(void);
 
-    // initialize "oic/p"
+    /*
+     * Platform destructor
+     */
+    virtual ~Platform();
 
-    std::cout << "oic/p" << std::endl;
-    OCStackResult result = SetPlatformInfo(gPlatformId, gManufacturerName, gManufacturerLink,
-            gModelNumber, gDateOfManufacture, gPlatformVersion, gOperatingSystemVersion,
-            gHardwareVersion, gFirmwareVersion, gSupportLink, gSystemTime);
-    result = OCPlatform::registerPlatformInfo(platformInfo);
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Platform Registration (oic/p) failed\n";
-    }
+    /*
+     * Start the platform
+     */
+    OCStackResult start();
 
-    // initialize "oic/d"
-    std::cout << "oic/d" << std::endl;
-    result = SetDeviceInfo();
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Device Registration (oic/p) failed\n";
-    }
-}
+    /*
+     * Register all platform info
+     * This will register the platformId, manufaturerName, manufacturerUrl,
+     * modelNumber, dateOfManufacture, platformVersion, operatingSystemVersion,
+     * hardwareVersion, firmwareVersion, supportUrl, and systemTime
+     */
+    OCStackResult registerPlatformInfo(void);
 
+    /*
+     * Get OCPlatformInfo pointer
+     */
+    OCPlatformInfo* getPlatformInfo(void);
 
-/**
-*  DeletePlatformInfo
-*  Deletes the allocated platform information
-*/
-void DeletePlatformInfo()
-{
-    delete[] platformInfo.platformID;
-    delete[] platformInfo.manufacturerName;
-    delete[] platformInfo.manufacturerUrl;
-    delete[] platformInfo.modelNumber;
-    delete[] platformInfo.dateOfManufacture;
-    delete[] platformInfo.platformVersion;
-    delete[] platformInfo.operatingSystemVersion;
-    delete[] platformInfo.hardwareVersion;
-    delete[] platformInfo.firmwareVersion;
-    delete[] platformInfo.supportUrl;
-    delete[] platformInfo.systemTime;
-}
+    /*
+     * Stop the platform
+     */
+    OCStackResult stop(void);
 
-/**
-*  SetPlatformInfo
-*  Sets the platform information ("oic/p"), from the globals
+    /*
+     * SetDeviceInfo
+     * Sets the device information ("/oic/d")
+     *
+     * @return OC_STACK_OK on success OC_STACK_ERROR on failure
+     */
+    OCStackResult setDeviceInfo(void);
 
-* @param platformID the platformID
-* @param manufacturerName the manufacturerName
-* @param manufacturerUrl the manufacturerUrl
-* @param modelNumber the modelNumber
-* @param platformVersion the platformVersion
-* @param operatingSystemVersion the operatingSystemVersion
-* @param hardwareVersion the hardwareVersion
-* @param firmwareVersion the firmwareVersion
-* @param supportUrl the supportUrl
-* @param systemTime the systemTime
-* @return OC_STACK_ERROR or OC_STACK_OK
-*/
-OCStackResult SetPlatformInfo(std::string platformID, std::string manufacturerName,
-        std::string manufacturerUrl, std::string modelNumber, std::string dateOfManufacture,
-        std::string platformVersion, std::string operatingSystemVersion,
-        std::string hardwareVersion, std::string firmwareVersion, std::string supportUrl,
-        std::string systemTime)
-{
-    DuplicateString(&platformInfo.platformID, platformID);
-    DuplicateString(&platformInfo.manufacturerName, manufacturerName);
-    DuplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
-    DuplicateString(&platformInfo.modelNumber, modelNumber);
-    DuplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
-    DuplicateString(&platformInfo.platformVersion, platformVersion);
-    DuplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
-    DuplicateString(&platformInfo.hardwareVersion, hardwareVersion);
-    DuplicateString(&platformInfo.firmwareVersion, firmwareVersion);
-    DuplicateString(&platformInfo.supportUrl, supportUrl);
-    DuplicateString(&platformInfo.systemTime, systemTime);
+    // Set of strings for each of device info fields
+    std::string  deviceName = "{{json_data['info']['title']}}";
+    std::string  deviceType = "{{device_type}}";
+    std::string  specVersion = "ocf.1.0.0";
+    std::vector<std::string> dataModelVersions;
 
-    return OC_STACK_OK;
-}
+    std::string  protocolIndependentID = "fa008167-3bbf-4c9d-8604-c9bcb96cb712";
 
-/**
-*  SetDeviceInfo
-*  Sets the device information ("oic/d"), from the globals
+private:
+    // Set of strings for each of platform Info fields
+    std::string m_platformId = "0A3E0D6F-DBF5-404E-8719-D6880042463A";
+    std::string m_manufacturerName = "{{manufacturer}}";
+    std::string m_manufacturerLink = "https://{{manufacturer}}.org/";
+    std::string m_modelNumber = "ModelNumber";
+    std::string m_dateOfManufacture = "2017-12-01";
+    std::string m_platformVersion = "1.0";
+    std::string m_operatingSystemVersion = "myOS";
+    std::string m_hardwareVersion = "1.0";
+    std::string m_firmwareVersion = "1.0";
+    std::string m_supportLink = "https://{{manufacturer}}.org/";
+    std::string m_systemTime = "2017-12-01T12:00:00.52Z";
 
-* @return OC_STACK_ERROR or OC_STACK_OK
-*/
-OCStackResult SetDeviceInfo()
-{
-    OCStackResult result = OC_STACK_ERROR;
+    /*
+    * duplicateString
+    *
+    * @param targetString  destination string, will be allocated
+    * @param sourceString  source string, e.g. will be copied
+    *  TODO: don't use strncpy
+    */
+    void duplicateString(char ** targetString, std::string sourceString);
 
-    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
-    if (handle == NULL)
-    {
-        std::cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << std::endl;
-        return result;
-    }
-    result = OCBindResourceTypeToResource(handle, gDeviceType.c_str());
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Failed to add device type" << std::endl;
-        return result;
-    }
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, gDeviceName);
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Failed to set device name" << std::endl;
-        return result;
-    }
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
-                                          gDataModelVersions);
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Failed to set data model versions" << std::endl;
-        return result;
-    }
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, gSpecVersion);
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Failed to set spec version" << std::endl;
-        return result;
-    }
-    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
-                                          gProtocolIndependentID);
-    if (result != OC_STACK_OK)
-    {
-        std::cout << "Failed to set piid" << std::endl;
-        return result;
-    }
+    /**
+     *  SetPlatformInfo
+     *  Sets the platform information ("oic/p")
+     *
+     * @param platformID the platformID
+     * @param manufacturerName the manufacturerName
+     * @param manufacturerUrl the manufacturerUrl
+     * @param modelNumber the modelNumber
+     * @param platformVersion the platformVersion
+     * @param operatingSystemVersion the operatingSystemVersion
+     * @param hardwareVersion the hardwareVersion
+     * @param firmwareVersion the firmwareVersion
+     * @param supportUrl the supportUrl
+     * @param systemTime the systemTime
+     * @return OC_STACK_ERROR or OC_STACK_OK
+     */
+    void setPlatformInfo(std::string platformID,
+                         std::string manufacturerName,
+                         std::string manufacturerUrl,
+                         std::string modelNumber,
+                         std::string dateOfManufacture,
+                         std::string platformVersion,
+                         std::string operatingSystemVersion,
+                         std::string hardwareVersion,
+                         std::string firmwareVersion,
+                         std::string supportUrl,
+                         std::string systemTime);
 
-    return OC_STACK_OK;
-}
+    /*
+     * deletePlatformInfo
+     * Deleted the allocated platform information
+     */
+    void deletePlatformInfo(void);
+
+    // OCPlatformInfo Contains all the platform info
+    OCPlatformInfo platformInfo;
+};
+
 /**
 *  server_fopen
 *  opens file
@@ -869,6 +790,154 @@ FILE* server_fopen(const char* path, const char* mode)
     }
 }
 
+// Create persistent storage handlers
+OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
+
+Platform::Platform(void)
+{
+    std::cout << "Running Platform constructor" << std::endl;
+    dataModelVersions.push_back("ocf.res.1.3.0");
+    dataModelVersions.push_back("ocf.sh.1.3.0");
+
+    // create the platform
+    PlatformConfig cfg
+    {
+        ServiceType::InProc,
+        ModeType::Server,
+        &ps
+    };
+    OCPlatform::Configure(cfg);
+    setPlatformInfo(m_platformId, m_manufacturerName, m_manufacturerLink,
+                    m_modelNumber, m_dateOfManufacture, m_platformVersion,
+                    m_operatingSystemVersion, m_hardwareVersion,
+                    m_firmwareVersion, m_supportLink, m_systemTime);
+}
+
+Platform::~Platform(void)
+{
+    std::cout << "Running Platform destructor" << std::endl;
+    deletePlatformInfo();
+}
+
+OCStackResult Platform::start(void)
+{
+    return OCPlatform::start();
+}
+
+OCStackResult Platform::registerPlatformInfo(void)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    result = OCPlatform::registerPlatformInfo(platformInfo);
+    return result;
+}
+
+OCPlatformInfo* Platform::getPlatformInfo(void)
+{
+    return &platformInfo;
+}
+
+OCStackResult Platform::stop(void)
+{
+    return OCPlatform::stop();
+}
+
+void Platform::duplicateString(char ** targetString, std::string sourceString)
+{
+    *targetString = new char[sourceString.length() + 1];
+    strncpy(*targetString, sourceString.c_str(), (sourceString.length() + 1));
+}
+
+void Platform::setPlatformInfo(std::string platformID,
+                               std::string manufacturerName,
+                               std::string manufacturerUrl,
+                               std::string modelNumber,
+                               std::string dateOfManufacture,
+                               std::string platformVersion,
+                               std::string operatingSystemVersion,
+                               std::string hardwareVersion,
+                               std::string firmwareVersion,
+                               std::string supportUrl,
+                               std::string systemTime)
+{
+    duplicateString(&platformInfo.platformID, platformID);
+    duplicateString(&platformInfo.manufacturerName, manufacturerName);
+    duplicateString(&platformInfo.manufacturerUrl, manufacturerUrl);
+    duplicateString(&platformInfo.modelNumber, modelNumber);
+    duplicateString(&platformInfo.dateOfManufacture, dateOfManufacture);
+    duplicateString(&platformInfo.platformVersion, platformVersion);
+    duplicateString(&platformInfo.operatingSystemVersion, operatingSystemVersion);
+    duplicateString(&platformInfo.hardwareVersion, hardwareVersion);
+    duplicateString(&platformInfo.firmwareVersion, firmwareVersion);
+    duplicateString(&platformInfo.supportUrl, supportUrl);
+    duplicateString(&platformInfo.systemTime, systemTime);
+}
+
+void Platform::deletePlatformInfo()
+{
+    delete[] platformInfo.platformID;
+    delete[] platformInfo.manufacturerName;
+    delete[] platformInfo.manufacturerUrl;
+    delete[] platformInfo.modelNumber;
+    delete[] platformInfo.dateOfManufacture;
+    delete[] platformInfo.platformVersion;
+    delete[] platformInfo.operatingSystemVersion;
+    delete[] platformInfo.hardwareVersion;
+    delete[] platformInfo.firmwareVersion;
+    delete[] platformInfo.supportUrl;
+    delete[] platformInfo.systemTime;
+}
+
+/**
+*  SetDeviceInfo
+*  Sets the device information ("oic/d"), from the globals
+
+* @return OC_STACK_ERROR or OC_STACK_OK
+*/
+OCStackResult Platform::setDeviceInfo()
+{
+    OCStackResult result = OC_STACK_ERROR;
+
+    OCResourceHandle handle = OCGetResourceHandleAtUri(OC_RSRVD_DEVICE_URI);
+    if (handle == NULL)
+    {
+        std::cout << "Failed to find resource " << OC_RSRVD_DEVICE_URI << std::endl;
+        return result;
+    }
+    result = OCBindResourceTypeToResource(handle, deviceType.c_str());
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to add device type" << std::endl;
+        return result;
+    }
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DEVICE_NAME, deviceName);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set device name" << std::endl;
+        return result;
+    }
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_DATA_MODEL_VERSION,
+                                          dataModelVersions);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set data model versions" << std::endl;
+        return result;
+    }
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_SPEC_VERSION, specVersion);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set spec version" << std::endl;
+        return result;
+    }
+    result = OCPlatform::setPropertyValue(PAYLOAD_TYPE_DEVICE, OC_RSRVD_PROTOCOL_INDEPENDENT_ID,
+                                          protocolIndependentID);
+    if (result != OC_STACK_OK)
+    {
+        std::cout << "Failed to set piid" << std::endl;
+        return result;
+    }
+
+    return OC_STACK_OK;
+}
 
 #ifdef __unix__
 // global needs static, otherwise it can be compiled out and then Ctrl-C does not work
@@ -885,22 +954,25 @@ void handle_signal(int signal)
 // starts the server
 int main()
 {
-    // Create persistent storage handlers
-    OCPersistentStorage ps{server_fopen, fread, fwrite, fclose, unlink};
-    // create the platform
-    PlatformConfig cfg
+    Platform platform;
+    OC_VERIFY(platform.start() == OC_STACK_OK);
+
+    std::cout << "/oic/p" << std::endl;
+    // initialize "/oic/p"
+    if (platform.registerPlatformInfo() != OC_STACK_OK)
     {
-        ServiceType::InProc,
-        ModeType::Server,
-        &ps
-    };
-    OCPlatform::Configure(cfg);
-    OC_VERIFY(OCPlatform::start() == OC_STACK_OK);
+        std::cout << "Platform Registration (/oic/p) failed" << std::endl;
+    }
+    // initialize "/oic/d"
+    std::cout << "/oic/d" << std::endl;
+    if (platform.setDeviceInfo() != OC_STACK_OK)
+    {
+        std::cout << "Device Registration (/oic/d) failed" << std::endl;
+    }
 
-    std::cout << "device type: " <<  gDeviceType << std::endl;
-    std::cout << "platformID: " <<  gPlatformId << std::endl;
-    std::cout << "platform independent: " <<  gProtocolIndependentID << std::endl;
-
+    std::cout << "device type: " <<  platform.deviceType << std::endl;
+    std::cout << "platformID: " <<  platform.getPlatformInfo()->platformID << std::endl;
+    std::cout << "platform independent: " <<  platform.protocolIndependentID << std::endl;
 
 #ifdef __unix__
     struct sigaction sa;

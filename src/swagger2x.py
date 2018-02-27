@@ -601,7 +601,10 @@ def convert_to_cplus_type(json_type):
         return "int"  # uint8_t ?
     if json_type in ["string"]:
         return "std::string"
+    if json_type in ["object"]:
+        return "OCRepresentation"
 
+        
     return "void*"
 
 
@@ -612,10 +615,17 @@ def convert_to_cplus_array_type(json_data):
     :return: c++ type.
     """
     print ("convert_to_c_type: json_data:", json_data)
-    try:
-        return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
-    except:
-        pass
+    subtype = json_data["items"].get("type")
+    subtype_oneOff = json_data["items"].get("oneOf")
+    
+    print ("convert_to_c_type: json_data: Type:", type)
+    if subtype is not None:
+        if subtype in ["string", "number", "boolean", "integer"]:
+            return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
+        if subtype in ["object"]:
+            return "std::vector<OCRepresentation>"
+    elif subtype_oneOff is not None:
+        return "std::vector<OCRepresentation>"
 
     return "void*"
 

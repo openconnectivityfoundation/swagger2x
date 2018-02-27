@@ -173,11 +173,18 @@ class {{path|classsyntax}}Resource : public Resource
     {% endif -%}
     {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
+    {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}" 
+    {% endif -%}
     {% if var_data.type == "array" -%}
     // initialize vector {{var}}  {{var_data["description"]}}
     {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");{% else %}
-    m_var_value{{var|variablesyntax}}.push_back({{var_value}});{% endif %}
+    {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
+    m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}  
+    // array of objects  ;; OBJECT NOT HANDLED YET      
+    {%- else%}        
+    m_var_value{{var|variablesyntax}}.push_back({{var_value}});
+    {% endif -%}
     {% endfor -%}
     {% endif -%}
     {% endfor -%}
@@ -278,7 +285,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // value exist in payload
             {% if var_data.readOnly -%}
             {% if var_data.readOnly == true %}
-            // check if it is read only
+            // check if "{{var}}" is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
             {% endif -%}{% endif %}
@@ -300,7 +307,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             rep.getValue(m_var_name{{var|variablesyntax}}, value);
             {% if var_data.readOnly -%}
             {% if var_data.readOnly == true %}
-            // check if it is read only
+            // check if "{{var}}" is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
             {% endif -%}{% endif %}
@@ -329,7 +336,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // value exist in payload
             {% if var_data.readOnly -%}
             {% if var_data.readOnly == true %}
-            // check if it is read only
+            // check if "{{var}}" is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
             {% endif -%}{% endif %}
@@ -347,7 +354,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             // value exist in payload
             {% if var_data.readOnly -%}
             {% if var_data.readOnly == true %}
-            // check if it is read only
+            // check if "{{var}}" is read only
             ehResult = OC_EH_ERROR;
             std::cout << "\t\t" << "property '{{var}}' is readOnly "<< std::endl;
             {% endif -%}{% endif %}
@@ -413,8 +420,9 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif -%}
-        {% if var_data.type == "array" %}
+        {% if var_data.type == "array" -%}
         // array only works for integer, boolean, numbers and strings
+        {% if var_data |convert_to_cplus_array_type != "std::vector<OCRepresentation>"  -%}
         // TODO: make it also work with array of objects
         try {
             if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
@@ -445,7 +453,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         catch (std::exception& e)
         {
             std::cout << e.what() << std::endl;
-        }{% endif %}
+        }{% endif %}{% endif %}
     {%- endfor %}
 
         if (m_send_notification_flag)

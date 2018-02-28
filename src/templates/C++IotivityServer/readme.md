@@ -1,6 +1,6 @@
 # Template: IOTivity C++ server
 
-The generated code acts as an simulator:
+The generated code acts as a simulator:
 - it creates values at start update
 - handles incoming requests,
     - stores the values on POST
@@ -9,7 +9,7 @@ The generated code acts as an simulator:
 ## what is generated:
 
 - server.cpp implementation code
-    - per resource an class is generated.
+    - per resource a class is generated.
         - constructor
             - creates the resource
         - has entity handler
@@ -22,7 +22,7 @@ The generated code acts as an simulator:
                     - only arrays of a single type are handled.
                         e.g. array of int, array of strings, array of number
                         NOT handled: array of objects.
-                        - TODO: add complex objecs, see garage example of how to next objects (see client and server side)
+                        - TODO: add complex objects, see garage example of how to next objects (see client and server side)
                 - checks on minimum, maximum and readOnly, no update of the value if this occurs
                     - arrays: no min/max check
                 - tells the notify thread to send out a notification when a member is UPDATED
@@ -39,12 +39,12 @@ The generated code acts as an simulator:
 - svr_server.json  - not used !!!
     default json definition of the secure virtual resources (svr)
     - just works
-    - not onboarded
+    - not on-boarded
     - not tested, not used yet.
 - oic_svr_db_server_mvjustworks.dat
     - copy from iotivity-1.3.1\resource\csdk\security\provisioning
     - security: just works
-    - used in CTT testing (e.g. it can onboard the device!), and CTT can talk to the device.
+    - used in CTT testing (e.g. it can on-board the device!), and CTT can talk to the device.
 - PICS.json
     - pics for CTT testing
     - security: just works.
@@ -158,20 +158,20 @@ run.bat server
 ## CTT info
 
 When CTT pops up:
-"reset to onboarding state" means one needs to:
+"reset to on-boarding state" means one needs to:
 1. Stop your device
 2. Reset/replace security databases with a new/unowned one.
     e.g. copy the ORIGINAL security file to the executable directory.
 3. Start your device.
 
-Note if the IUT crashes during testing one has to reset the security state to not onboarded.
+Note if the IUT crashes during testing one has to reset the security state to not on-boarded.
 this is mentioned in the test case log of CTT when the CTT can't reset the device state properly.
 
 
 # CTT PICS information
 
 - IOTivity implements the next optional virtual security resources
-    currently there is no mechanism available to remove those from the implementatino.
+    currently there is no mechanism available to remove those from the implementation.
     hence they must be listed in the PICS:
     - oic.r.crl, oic.r.csr, oic.r.roles
 - oic/res

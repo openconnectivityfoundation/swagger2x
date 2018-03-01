@@ -197,22 +197,23 @@ class {{path|classsyntax}}Resource : public Resource
                                                         cb,
                                                         OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
 
-    // add the additional interfaces
-    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
-    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
-    for( int a = 1; a < m_nr_resource_interfaces; a++)
-    {
-        OCStackResult result1 = OCBindResourceInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
-        if (result1 != OC_STACK_OK)
-            std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
-    }
     // add the additional resource types
     for( int a = 1; a < m_nr_resource_types; a++ )
     {
-        OCStackResult result2 = OCBindResourceTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
-        if (result2 != OC_STACK_OK)
+        OCStackResult result1 = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
+        if (result1 != OC_STACK_OK)
             std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
     }
+    // add the additional interfaces
+    for( int a = 1; a < m_nr_resource_interfaces; a++)
+    {
+        OCStackResult result2 = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
+        if (result2 != OC_STACK_OK)
+            std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
+    }
+
+    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
+    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
 
     if(OC_STACK_OK != result)
     {

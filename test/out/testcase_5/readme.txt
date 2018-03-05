@@ -30,7 +30,6 @@ what is missing:
   now uses an fixed constant from the API
 
 what is possibly wrong with node.js
-- query param that violate the javascript syntax (e.g. "if" interface query param)
 - rt and if values are single strings: API should be an array
     (not sure what the impact is though)
 

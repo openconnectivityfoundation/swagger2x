@@ -360,7 +360,9 @@ def swagger_if(json_data, input_path):
 
 def swagger_property_data_schema(json_data, input_path, name):
     """
-    get the if value from the schema that is referenced by the path in get (or put)
+    get the value of the property name from the schema that is referenced by the path in get (or put)
+    it tries to get first the enum values or the default value.
+    if this is not found then it will try to get the value from the example
     :param json_data: the swagger file as json struct
     :param input_path: the path to which the if should be queried
     :return: list of if values
@@ -368,16 +370,17 @@ def swagger_property_data_schema(json_data, input_path, name):
     data_values = []
     schema = None
     example = None
-    print("swagger_property_data_schema: path:", input_path)
+    print("swagger_property_data_schema: path/name:", input_path, name)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
-            # get the schemea
+            # get the schema
             try:
                 schema = path_item["get"]["responses"]["200"]["schema"]
             except:
                 try:
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
+                    print ("swagger_property_data_schema: could not find schema")
                     pass
             # get the example
             try:
@@ -386,9 +389,11 @@ def swagger_property_data_schema(json_data, input_path, name):
                 try:
                     example = path_item["post"]["responses"]["200"]["x-example"]
                 except:
+                    print ("swagger_property_data_schema: could not find x-example")
                     pass
 
 
+            value_found = False        
             if schema is not None:
                 print("swagger_property_data_schema: schema", schema)
                 def_data = json_data["definitions"]
@@ -404,26 +409,32 @@ def swagger_property_data_schema(json_data, input_path, name):
                                 enum_values = name_block["items"]["enum"]
                                 for enum_value in enum_values:
                                     data_values.append(enum_value)
+                                    value_found = True
                             except:
                                 # get it from the schema::default
                                 try:
                                     default_values = name_block["default"]
                                     for default_value in default_values:
                                         data_values.append(default_value)
+                                        value_found = True
 
                                 except:
                                     # get it from the example
-                                    if example is not None:
-                                        try:
-                                            default_values = example[name]
-                                            for default_value in default_values:
-                                                data_values.append(default_value)
-                                        except:
-                                            pass
-
+                                    value_found = False
             else:
                 print("swagger_property_data: schema not found:", input_path)
 
+            if value_found is False:
+                if example is not None:
+                    print("swagger_property_data_schema: example", example)
+                    try:
+                        value = example[name]
+                        #for value in values:
+                        data_values.append(value)
+                    except:
+                        print("swagger_property_data_schema: example could not find", name)
+                        pass    
+                
     return data_values
 
 
@@ -700,6 +711,29 @@ def code_indent(input_string, indent_str):
     return_string = add_justification_smart(indent_str, input_string, no_dot_split = True )
     return return_string    
     
+    
+
+def convert_value_to_c_value(my_value):
+    """
+    convert the json value to c value
+    :param my_value the value from swagger_property_data_schema
+    :return: c value.
+    """
+    print ("convert_value_to_c_type: my_value:", my_value)
+    
+    if isinstance(my_value, list) :
+        if len (my_value) > 0:
+            my_value = my_value[0]
+        else:
+            my_value = ""  # default is empty string
+    
+    if isinstance(my_value, bool) :
+        if my_value is True:
+            my_value = "true"
+        else:
+            my_value = "false"
+
+    return my_value
 
 #
 #   main of script
@@ -786,6 +820,7 @@ try:
     env.filters['convert_to_c_type_array'] = convert_to_cplus_string_array
     env.filters['convert_array_size'] = convert_array_size
     env.filters['code_indent'] = code_indent
+    env.filters['convert_value_to_c_value'] = convert_value_to_c_value
 
     for template_file in template_files:
         print ("processing:", template_file)

@@ -165,13 +165,13 @@ class {{path|classsyntax}}Resource : public Resource
 
     // initialize member variables {{path}}
     {% for var, var_data in query_properties(json_data, path).items() -%}
-    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = true; // current value of property "{{var}}" {{var_data["description"]}}
+    {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = 0.0; // current value of property "{{var}}"  {{var_data["description"]}}
+    {% if var_data.type == "number" %}m_var_value{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)| convert_value_to_c_value}}; // current value of property "{{var}}"  {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = 0; // current value of property "{{var}}" {{var_data["description"]}}
+    {% if var_data.type == "integer" %}m_var_value{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)| convert_value_to_c_value}}; // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "";  // current value of property "{{var}}" {{var_data["description"]}}
+    {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "{{swagger_property_data_schema(json_data, path, var)| convert_value_to_c_value}}";  // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
     {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}" 
     {% endif -%}

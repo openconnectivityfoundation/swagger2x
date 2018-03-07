@@ -207,6 +207,24 @@ function: santize strings to be part of the target language.
 
 typical value = "+-? ,./"
 
+#### swagger_property_data_schema
+    get the value of the property name from the schema that is referenced by the path in get (or put)
+    it tries to get first the enum values or the default value.
+    if this is not found then it will try to get the value from the example
+    param json_data: the swagger file as json struct
+    param input_path: the path to which the if should be queried
+    return: list of if values
+
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{% for var, var_data in query_properties(json_data, path).items() -%}
+{{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; 
+{% endfor -%}
+{% endfor -%}
+```
+
 ### jinja2 filter functions
 
 #### variablesyntax
@@ -282,6 +300,21 @@ indents the descriptions with an prefix per line.
 typical usage:
 ```
 {{ method_data["description"] | code_indent(" * ")}}
+```
+
+#### convert_value_to_c_value
+    used in combination with swagger_property_data_schema
+    the filter is then unwrapping the array and gives out the variable in c style
+    e.g. boolean True False are corrected to true and false
+    string needs to be with quotes in the jinga2 template.
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{% for var, var_data in query_properties(json_data, path).items() -%}
+{{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; 
+{% endfor -%}
+{% endfor -%}
 ```
 
 

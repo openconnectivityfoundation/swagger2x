@@ -249,13 +249,8 @@ OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {
     OC_UNUSED(queries);
     {%- for var, var_data in query_properties(json_data, path).items() -%}
-    {% if var_data.type == "boolean" %}
-    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-    {% if var_data.type == "number" %}
-    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-    {% if var_data.type == "integer" %}
-    m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
-    {% if var_data.type == "string" %}
+    {% if var_data.type in  ["boolean", "number", "integer", "string" ] %}
+    std::cout << "\t\t" << "property '{{var}}' : "<< m_var_value{{var|variablesyntax}} << std::endl;
     m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
     {% if var_data.type == "array" %}
     m_rep.setValue(m_var_name{{var|variablesyntax}},  m_var_value{{var|variablesyntax}} ); {% endif -%}
@@ -373,8 +368,10 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {% for var, var_data in query_properties(json_data, path).items() -%}
         {% if var_data.type == "boolean" %}
         try {
-            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            bool temp;
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, temp ))
             {
+                m_var_value{{var|variablesyntax}} = temp;
                 std::cout << "\t\t" << "property '{{var}}' UPDATED: " << ((m_var_value{{var|variablesyntax}}) ? "true" : "false") << std::endl;
                 m_send_notification_flag = true;
             }
@@ -387,11 +384,13 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif -%}
-        {% if var_data.type in ["number", "integer" ] %}
+        {% if var_data.type in ["number", "integer", "string" ] %}
         try {
             // value exist in payload
-            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
+            {{var_data.type|convert_to_cplus_type}} temp;
+            if (rep.getValue(m_var_name{{var|variablesyntax}}, temp ))
             {
+                m_var_value{{var|variablesyntax}} = temp;
                 std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
                 m_send_notification_flag = true;
             }
@@ -405,22 +404,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             std::cout << e.what() << std::endl;
         }{% endif -%}
        
-        {% if var_data.type == "string" %}
-        try {
-            if (rep.getValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ))
-            {
-                std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
-                m_send_notification_flag = true;
-            }
-            else
-            {
-                std::cout << "\t\t" << "property '{{var}}' not found in the representation" << std::endl;
-            }
-        }
-        catch (std::exception& e)
-        {
-            std::cout << e.what() << std::endl;
-        }{% endif -%}
+        
         {% if var_data.type == "array" -%}
         // array only works for integer, boolean, numbers and strings
         {% if var_data |convert_to_cplus_array_type != "std::vector<OCRepresentation>"  -%}

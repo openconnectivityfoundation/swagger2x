@@ -73,13 +73,30 @@ class {{path|classsyntax}}Resource : public Resource
     public:
         /*
          * constructor
+         *
+         * @param resourceUri the uri for this resource
          */
-        {{path|classsyntax}}Resource();
+        {{path|classsyntax}}Resource(std::string resourceUri = "{{path}}");
 
         /*
          * destructor
          */
          virtual ~{{path|classsyntax}}Resource();
+
+        /*
+         * Register the resource with the server
+         *
+         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
+         * setting resourceProperty as OC_OBSERVABLE will allow observation
+         * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery and observation
+         * setting resourceProperty as OC_SECURE the resource supports access via secure endpoints
+         * setting resourceProperty as OC_NONSECURE the resource supports access via non-secure endpoints
+         * setting resourceProperty as OC_SECURE | OC_NONSECURE will allow access via secure and non-secure endpoints
+         *
+         * @param resourceProperty indicates the property of the resource. Defined in octypes.h.
+         */
+        OCStackResult registerResource(uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+
     private:
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %}
@@ -100,8 +117,8 @@ class {{path|classsyntax}}Resource : public Resource
          */
         OCEntityHandlerResult post(OC::QueryParamsMap queries, const OC::OCRepresentation& rep);
 {% endif -%}{% endfor %}
-        
-        std::atomic<bool> m_notify_thread_active;       // signal if the thread should run 
+
+        std::atomic<bool> m_notify_thread_active;       // signal if the thread should run
         std::thread* m_notify_thread;                   // the thread running in the background to update the observe listeners
         std::atomic<bool> m_send_notification_flag;     // signal if the thread should update all registered listeners
         std::mutex m_cv_mutex;                          // mutex to lock the sending of the notification
@@ -117,6 +134,7 @@ class {{path|classsyntax}}Resource : public Resource
          */
         void notifyObservers(void);
 
+        std::string m_resourceUri;
         // resource types and interfaces as array..
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
         std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array)
@@ -132,7 +150,7 @@ class {{path|classsyntax}}Resource : public Resource
         {% else -%}
         {{var_data.type|convert_to_cplus_type}} m_var_value{{var|variablesyntax}}; // the value for the attribute "{{var}}": {{var_data["description"]}}
         {% endif -%}
-        std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute "{{var}}" 
+        std::string m_var_name{{var|variablesyntax}} = "{{var}}"; // the name for the attribute "{{var}}"
         {% endfor %}
     protected:
         /*
@@ -153,7 +171,7 @@ class {{path|classsyntax}}Resource : public Resource
 /*
 * Constructor code
 */
-{{path|classsyntax}}Resource::{{path|classsyntax}}Resource():
+{{path|classsyntax}}Resource::{{path|classsyntax}}Resource(std::string resourceUri):
     m_notify_thread_active(true),
     m_notify_thread(nullptr),
     m_send_notification_flag(false),
@@ -161,8 +179,8 @@ class {{path|classsyntax}}Resource : public Resource
     m_cv{}
 {
     std::cout << "- Running: {{path|classsyntax}}Resource constructor" << std::endl;
-    std::string resourceURI = "{{path}}";
 
+    m_resourceUri = resourceUri;
     // initialize member variables {{path}}
     {% for var, var_data in query_properties(json_data, path).items() -%}
     {% if var_data.type == "boolean" %}m_var_value{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; // current value of property "{{var}}" {{var_data["description"]}}
@@ -173,53 +191,21 @@ class {{path|classsyntax}}Resource : public Resource
     {% endif -%}
     {% if var_data.type == "string" %}m_var_value{{var|variablesyntax}} = "{{swagger_property_data_schema(json_data, path, var)| convert_value_to_c_value}}";  // current value of property "{{var}}" {{var_data["description"]}}
     {% endif -%}
-    {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}" 
+    {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"
     {% endif -%}
     {% if var_data.type == "array" -%}
     // initialize vector {{var}}  {{var_data["description"]}}
     {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
     {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
     m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}  
-    // array of objects  ;; OBJECT NOT HANDLED YET      
-    {%- else%}        
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
+    // array of objects  ;; OBJECT NOT HANDLED YET
+    {%- else%}
     m_var_value{{var|variablesyntax}}.push_back({{var_value}});
     {% endif -%}
     {% endfor -%}
     {% endif -%}
     {% endfor -%}
-
-    EntityHandler cb = std::bind(&{{path|classsyntax}}Resource::entityHandler, this,PH::_1);
-    OCStackResult result = OCPlatform::registerResource(m_resourceHandle,
-                                                        resourceURI,
-                                                        m_RESOURCE_TYPE[0],
-                                                        m_RESOURCE_INTERFACE[0],
-                                                        cb,
-                                                        OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE );
-
-    // add the additional resource types
-    for( int a = 1; a < m_nr_resource_types; a++ )
-    {
-        OCStackResult result1 = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
-        if (result1 != OC_STACK_OK)
-            std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
-    }
-    // add the additional interfaces
-    for( int a = 1; a < m_nr_resource_interfaces; a++)
-    {
-        OCStackResult result2 = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
-        if (result2 != OC_STACK_OK)
-            std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
-    }
-
-    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
-    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
-
-    if(OC_STACK_OK != result)
-    {
-        throw std::runtime_error(
-            std::string("{{path|classsyntax}}Resource failed to start")+std::to_string(result));
-    }
 
     m_send_notification_flag = false;
     m_notify_thread_active = true;
@@ -237,6 +223,50 @@ class {{path|classsyntax}}Resource : public Resource
     {
         m_notify_thread->join();
     }
+}
+
+OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourceProperty)
+{
+    OCStackResult result = OC_STACK_ERROR;
+    EntityHandler cb = std::bind(&{{path|classsyntax}}Resource::entityHandler, this,PH::_1);
+    result = OCPlatform::registerResource(m_resourceHandle,
+                                          m_resourceUri,
+                                          m_RESOURCE_TYPE[0],
+                                          m_RESOURCE_INTERFACE[0],
+                                          cb,
+                                          resourceProperty);
+    if(OC_STACK_OK != result)
+    {
+        std::cerr << "Failed to register {{path|classsyntax}}Resource." << std::endl;
+        return result;
+    }
+
+    /// add the additional resource types
+    for( int a = 1; a < m_nr_resource_types; a++ )
+    {
+        result = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
+        if(OC_STACK_OK != result)
+        {
+            std::cerr << "Could not bind resource type:" << m_RESOURCE_INTERFACE[a] << std::endl;
+            return result;
+        }
+    }
+    // add the additional interfaces
+    for( int a = 1; a < m_nr_resource_interfaces; a++)
+    {
+        result = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
+        if(OC_STACK_OK != result)
+        {
+            std::cerr << "Could not bind interface:" << m_RESOURCE_INTERFACE[a] << std::endl;
+            return result;
+        }
+    }
+
+    std::cout << "{{path|classsyntax}}Resource:" << std::endl;
+    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
+    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
+
+    return result;
 }
 
 {% for methodName, method_data in path_data.items() -%}
@@ -403,8 +433,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {
             std::cout << e.what() << std::endl;
         }{% endif -%}
-       
-        
+
+
         {% if var_data.type == "array" -%}
         // array only works for integer, boolean, numbers and strings
         {% if var_data |convert_to_cplus_array_type != "std::vector<OCRepresentation>"  -%}
@@ -620,6 +650,20 @@ class IoTServer
          */
         ~IoTServer();
 
+        /*
+         * Register the resources with the server
+         *
+         * setting resourceProperty as OC_DISCOVERABLE will allow Discovery of this resource
+         * setting resourceProperty as OC_OBSERVABLE will allow observation
+         * setting resourceProperty as OC_DISCOVERABLE | OC_OBSERVABLE will allow both discovery and observation
+         * setting resourceProperty as OC_SECURE the resource supports access via secure endpoints
+         * setting resourceProperty as OC_NONSECURE the resource supports access via non-secure endpoints
+         * setting resourceProperty as OC_SECURE | OC_NONSECURE will allow access via secure and non-secure endpoints
+         *
+         * @param resourceProperty indicates the property of the resources. Defined in octypes.h.
+         */
+        OCStackResult registerResources(uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
+
     private:
 {%- for path, path_data in json_data['paths'].items() %}
         {{path|classsyntax}}Resource  m{{path|variablesyntax}}Instance;
@@ -637,6 +681,19 @@ IoTServer::IoTServer()
 IoTServer::~IoTServer()
 {
     std::cout << "Running IoTServer destructor" << std::endl;
+}
+
+OCStackResult IoTServer::registerResources(uint8_t resourceProperty)
+{
+    OCStackResult result = OC_STACK_ERROR;
+{%- for path, path_data in json_data['paths'].items() %}
+    result = m{{path|variablesyntax}}Instance.registerResource(resourceProperty);
+    if(OC_STACK_OK != result)
+    {
+        return result;
+    }
+{%- endfor -%}
+    return result;
 }
 
 class Platform
@@ -955,27 +1012,39 @@ void handle_signal(int signal)
 
 // main application
 // starts the server
-int main()
+int main(void)
 {
     Platform platform;
-    OC_VERIFY(platform.start() == OC_STACK_OK);
+    if(OC_STACK_OK != platform.start())
+    {
+        std::cerr << "Failed to start the IoTivity platform." << std::endl;
+        return 1;
+    }
 
     std::cout << "/oic/p" << std::endl;
     // initialize "/oic/p"
-    if (platform.registerPlatformInfo() != OC_STACK_OK)
+    if (OC_STACK_OK != platform.registerPlatformInfo())
     {
-        std::cout << "Platform Registration (/oic/p) failed" << std::endl;
+        std::cerr << "Failed platform registration (/oic/p)." << std::endl;
     }
     // initialize "/oic/d"
     std::cout << "/oic/d" << std::endl;
-    if (platform.setDeviceInfo() != OC_STACK_OK)
+    if (OC_STACK_OK != platform.setDeviceInfo())
     {
-        std::cout << "Device Registration (/oic/d) failed" << std::endl;
+        std::cerr << "Failed device registration (/oic/d)." << std::endl;
     }
 
     std::cout << "device type: " <<  platform.deviceType << std::endl;
     std::cout << "platformID: " <<  platform.getPlatformInfo()->platformID << std::endl;
     std::cout << "platform independent: " <<  platform.protocolIndependentID << std::endl;
+
+    // create the server
+    IoTServer server;
+    if (OC_STACK_OK != server.registerResources())
+    {
+        std::cerr << "Failed to register server resources." << std::endl;
+        return 1;
+    }
 
 #ifdef __unix__
     struct sigaction sa;
@@ -984,19 +1053,15 @@ int main()
     sa.sa_handler = handle_signal;
     sigaction(SIGINT, &sa, NULL);
     std::cout << "Press Ctrl-C to quit...." << std::endl;
-    // create the server
-    IoTServer server;
     do
     {
         usleep(2000000);
     }
     while (quit != 1);
-
 #endif
 
 
 #if defined(_WIN32)
-    IoTServer server;
     std::cout << "Press Ctrl-C to quit...." << std::endl;
     // we will keep the server alive for at most 30 minutes
     std::this_thread::sleep_for(std::chrono::minutes(30));

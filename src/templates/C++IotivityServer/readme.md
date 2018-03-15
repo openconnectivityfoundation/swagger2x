@@ -145,7 +145,7 @@ if "!RUN_ARG!"=="server" (
 # build on windows
 in top directory:
 ```
-run.bat build server -noTest
+run.bat build server -noTest -NoTCP
 ```
 
 # run on windows

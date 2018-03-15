@@ -427,12 +427,16 @@ def swagger_property_data_schema(json_data, input_path, name):
             if value_found is False:
                 if example is not None:
                     print("swagger_property_data_schema: example", example)
-                    try:
+                    value = example.get(name)
+                    if value is not None:
                         value = example[name]
-                        #for value in values:
-                        data_values.append(value)
-                    except:
-                        print("swagger_property_data_schema: example could not find", name)
+                        if isinstance(value, list):
+                            for val in value:
+                                data_values.append(val)
+                        else:
+                            data_values.append(value)
+                    else:
+                        print("swagger_property_data_schema: example could not find:", name)
                         pass    
                 
     return data_values
@@ -734,6 +738,27 @@ def convert_value_to_c_value(my_value):
             my_value = "false"
 
     return my_value
+    
+    
+    
+def init_value_if_empty(my_value, value_type):
+    """
+    convert the json value to c value
+    :param my_value the value from swagger_property_data_schema
+    :return: c value.
+    """
+    print ("init_value_if_empty: my_value:", my_value, " type:", value_type)
+    
+    new_value = convert_value_to_c_value(my_value)
+    
+    if value_type in ["number", "integer"]:
+        if new_value is None:
+            new_value = 0
+        if new_value in [""]:
+            new_value = 0
+    #if value_type in []
+
+    return new_value
 
 #
 #   main of script
@@ -806,6 +831,10 @@ try:
     object_string = json.dumps(json_data, sort_keys=True, indent=2, separators=(',', ': '))
     print ("parse tree of input file:")
     print (object_string)
+    # always in the same order..
+    json_dict = json.loads(object_string)
+    
+    
 
     template_files = get_dir_list(full_path, ".jinja2")
     env = Environment(loader=FileSystemLoader(full_path))
@@ -821,6 +850,7 @@ try:
     env.filters['convert_array_size'] = convert_array_size
     env.filters['code_indent'] = code_indent
     env.filters['convert_value_to_c_value'] = convert_value_to_c_value
+    env.filters['init_value_if_empty'] = init_value_if_empty
 
     for template_file in template_files:
         print ("processing:", template_file)

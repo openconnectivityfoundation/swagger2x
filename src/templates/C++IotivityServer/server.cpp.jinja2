@@ -571,12 +571,13 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
                     if (ehResult == OC_EH_OK)
                     {
                         pResponse->setResourceRepresentation(get(queries), "");
+                        OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
                     }
-                    else
-                    {
-                         pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                    }
-                    OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
+                    //else
+                    //{
+                    //     pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                    //}
+                    //OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
                 }
             }
             {% endif -%}{% endfor -%}

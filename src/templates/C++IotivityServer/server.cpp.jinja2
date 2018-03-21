@@ -18,9 +18,6 @@
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 #include <signal.h>
-#include <atomic>
-#include <thread>
-#include <condition_variable>
 #include <functional>
 #include <string>
 #include <iostream>
@@ -81,7 +78,7 @@ class {{path|classsyntax}}Resource : public Resource
         /*
          * destructor
          */
-         virtual ~{{path|classsyntax}}Resource();
+         virtual ~{{path|classsyntax}}Resource(void);
 
         /*
          * Register the resource with the server
@@ -97,11 +94,19 @@ class {{path|classsyntax}}Resource : public Resource
          */
         OCStackResult registerResource(uint8_t resourceProperty = OC_DISCOVERABLE | OC_OBSERVABLE | OC_SECURE);
 
+        /*
+         * Attempt to send out notifications to observing clients
+         * if no value on the device has been changed no notification
+         * will be sent.
+         *
+         * @return OC_STACK_OK on success
+         */
+        OCStackResult sendNotification();
     private:
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %}
         /*
-         * function to make the payload for the retrieve function (e.g. GET) {{path}}
+         * Make the payload for the retrieve function (e.g. GET) {{path}}
 {{method_data["description"] | code_indent("         * ")}}
          * @param queries  the query parameters for this call
          */
@@ -109,7 +114,7 @@ class {{path|classsyntax}}Resource : public Resource
 {% endif -%}
 {% if methodName == "post" %}
         /*
-         * function to parse the payload for the update function (e.g. POST) {{path}}
+         * Parse the payload for the update function (e.g. POST) {{path}}
 {{method_data["description"] | code_indent("         * ")}}
          * @param queries  the query parameters for this call
          * @param rep  the response to get the property values from
@@ -117,22 +122,6 @@ class {{path|classsyntax}}Resource : public Resource
          */
         OCEntityHandlerResult post(OC::QueryParamsMap queries, const OC::OCRepresentation& rep);
 {% endif -%}{% endfor %}
-
-        std::atomic<bool> m_notify_thread_active;       // signal if the thread should run
-        std::thread* m_notify_thread;                   // the thread running in the background to update the observe listeners
-        std::atomic<bool> m_send_notification_flag;     // signal if the thread should update all registered listeners
-        std::mutex m_cv_mutex;                          // mutex to lock the sending of the notification
-        std::condition_variable m_cv;
-
-        /*
-         * Function responsible for notifying all observers when a property
-         * on the resource has been changed.
-         * this function is running in a thread. Send a notification the
-         * m_send_notification_flag must be set to true and then m_cv.notify_all()
-         * must be called. This should automatically be handled by the code when
-         * PUT or POST is sent to the entityHandler.
-         */
-        void notifyObservers(void);
 
         std::string m_resourceUri;
         // resource types and interfaces as array..
@@ -154,7 +143,7 @@ class {{path|classsyntax}}Resource : public Resource
         {% endfor %}
     protected:
         /*
-         * function to check if the interface is
+         * Check if the interface is
          * @param  interface_name the interface name used during the request
          * @return true: updatable interface
          */
@@ -171,12 +160,7 @@ class {{path|classsyntax}}Resource : public Resource
 /*
 * Constructor code
 */
-{{path|classsyntax}}Resource::{{path|classsyntax}}Resource(std::string resourceUri):
-    m_notify_thread_active(true),
-    m_notify_thread(nullptr),
-    m_send_notification_flag(false),
-    m_cv_mutex{},
-    m_cv{}
+{{path|classsyntax}}Resource::{{path|classsyntax}}Resource(std::string resourceUri)
 {
     std::cout << "- Running: {{path|classsyntax}}Resource constructor" << std::endl;
 
@@ -195,35 +179,23 @@ class {{path|classsyntax}}Resource : public Resource
     {% endif -%}
     {% if var_data.type == "array" -%}
     // initialize vector {{var}}  {{var_data["description"]}}
-    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    {%- for var_value in swagger_property_data_schema(json_data, path, var) -%}
     {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
     m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" -%}
     // array of objects  ;; OBJECT NOT HANDLED YET
-    {%- else%}
+    {%- else -%}
     m_var_value{{var|variablesyntax}}.push_back({{var_value}});
     {% endif -%}
-    {% endfor -%}
+    {% endfor %}
     {% endif -%}
     {% endfor -%}
-
-    m_send_notification_flag = false;
-    m_notify_thread_active = true;
-    m_notify_thread = new std::thread(&{{path|classsyntax}}Resource::notifyObservers, this);
 }
 
 /*
 * Destructor code
 */
-{{path|classsyntax}}Resource::~{{path|classsyntax}}Resource()
-{
-    m_notify_thread_active = false;
-    m_cv.notify_all();
-    if(m_notify_thread->joinable())
-    {
-        m_notify_thread->join();
-    }
-}
+{{path|classsyntax}}Resource::~{{path|classsyntax}}Resource() { }
 
 OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourceProperty)
 {
@@ -269,18 +241,39 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
     return result;
 }
 
+OCStackResult {{path|classsyntax}}Resource::sendNotification(void)
+{
+    OCStackResult sResult = OC_STACK_OK;
+    if ( m_interestedObservers.size() > 0) {
+        std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
+        auto pResponse = std::make_shared<OC::OCResourceResponse>();
+        sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
+                                                    m_interestedObservers,
+                                                    pResponse);
+    }
+    return sResult;
+}
+
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" -%}
 /*
-* function to make the payload for the retrieve function (e.g. GET) {{path}}
+* Make the payload for the retrieve function (e.g. GET) {{path}}
 * @param queries  the query parameters for this call
 */
 OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {
     OC_UNUSED(queries);
+
+    {% for var, var_data in query_properties(json_data, path).items() -%}
+    {% if var_data.type in  ["boolean" ] -%}
+    std::cout << "\t\t" << "property '{{var}}' : "<< ((m_var_value{{var|variablesyntax}}) ? "true" : "false") << std::endl;
+    {% endif -%}
+    {% if var_data.type in  ["number", "integer", "string" ] -%}
+    std::cout << "\t\t" << "property '{{var}}' : "<< m_var_value{{var|variablesyntax}} << std::endl;
+    {% endif -%}
+    {% endfor %}
     {%- for var, var_data in query_properties(json_data, path).items() -%}
     {% if var_data.type in  ["boolean", "number", "integer", "string" ] %}
-    std::cout << "\t\t" << "property '{{var}}' : "<< m_var_value{{var|variablesyntax}} << std::endl;
     m_rep.setValue(m_var_name{{var|variablesyntax}}, m_var_value{{var|variablesyntax}} ); {% endif -%}
     {% if var_data.type == "array" %}
     m_rep.setValue(m_var_name{{var|variablesyntax}},  m_var_value{{var|variablesyntax}} ); {% endif -%}
@@ -294,7 +287,7 @@ OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "post" %}
 /*
-* function to parse the payload for the update function (e.g. POST) {{path}}
+* Parse the payload for the update function (e.g. POST) {{path}}
 * @param queries  the query parameters for this call
 * @param rep  the response to get the property values from
 * @return OCEntityHandlerResult ok or not ok indication
@@ -403,7 +396,6 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             {
                 m_var_value{{var|variablesyntax}} = temp;
                 std::cout << "\t\t" << "property '{{var}}' UPDATED: " << ((m_var_value{{var|variablesyntax}}) ? "true" : "false") << std::endl;
-                m_send_notification_flag = true;
             }
             else
             {
@@ -422,7 +414,6 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             {
                 m_var_value{{var|variablesyntax}} = temp;
                 std::cout << "\t\t" << "property '{{var}}' UPDATED: " << m_var_value{{var|variablesyntax}} << std::endl;
-                m_send_notification_flag = true;
             }
             else
             {
@@ -458,7 +449,6 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
                     }
                 }
                 std::cout <<  std::endl;
-                m_send_notification_flag = true;
             }
             else
             {
@@ -470,11 +460,6 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             std::cout << e.what() << std::endl;
         }{% endif %}{% endif %}
     {%- endfor %}
-
-        if (m_send_notification_flag)
-        {
-            m_cv.notify_all();
-        }
     }
     return ehResult;
 }
@@ -482,7 +467,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
 {% endfor -%}
 
 /*
-* function to check if the interface name is an registered interface name
+* Check if the interface name is an registered interface name
 */
 bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface_name)
 {
@@ -571,13 +556,18 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
                     if (ehResult == OC_EH_OK)
                     {
                         pResponse->setResourceRepresentation(get(queries), "");
-                        OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
+                        if (OC_STACK_OK == OCPlatform::sendResponse(pResponse))
+                        {
+                            if (OC_STACK_OK != sendNotification() )
+                            {
+                                std::cerr << "NOTIFY failed." << std::endl;
+                            }
+                        }
                     }
-                    //else
-                    //{
-                    //     pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
-                    //}
-                    //OC_VERIFY(OCPlatform::sendResponse(pResponse) == OC_STACK_OK);
+                    else
+                    {
+                         pResponse->setResponseResult(OCEntityHandlerResult::OC_EH_ERROR);
+                    }
                 }
             }
             {% endif -%}{% endfor -%}
@@ -594,8 +584,17 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
         if(requestFlag & RequestHandlerFlag::ObserverFlag)
         {
             // observe flag is set
-            std::cout << "\t\trequestFlag : Observer\n" << std::endl;
             ObservationInfo observationInfo = request->getObservationInfo();
+            std::cout << "\t\trequestFlag : observer ";
+            if (ObserveAction::ObserveRegister == observationInfo.action)
+            {
+                std::cout << "register" << std::endl; 
+            } 
+            else
+            {
+                std::cout << "unregister" << std::endl;
+            }
+
             if(ObserveAction::ObserveRegister == observationInfo.action)
             {
                 // add observer
@@ -605,34 +604,15 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::entityHandler(std::shared_pt
             {
                 // delete observer
                 m_interestedObservers.erase(std::remove(
-                                                            m_interestedObservers.begin(),
-                                                            m_interestedObservers.end(),
-                                                            observationInfo.obsId),
-                                                            m_interestedObservers.end());
+                                            m_interestedObservers.begin(),
+                                            m_interestedObservers.end(),
+                                            observationInfo.obsId),
+                                            m_interestedObservers.end());
             }
             ehResult = OC_EH_OK;
         }
     }
     return ehResult;
-}
-
-/*
-* the function running in the thread to update the registered observers
-*/
-void {{path|classsyntax}}Resource::notifyObservers(void)
-{
-    std::unique_lock<std::mutex> cv_lock(m_cv_mutex);
-    while (m_notify_thread_active)
-    {
-        m_cv.wait(cv_lock);
-        if (m_send_notification_flag)
-        {
-            m_send_notification_flag = false;
-            std::cout << "Send NOTIFICATION to all observers" << std::endl;
-
-            OCPlatform::notifyAllObservers(this->m_resourceHandle);
-        }
-    }
 }
 
 {% endfor %}

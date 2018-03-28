@@ -400,9 +400,9 @@ def swagger_property_data_schema(json_data, input_path, name):
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
-                        #print("swagger_property_data_schema: found", def_item)
+                        print("swagger_property_data_schema: found", full_def_name)
                         name_block = find_key_link(def_item, name)
-                        print("swagger_property_data_schema: found", name_block)
+                        print("swagger_property_data_schema: found name", name, name_block)
                         if name_block is not None:
                             # get it from the schema::enum
                             try:
@@ -421,6 +421,9 @@ def swagger_property_data_schema(json_data, input_path, name):
                                 except:
                                     # get it from the example
                                     value_found = False
+                        else:
+                            print (def_item)
+                            
             else:
                 print("swagger_property_data: schema not found:", input_path)
 
@@ -516,6 +519,16 @@ def swagger_properties(json_data, input_path):
                 print("swagger_properties: schema not found:", input_path)
 
     return prop_block
+    
+def swagger_properties_filtered(json_data, input_path):
+    properties_list =  swagger_properties(json_data, input_path)
+    my_dict = {}
+    for item, item_val in properties_list.items():
+        if item not in ["n", "if", "rt"]:
+            my_dict[item] = item_val
+   
+    return my_dict
+    
 
 def query_rt_from_path(parse_tree, path):
     """
@@ -864,6 +877,7 @@ try:
         template_environment.globals['query_property_names'] = swagger_property_names
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties
+        template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict

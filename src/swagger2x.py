@@ -358,6 +358,14 @@ def swagger_if(json_data, input_path):
     return swagger_property_data_schema(json_data, input_path, "if")
 
 
+def swagger_if_exist(json_data, input_path, if_value):
+    data = swagger_property_data_schema(json_data, input_path, "if")
+    #print ("swagger_if_exist", data)
+    if if_value in data:
+        return True
+    return False
+    
+
 def swagger_property_data_schema(json_data, input_path, name):
     """
     get the value of the property name from the schema that is referenced by the path in get (or put)
@@ -874,6 +882,7 @@ try:
         template_environment.globals['query_ref'] = query_ref
         template_environment.globals['query_rt'] = query_rt_from_path
         template_environment.globals['query_if'] = swagger_if
+        template_environment.globals['query_if_exist'] = swagger_if_exist
         template_environment.globals['query_property_names'] = swagger_property_names
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties

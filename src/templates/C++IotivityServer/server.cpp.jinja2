@@ -128,8 +128,6 @@ class {{path|classsyntax}}Resource : public Resource
         std::string m_RESOURCE_TYPE[{{query_rt(json_data, path)|convert_array_size}}] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
         std::string m_RESOURCE_INTERFACE[{{query_if(json_data, path)|convert_array_size}}] = {{query_if(json_data, path)|convert_to_c_type_array}}; // interface if (as an array)
         std::string m_IF_UPDATE[3] = {"oic.if.a", "oic.if.rw", "oic.if.baseline"}; // updateble interfaces
-        int m_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
-        int m_nr_resource_interfaces = {{query_if(json_data, path)|convert_array_size}};
         ObservationIds m_interestedObservers;
 
         // member variables for path: "{{path}}"
@@ -214,7 +212,7 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
     }
 
     /// add the additional resource types
-    for( int a = 1; a < m_nr_resource_types; a++ )
+    for( int a = 1; a < (sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0])); a++ )
     {
         result = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
         if(OC_STACK_OK != result)
@@ -224,7 +222,7 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
         }
     }
     // add the additional interfaces
-    for( int a = 1; a < m_nr_resource_interfaces; a++)
+    for( int a = 1; a < (sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0])); a++)
     {
         result = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
         if(OC_STACK_OK != result)
@@ -235,8 +233,10 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
     }
 
     std::cout << "{{path|classsyntax}}Resource:" << std::endl;
-    std::cout << "\t" << "# resource interfaces: " << m_nr_resource_interfaces << std::endl;
-    std::cout << "\t" << "# resource types     : " << m_nr_resource_types << std::endl;
+    std::cout << "\t" << "# resource interfaces: "
+              << sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0]) << std::endl;
+    std::cout << "\t" << "# resource types     : "
+              << sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0]) << std::endl;
 
     return result;
 }
@@ -471,7 +471,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
 */
 bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface_name)
 {
-    for (int i=0; i<3; i++)
+    for (int i=0; i < (sizeof(m_IF_UPDATE)/sizeof(m_IF_UPDATE[0])); i++)
     {
         if (m_IF_UPDATE[i].compare(interface_name) == 0)
             return true;

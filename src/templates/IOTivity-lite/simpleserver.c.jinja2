@@ -108,12 +108,13 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 {
   (void)user_data;  // not used
 
-  PRINT("get{{path|variablesyntax}}:\n");
+  PRINT("get{{path|variablesyntax}}: interface %d\n", interfaces);
   oc_rep_start_root_object();
   switch (interfaces) {
   case OC_IF_BASELINE:
-    oc_process_baseline_interface(request->resource);
-    
+    //PRINT("   Adding Baseline info\n" );
+    //oc_process_baseline_interface(request->resource);
+    /* fall through */
   {%- if query_if_exist(json_data, path, "oic.if.a") %}
   case OC_IF_A:
   {% endif -%}
@@ -126,6 +127,8 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {%- if query_if_exist(json_data, path, "oic.if.rw") %}
   case OC_IF_RW:
   {% endif -%}
+    PRINT("   Adding Baseline info\n" );
+    oc_process_baseline_interface(request->resource);
     {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
     {% if var_data.type == "boolean" %}oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
     PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  g{{path|variablesyntax}}{{var|variablesyntax}} );
@@ -217,6 +220,7 @@ register_resources(void)
         oc_resource_bind_resource_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[a]));
     }
     oc_resource_set_default_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]));  
+    PRINT("     default interface: %d (%s)\n", convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]), g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
     oc_resource_set_discoverable(res{{path|variablesyntax}}, true);
     oc_resource_set_periodic_observable(res{{path|variablesyntax}}, 1);
   {% for methodName, method_data in path_data.items() -%}

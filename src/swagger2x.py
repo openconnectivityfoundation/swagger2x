@@ -35,6 +35,7 @@ import os.path
 from os import listdir
 from os.path import isfile, join
 from shutil import copyfile
+from  collections import OrderedDict
 
 
 if sys.version_info < (3, 5):
@@ -81,7 +82,7 @@ def load_json_schema(filename, my_dir=None):
         print ("json file does not exist:", full_path)
 
     linestring = open(full_path, 'r').read()
-    json_dict = json.loads(linestring)
+    json_dict = json.loads(linestring, object_pairs_hook=OrderedDict)
 
     return json_dict
 

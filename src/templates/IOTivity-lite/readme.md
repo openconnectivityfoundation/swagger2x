@@ -1,34 +1,65 @@
 Template: IOTivity Constrained C server
 
-== not complete yet, awaiting answers ==
 
-
-The generated code acts as an simulator:
-- it creates values at start update
-- handles incomming requests, 
+The generated code acts as a simulator:
+- the server creates (initial) values at start up (from default/examples)
+- handles incomming requests (GET/POST)
     - stores the values on POST
     - respond on GET by giving out the stored values
 
 what is generated:
-        
 - simpleserver.c implementation code
-    - variables
+    - app_init
+        - function to create the device
+        - sets the type and which OCF spec is being used (default to OCF1.3)
+    - global variables, for each property per resources
+        - type 
+        - naming convention g_<resource>_<propertyname>
         
     - functions:
-        - get_XXX() : function to convert the  member variables to the response document
-            - TODO: setting output response from global variables
-        - post_XXX() : function to convert the input request document to the member variables
-            - TODO: setting input to global variables
-
+        - get_<resource> 
+            - function to convert the  member variables to the response document
+            - note: always returns the same document, regardless of the interface
+                - this works for testcase CT1.2.2
+            - handles: boolean, number, integer, string
+        - post_<resource>(
+            - function to convert the input request document to the member variables
+            - checks if input is correct :
+                - no write only properties
+                - properties of the correct type
+                - properties in MIN/MAX range given in by schema (not by property range)
+               returns error if this is not satisfied.
+               global variable(s) is not assigne
+            - handles boolean, number integer
+-PICT.json
+    - PICT file that list the implemented resources in the generated code
+      to be used with CTT
+- server_introspection.dat
+    - CBOR encoded Introspection Device Data
+      
+      
+            
 what is missing/incorrect:
-- handling query params
 - creation/deletion of resources (PUT/DELETE functions)
-- no correct makefile file, so we do not yet know how to insert this in the IOTivity tree and then compile
-- security?
-- introspection
+- handling in get/post of
+    - arrays/josn structures in payload
+    - string in payload (for post)
 
-Notes:
 
+Building instructions
+
+windows:
+- easiest way to build and run is to rename the generated file to the simpleserver_windows.c file in the apps folder 
+- use the existing visual studio project in folder port/windows
+- note that there are 3 project, 1 for the library, client and server.
+
+- other instructions
+    - place the server_introspection.dat file in the folder port/windows
+    
+CTT instructions
+- when asked for revertion to RFOB
+  - delete all files in port/windows/simpleserver_creds and restart the server.
+    
 
 
 

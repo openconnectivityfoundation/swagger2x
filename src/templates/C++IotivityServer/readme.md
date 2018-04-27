@@ -1,8 +1,8 @@
 # Template: IOTivity C++ server
 
 The generated code acts as a simulator:
-- it creates values at start update
-- handles incoming requests,
+- the server creates (initial) values at start up (from default/examples)
+- handles incomming requests (GET/POST)
     - stores the values on POST
     - respond on GET by giving out the stored values
 

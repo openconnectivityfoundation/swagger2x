@@ -31,4 +31,4 @@ try:
 except:
     print("missing jinja2:")
     print ("Trying to Install required module: jinja2")
-    os.system('python3 -m pip install --user jinja2')
+    os.system('python3 -m pip3 install --user jinja2')

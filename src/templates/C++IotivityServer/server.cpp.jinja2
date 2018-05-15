@@ -212,7 +212,7 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
     }
 
     /// add the additional resource types
-    for( int a = 1; a < (sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0])); a++ )
+    for( unsigned int a = 1; a < (sizeof(m_RESOURCE_TYPE)/sizeof(m_RESOURCE_TYPE[0])); a++ )
     {
         result = OCPlatform::bindTypeToResource(m_resourceHandle, m_RESOURCE_TYPE[a].c_str());
         if(OC_STACK_OK != result)
@@ -222,7 +222,7 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
         }
     }
     // add the additional interfaces
-    for( int a = 1; a < (sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0])); a++)
+    for( unsigned int a = 1; a < (sizeof(m_RESOURCE_INTERFACE)/sizeof(m_RESOURCE_INTERFACE[0])); a++)
     {
         result = OCPlatform::bindInterfaceToResource(m_resourceHandle, m_RESOURCE_INTERFACE[a].c_str());
         if(OC_STACK_OK != result)

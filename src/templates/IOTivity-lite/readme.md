@@ -43,11 +43,14 @@ The generated code acts as a simulator:
 # what is missing/incorrect:
 - creation/deletion of resources (PUT/DELETE functions)
 - handling in get/post of
-    - arrays/josn structures in payload
+    - arrays/json structures in payload
     - string in payload (for post)
 
 
+    
 # Building instructions
+## code repo
+https://github.com/iotivity/iotivity-constrained  e.g. IOTivity-Lite
 
 ## windows:
 - easiest way to build and run is to rename the generated file to the simpleserver_windows.c file in the apps folder 

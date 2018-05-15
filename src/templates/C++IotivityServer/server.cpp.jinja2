@@ -471,7 +471,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
 */
 bool {{path|classsyntax}}Resource::in_updatable_interfaces(std::string interface_name)
 {
-    for (int i=0; i < (sizeof(m_IF_UPDATE)/sizeof(m_IF_UPDATE[0])); i++)
+    for (unsigned int i=0; i < (sizeof(m_IF_UPDATE)/sizeof(m_IF_UPDATE[0])); i++)
     {
         if (m_IF_UPDATE[i].compare(interface_name) == 0)
             return true;

@@ -263,6 +263,10 @@ OCStackResult {{path|classsyntax}}Resource::sendNotification(void)
 OCRepresentation {{path|classsyntax}}Resource::get(QueryParamsMap queries)
 {
     OC_UNUSED(queries);
+	
+	// TODO: SENSOR add here the code to talk to the HW if one implements a sensor.
+	// the calls needs to fill in the member variable before it is returned.
+	// alternative is to have a callback from the hardware that sets the member variables
 
     {% for var, var_data in query_properties(json_data, path).items() -%}
     {% if var_data.type in  ["boolean" ] -%}
@@ -366,7 +370,8 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         std::cout << e.what() << std::endl;
     }{% endif -%}
     {% if var_data.type == "array" %}
-    // TODO add check on array contents out of range, etc..
+    // TODO: missing code: add check on array contents out of range
+	// such a check is resource specific
     try {
         if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
         {
@@ -429,7 +434,7 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
         {% if var_data.type == "array" -%}
         // array only works for integer, boolean, numbers and strings
         {% if var_data |convert_to_cplus_array_type != "std::vector<OCRepresentation>"  -%}
-        // TODO: make it also work with array of objects
+        // TODO: missing code, make it also work with array of objects
         try {
             if (rep.hasAttribute(m_var_name{{var|variablesyntax}}))
             {
@@ -460,6 +465,9 @@ OCEntityHandlerResult {{path|classsyntax}}Resource::post(QueryParamsMap queries,
             std::cout << e.what() << std::endl;
         }{% endif %}{% endif %}
     {%- endfor %}
+	// TODO: ACTUATOR add here the code to talk to the HW if one implements an actuator.
+	// one can use the member variables as input to those calls
+	// the member values have been updated already with the request data
     }
     return ehResult;
 }
@@ -748,7 +756,6 @@ private:
     *
     * @param targetString  destination string, will be allocated
     * @param sourceString  source string, e.g. will be copied
-    *  TODO: don't use strncpy
     */
     void duplicateString(char ** targetString, std::string sourceString);
 

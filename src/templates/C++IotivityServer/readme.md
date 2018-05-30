@@ -36,11 +36,7 @@ The generated code acts as a simulator:
             - security file (SVR) contents
             these files needs to be installed/copied where the the executable is.
 
-- svr_server.json  - not used !!!
-    default json definition of the secure virtual resources (svr)
-    - just works
-    - not on-boarded
-    - not tested, not used yet.
+
 - oic_svr_db_server_mvjustworks.dat
     - copy from iotivity-1.3.1\resource\csdk\security\provisioning
     - security: just works

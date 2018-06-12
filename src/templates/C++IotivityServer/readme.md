@@ -37,10 +37,6 @@ The generated code acts as a simulator:
             these files needs to be installed/copied where the the executable is.
 
 
-- oic_svr_db_server_mvjustworks.dat
-    - copy from iotivity-1.3.1\resource\csdk\security\provisioning
-    - security: just works
-    - used in CTT testing (e.g. it can on-board the device!), and CTT can talk to the device.
 - PICS.json
     - pics for CTT testing
     - security: just works.
@@ -58,6 +54,13 @@ The generated code acts as a simulator:
 - readOnly params like: "precision", "maximumsaturation" from oic.r.colour.chroma is crashing the device when running the CTT
     - to avoid this: remove these properties from the generated device.
 
+    
+# security files
+    
+use oic_svr_db_server_justworks.dat, can be obtained from:
+    - iotivity-1.3.1\resource\csdk\security\provisioning
+    - security: just works
+    - used in CTT testing (e.g. it can on-board the device!), and CTT can talk to the device.
 
 ## SCONS adaption in resource/examples
 

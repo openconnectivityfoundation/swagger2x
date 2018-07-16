@@ -25,27 +25,21 @@ The generated code acts as a simulator:
         - post_<resource>(
             - function to convert the input request document to the member variables
             - checks if input is correct :
-                - no write only properties
-                - properties of the correct type
+                - no write to readOnly properties
+                - properties of the correct type (using type in the struct)
                 - properties in MIN/MAX range given in by schema (not by property range)
                returns error if this is not satisfied.
-               global variable(s) is not assigne
-            - handles boolean, number integer
--PICTS.json
+               global variable(s) is not assigned
+            - handles boolean, number, integer and string
+-PICS.json
     - PICT file that list the implemented resources in the generated code
       to be used with CTT
-- server_introspection.dat
-    - CBOR encoded Introspection Device Data
-    - security: just works.
-      
       
             
 # what is missing/incorrect:
 - creation/deletion of resources (PUT/DELETE functions)
 - handling in get/post of
     - arrays/json structures in payload
-    - string in payload (for post)
-
 
     
 # Building instructions

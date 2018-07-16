@@ -39,13 +39,22 @@ static CRITICAL_SECTION cs;     // event loop variable
 
 #define MAX_STRING 25
 
-volatile int quit = 0;			// stop variable
+volatile int quit = 0;          // stop variable
 oc_string_t name;               // name of the device
 
 {% for path, path_data in json_data['paths'].items() %}
 // membervariables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
 static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}[] = "{{var}}"; // the name for the attribute
-{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute {% endfor -%}
+//{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute 
+
+{% if var_data.type == "boolean" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "number" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}"  {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "integer" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "string" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}[65];
+strncpy(g{{path|variablesyntax}}{{var|variablesyntax}},"{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}");  // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
+{% if var_data.type == "array" -%}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
+{% endfor -%} 
 {% endfor -%} 
 // variables for the resources
 {% for path, path_data in json_data['paths'].items() %}
@@ -141,7 +150,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, g{{path|variablesyntax}}{{var}}, {{var}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
-{% endfor -%}
+    {% endfor -%}
     break;
   default:
     break;
@@ -164,124 +173,161 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 static void
 post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
 {
-    (void)interfaces;
-    (void)user_data;
-    bool error_state = false;
-    PRINT("post{{path|variablesyntax}}:\n");
+  (void)interfaces;
+  (void)user_data;
+  bool error_state = false;
+  PRINT("post{{path|variablesyntax}}:\n");
+  oc_rep_t *rep = request->request_payload;
+  while (rep != NULL) {
+    PRINT("key: (check) %s ", oc_string(rep->name));
+    {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
+    {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      // value exist in payload
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif -%}{% endif %}
+      if (rep->type != OC_REP_BOOL)
+      {
+        error_state = true;
+        PRINT ("   property '{{var}}' is not of type bool %d \n", rep->type);
+      }
+    }{% endif -%}
+    {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      // value exist in payload
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif -%}{% endif %}
+      if (rep->type != OC_REP_STRING)
+      {
+        error_state = true;
+        PRINT ("   property '{{var}}' is not of type string %d \n", rep->type);
+      }
+    }{% endif -%}
+    {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      int value = rep->value.integer;
+      // value exist in payload
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif -%}{% endif %}
+      if (rep->type != OC_REP_INT)
+      {
+        error_state = true;
+        PRINT ("   property '{{var}}' is not of type int %d \n", rep->type);
+      }
+      {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
+      {
+        // check the minimum range
+        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
+        error_state = true;
+      }{% endif %}
+      {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
+      {
+        // check the maximum range
+        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
+        error_state = true;
+      }{% endif %}
+    } {% endif %}
+    {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      double value = 0;
+      if (rep->type == OC_REP_DOUBLE)
+        value = rep->value.double_p;
+      if (rep->type == OC_REP_INT)
+        value = (double) rep->value.integer;
+      // value exist in payload
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif -%}{% endif %} 
+      if ( (rep->type != OC_REP_DOUBLE) || (rep->type != OC_REP_INT))
+      {
+        error_state = true;
+        PRINT ("   property '{{var}}' is not of type double or int %d \n", rep->type);
+      }
+      {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
+      {
+        // check the minimum range
+        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
+        error_state = true;
+      }{% endif %}
+      {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
+      {
+        // check the maximum range
+        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
+        error_state = true;
+      }{% endif %}
+    }{% endif %}
+    {% if var_data.type == "array" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      // array not handled
+    } {% endif %}
+    {% if var_data.type == "object" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+    {
+      // object not handled
+      if (rep->type != OC_REP_OBJECT)
+      {
+        error_state = true;
+        PRINT ("   property '{{var}}' is not of type object %d \n", rep->type);
+      }
+    } {% endif %}
+    {%- endfor -%}
+    rep = rep->next;
+  }
+    
+  if (error_state == false)
+  {
     oc_rep_t *rep = request->request_payload;
     while (rep != NULL) {
-        PRINT("key: (check) %s ", oc_string(rep->name));
-        
-        {%- for var, var_data in query_properties(json_data, path).items() -%}
-        {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-        {
-                // value exist in payload
-                {% if var_data.readOnly -%}
-                {% if var_data.readOnly == true %}
-                // check if "{{var}}" is read only
-                error_state = true;
-                PRINT ("   property '{{var}}' is readOnly \n");
-                {% endif -%}{% endif %}
-                if (rep->type != OC_REP_BOOL)
-                {
-                    error_state = true;
-                    PRINT ("   property '{{var}}' is not of type bool %d \n", rep->type);
-                }
-        }{% endif -%}
-        {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-        {
-            int value = rep->value.integer;
-            // value exist in payload
-            {% if var_data.readOnly -%}
-            {% if var_data.readOnly == true %}
-            // check if "{{var}}" is read only
-            error_state = true;
-            PRINT ("   property '{{var}}' is readOnly \n");
-            {% endif -%}{% endif %}
-            if (rep->type != OC_REP_INT)
-            {
-                error_state = true;
-                PRINT ("   property '{{var}}' is not of type int %d \n", rep->type);
-            }
-            {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-            {
-                // check the minimum range
-                PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
-                error_state = true;
-            }{% endif %}
-            {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-            {
-                // check the maximum range
-                PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
-                error_state = true;
-            }{% endif %}
-        } {% endif %}
-        {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-        {
-            double value = 0;
-            if (rep->type == OC_REP_DOUBLE)
-                value = rep->value.double_p;
-            if (rep->type == OC_REP_INT)
-                value = (double) rep->value.integer;
-            // value exist in payload
-            {% if var_data.readOnly -%}
-            {% if var_data.readOnly == true %}
-            // check if "{{var}}" is read only
-            error_state = true;
-            PRINT ("   property '{{var}}' is readOnly \n");
-            {% endif -%}{% endif %} 
-            if ( (rep->type != OC_REP_DOUBLE) || (rep->type != OC_REP_INT))
-            {
-                error_state = true;
-                PRINT ("   property '{{var}}' is not of type double or int %d \n", rep->type);
-            }
-            {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-            {
-                // check the minimum range
-                PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
-                error_state = true;
-            }{% endif %}
-            {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-            {
-                // check the maximum range
-                PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
-                error_state = true;
-            }{% endif %}
-        }{% endif %}
-        {%- endfor -%}
-        rep = rep->next;
+      PRINT("key: (assign) %s ", oc_string(rep->name));
+      // no error: assign the variables
+      {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
+      {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0)
+      {
+        // assign {{var}}
+        g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
+      }{% endif -%}
+      {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+      {
+        // assign {{var}}
+        g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.integer;
+      }{% endif -%}
+      {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+      {
+        // assign {{var}}
+        g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
+      }{% endif -%} 
+      {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
+      {
+        // assign {{var}}
+        //strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, rep->value.string);
+      }{% endif -%} 
+      {% if var_data.type == "array" -%}// TODO: array not handled "{{var}}"
+      {% endif -%} 
+      {% if var_data.type == "object" %}// TODO: OBJECT NOT HANDLED  "{{var}}"
+      {% endif -%}
+      {%- endfor %}
+      rep = rep->next;
     }
-    
-    if (error_state == false)
-    {
-        oc_rep_t *rep = request->request_payload;
-        while (rep != NULL) {
-            PRINT("key: (assign) %s ", oc_string(rep->name));
-            // no error: assign the variables
-            {% for var, var_data in query_properties(json_data, path).items() -%}
-            {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0)
-            {
-                // assign {{var}}
-                g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
-            }{% endif -%}
-            {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-            {
-                // assign {{var}}
-                g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.integer;
-            }{% endif -%}
-            {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-            {
-                // assign {{var}}
-                g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
-            }{% endif -%} {%- endfor %}
-            rep = rep->next;
-        }
-        oc_send_response(request, OC_STATUS_CHANGED);
-    }
-    else
-    {
-        oc_send_response(request, OC_STATUS_NOT_MODIFIED);
-    }
+    oc_send_response(request, OC_STATUS_CHANGED);
+  }
+  else
+  {
+    oc_send_response(request, OC_STATUS_NOT_MODIFIED);
+  }
 }
 {% endif -%}
 {% endfor -%}
@@ -295,31 +341,31 @@ static void
 register_resources(void)
 {
 {% for path, path_data in json_data['paths'].items() %}
-    PRINT("register resource with path {{path}}\n");
-    oc_resource_t *res{{path|variablesyntax}} = oc_new_resource(NULL, g{{path|variablesyntax}}_RESOURCE_ENDPOINT, g{{path|variablesyntax}}_nr_resource_types, 0);
-    PRINT("     number of resource types: %d\n", g{{path|variablesyntax}}_nr_resource_types);
-    for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_types; a++ )
-    {
-        PRINT("     resource type: %s\n", g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
-        oc_resource_bind_resource_type(res{{path|variablesyntax}},g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
-    }
-    for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_interfaces; a++ )
-    {
-        oc_resource_bind_resource_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[a]));
-    }
-    oc_resource_set_default_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]));  
-    PRINT("     default interface: %d (%s)\n", convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]), g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
-    oc_resource_set_discoverable(res{{path|variablesyntax}}, true);
-    oc_resource_set_periodic_observable(res{{path|variablesyntax}}, 1);
+  PRINT("register resource with path {{path}}\n");
+  oc_resource_t *res{{path|variablesyntax}} = oc_new_resource(NULL, g{{path|variablesyntax}}_RESOURCE_ENDPOINT, g{{path|variablesyntax}}_nr_resource_types, 0);
+  PRINT("     number of resource types: %d\n", g{{path|variablesyntax}}_nr_resource_types);
+  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_types; a++ )
+  {
+    PRINT("     resource type: %s\n", g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
+    oc_resource_bind_resource_type(res{{path|variablesyntax}},g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
+  }
+  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_interfaces; a++ )
+  {
+    oc_resource_bind_resource_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[a]));
+  }
+  oc_resource_set_default_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]));  
+  PRINT("     default interface: %d (%s)\n", convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]), g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
+  oc_resource_set_discoverable(res{{path|variablesyntax}}, true);
+  oc_resource_set_periodic_observable(res{{path|variablesyntax}}, 1);
   {% for methodName, method_data in path_data.items() -%}
   {% if methodName == "get" %} 
-    oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_GET, get{{path|variablesyntax}}, NULL);
+  oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_GET, get{{path|variablesyntax}}, NULL);
   {% endif -%}
   {% if methodName == "post" %} 
-    oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_POST, post{{path|variablesyntax}}, NULL);
+  oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_POST, post{{path|variablesyntax}}, NULL);
   {% endif -%}
   {% if methodName == "put" %} 
-    oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_PUT, put{{path|variablesyntax}}, NULL);
+  oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_PUT, put{{path|variablesyntax}}, NULL);
   {% endif -%}
 {% endfor -%}    oc_add_resource(res{{path|variablesyntax}});
 {% endfor -%}

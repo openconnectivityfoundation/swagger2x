@@ -29,6 +29,7 @@
 #include <signal.h>
 
 #ifdef __linux__
+#include <pthread.h>
 static pthread_mutex_t mutex;
 static pthread_cond_t cv;
 static struct timespec ts;

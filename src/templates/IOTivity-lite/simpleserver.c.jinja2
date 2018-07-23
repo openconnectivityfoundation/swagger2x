@@ -326,10 +326,31 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {%- endfor %}
       rep = rep->next;
     }
+    
+    // set the response
+    oc_rep_start_root_object();
+    //oc_process_baseline_interface(request->resource);
+    {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+    {% if var_data.type == "boolean" %}oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
+    {% endif -%}
+    {% if var_data.type == "number" %}oc_rep_set_double(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
+    {% endif -%}
+    {% if var_data.type == "integer" %}oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
+    {% endif -%}
+    {% if var_data.type == "string" %}oc_rep_set_text_string(root, g{{path|variablesyntax}}{{var}}, {{var}} ); 
+    {% endif -%}
+    {% if var_data.type == "array" -%}// TODO: array not handled "{{var}}"
+    {% endif -%} 
+    {% if var_data.type == "object" %}// TODO: OBJECT NOT HANDLED  "{{var}}"
+    {% endif -%}
+    {% endfor -%}
+    oc_rep_end_root_object();
+    
     oc_send_response(request, OC_STATUS_CHANGED);
   }
   else
   {
+    // TODO: add error response, if any
     oc_send_response(request, OC_STATUS_NOT_MODIFIED);
   }
 }

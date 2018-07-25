@@ -54,8 +54,7 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% if var_data.type == "boolean" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "number" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}"  {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "integer" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
-{% if var_data.type == "string" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}[65];
-strncpy(g{{path|variablesyntax}}{{var|variablesyntax}},"{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}");  // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "string" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}[65] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
 {% if var_data.type == "array" -%}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
 {% endfor -%} 

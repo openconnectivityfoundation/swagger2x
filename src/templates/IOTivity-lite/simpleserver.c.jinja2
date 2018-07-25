@@ -41,25 +41,23 @@ static CONDITION_VARIABLE cv;   // event loop variable
 static CRITICAL_SECTION cs;     // event loop variable
 #endif
 
-#define MAX_STRING 45   // max size of the strings.
+#define MAX_STRING 65   // max size of the strings.
 
 volatile int quit = 0;          // stop variable
 oc_string_t name;               // name of the device
 
 {% for path, path_data in json_data['paths'].items() %}
-// membervariables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+// global variables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
 static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}[] = "{{var}}"; // the name for the attribute
-//{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}; // the value for the attribute 
-
 {% if var_data.type == "boolean" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "number" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}"  {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "integer" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
-{% if var_data.type == "string" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}}[65] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "string" %}char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_STRING] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
 {% if var_data.type == "array" -%}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
 {% endfor -%} 
 {% endfor -%} 
-// variables for the resources
+// registration data variables for the resources
 {% for path, path_data in json_data['paths'].items() %}
 static char g{{path|variablesyntax}}_RESOURCE_ENDPOINT[] = "{{path}}";  // used path for this resource
 static char g{{path|variablesyntax}}_RESOURCE_TYPE[][MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
@@ -150,7 +148,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% if var_data.type == "integer" %}oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
-    {% if var_data.type == "string" %}oc_rep_set_text_string(root, g{{path|variablesyntax}}{{var}}, {{var}} ); 
+    {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
     {% endfor -%}
@@ -441,7 +439,7 @@ int init;
 #endif
   
 {%- for path, path_data in json_data['paths'].items() %}
-  // initialize member variables {{path}}
+  // initialize member variables for endpoint "{{path}}"
   {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
   {% if var_data.type == "boolean" %}g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}
   {% endif -%}
@@ -449,7 +447,7 @@ int init;
   {% endif -%}
   {% if var_data.type == "integer" %}g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}
   {% endif -%}
-  {% if var_data.type == "string" %}g{{path|variablesyntax}}{{var|variablesyntax}} = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}";  // current value of property "{{var}}" {{var_data["description"]}}
+  {% if var_data.type == "string" %}strcpy(g{{path|variablesyntax}}{{var|variablesyntax}},"{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}");  // current value of property "{{var}}" {{var_data["description"]}}
   {% endif -%}
   {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"
   {% endif -%}
@@ -461,7 +459,7 @@ int init;
   {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
   // array of objects  ;; OBJECT NOT HANDLED YET
   {%- else%}
-  m_var_value{{var|variablesyntax}}.push_back({{var_value}});
+  //m_var_value{{var|variablesyntax}}.push_back({{var_value}});
   {% endif -%}
   {% endfor -%}
   {% endif -%}

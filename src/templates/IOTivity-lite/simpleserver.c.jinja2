@@ -151,6 +151,10 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
+    {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled%s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
+    {% endif -%}
+    {% if var_data.type == "array" %}PRINT("   ARRAY NOT handled%s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
+    {% endif -%}
     {% endfor -%}
     break;
   default:

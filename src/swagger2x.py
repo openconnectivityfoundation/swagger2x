@@ -534,7 +534,9 @@ def swagger_properties_filtered(json_data, input_path):
     my_dict = {}
     for item, item_val in properties_list.items():
         if item not in ["n", "if", "rt"]:
-            my_dict[item] = item_val
+            type = item_val.get("type")
+            if type != None:
+                my_dict[item] = item_val
    
     return my_dict
     

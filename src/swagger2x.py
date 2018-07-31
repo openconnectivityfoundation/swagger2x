@@ -227,8 +227,10 @@ def add_justification_smart( depth, input_string, no_dot_split=False):
                     if len(line) > 0:
                         ret_string = ret_string + string1
             else:
-                string1 = depth + x_line + "\n"
+                string1 = depth + x_line
                 ret_string = ret_string + string1
+                if not x_line is all_lines[-1]:
+                    ret_string = ret_string + "\n"
         return ret_string
     
     
@@ -737,7 +739,7 @@ def code_indent(input_string, indent_str):
     :return: adjusted string
     """    
     return_string = add_justification_smart(indent_str, input_string, no_dot_split = True )
-    return return_string    
+    return return_string
     
     
 

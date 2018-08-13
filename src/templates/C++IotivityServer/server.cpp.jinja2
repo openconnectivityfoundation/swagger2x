@@ -54,38 +54,7 @@ class Resource
     OCResourceHandle m_resourceHandle;
     OC::OCRepresentation m_rep;
     virtual OCEntityHandlerResult entityHandler(std::shared_ptr<OC::OCResourceRequest> request)=0;
-    
-    /*
-    * Make the payload for the observe function (e.g. GET)
-    */
-    OCStackResult sendNotification(void)
-    {
-        OCStackResult sResult = OC_STACK_OK;
-        if ( m_interestedObservers.size() > 0) {
-            std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
-            auto pResponse = std::make_shared<OC::OCResourceResponse>();
-            sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
-                                                        m_interestedObservers,
-                                                        pResponse);
-        }
-        return sResult;
-    }
 
-    /*
-    * Make the payload for the observe function (e.g. GET)
-    * @param pResponse  the response to use for the observe
-    */
-    OCStackResult sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
-    {
-        OCStackResult sResult = OC_STACK_OK;sendNotification
-        if ( m_interestedObservers.size() > 0) {
-            std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
-            sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
-                                                        m_interestedObservers,
-                                                        pResponse);
-        }
-        return sResult;
-    }
 };
 
 {% for path, path_data in json_data['paths'].items() %}
@@ -273,7 +242,37 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
     return result;
 }
 
+/*
+* Make the payload for the observe function (e.g. GET) {{path}}
+*/
+OCStackResult {{path|classsyntax}}Resource::sendNotification(void)
+{
+    OCStackResult sResult = OC_STACK_OK;
+    if ( m_interestedObservers.size() > 0) {
+        std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
+        auto pResponse = std::make_shared<OC::OCResourceResponse>();
+        sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
+                                                    m_interestedObservers,
+                                                    pResponse);
+    }
+    return sResult;
+}
 
+/*
+* Make the payload for the observe function (e.g. GET) {{path}}
+* @param pResponse  the response to use for the observe
+*/
+OCStackResult {{path|classsyntax}}Resource::sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
+{
+    OCStackResult sResult = OC_STACK_OK;sendNotification
+    if ( m_interestedObservers.size() > 0) {
+        std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
+        sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
+                                                    m_interestedObservers,
+                                                    pResponse);
+    }
+    return sResult;
+}
 
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" -%}

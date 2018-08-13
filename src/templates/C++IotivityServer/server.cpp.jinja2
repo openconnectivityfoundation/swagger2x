@@ -103,6 +103,7 @@ class {{path|classsyntax}}Resource : public Resource
          * @return OC_STACK_OK on success
          */
         OCStackResult sendNotification();
+        OCStackResult sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
     private:
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %}
@@ -244,6 +245,22 @@ OCStackResult {{path|classsyntax}}Resource::registerResource(uint8_t resourcePro
 
 /*
 * Make the payload for the observe function (e.g. GET) {{path}}
+*/
+OCStackResult {{path|classsyntax}}Resource::sendNotification(void)
+{
+    OCStackResult sResult = OC_STACK_OK;
+    if ( m_interestedObservers.size() > 0) {
+        std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
+        auto pResponse = std::make_shared<OC::OCResourceResponse>();
+        sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,
+                                                    m_interestedObservers,
+                                                    pResponse);
+    }
+    return sResult;
+}
+
+/*
+* Make the payload for the observe function (e.g. GET) {{path}}
 * @param pResponse  the response to use for the observe
 */
 OCStackResult {{path|classsyntax}}Resource::sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
@@ -257,6 +274,7 @@ OCStackResult {{path|classsyntax}}Resource::sendNotification(const std::shared_p
     }
     return sResult;
 }
+
 
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" -%}

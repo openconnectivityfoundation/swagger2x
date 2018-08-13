@@ -103,7 +103,7 @@ class {{path|classsyntax}}Resource : public Resource
          * @return OC_STACK_OK on success
          */
         OCStackResult sendNotification();
-        OCStackResult sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
+        OCStackResult sendNotification(const std::shared_ptr< OCResourceResponse > pResponse);
     private:
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %}

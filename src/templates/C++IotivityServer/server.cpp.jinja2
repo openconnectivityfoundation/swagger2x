@@ -265,7 +265,7 @@ OCStackResult {{path|classsyntax}}Resource::sendNotification(void)
 */
 OCStackResult {{path|classsyntax}}Resource::sendNotification(const std::shared_ptr< OCResourceResponse > pResponse)
 {
-    OCStackResult sResult = OC_STACK_OK;sendNotification;
+    OCStackResult sResult = OC_STACK_OK;
     if ( m_interestedObservers.size() > 0) {
         std::cout << "Notifying list "  << m_interestedObservers.size() << " of observers\n";
         sResult = OCPlatform::notifyListOfObservers(m_resourceHandle,

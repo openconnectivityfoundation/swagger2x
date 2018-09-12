@@ -5,7 +5,7 @@ The generated code acts as a simulator:
 - the server creates (initial) values at start up (from default/examples)
 - handles incomming requests (GET/POST)
     - stores the values on POST
-    - respond on GET by giving out the stored values
+    - respond on GET by handing out the stored values
 
 ## what is generated:
 - simpleserver.c implementation code

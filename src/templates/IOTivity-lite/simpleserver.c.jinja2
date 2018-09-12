@@ -30,11 +30,12 @@
 *  starts the stack, with the registered resources.
 *
 * Each endpoint has:
-*  global variables for:
+*  global property variables (per resource path) for:
 *    the property name
 *       naming convention: g_<path>_RESOURCE_PROPERTY_NAME_<propertyname>
 *    the actual value of the property, which is typed from the json data type
 *      naming convention: g_<path>_<propertyname>
+*  global resource variables (per path) for:
 *    the path in a variable:
 *      naming convention: g_<path>_RESOURCE_ENDPOINT
 *    array of interfaces, where by the first will be set as default interface
@@ -80,7 +81,7 @@ static CRITICAL_SECTION cs;     // event loop variable
 #define MAX_STRING 65   // max size of the strings.
 volatile int quit = 0;  // stop variable, used by handle_signal
 {% for path, path_data in json_data['paths'].items() %}
-// global variables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+// global property variables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
 static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}[] = "{{var}}"; // the name for the attribute
 {% if var_data.type == "boolean" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "number" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}"  {{var_data["description"]}}{% endif -%}
@@ -92,6 +93,7 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% endfor -%} 
 // registration data variables for the resources
 {% for path, path_data in json_data['paths'].items() %}
+// global resource variables for path: {{path}}
 static char g{{path|variablesyntax}}_RESOURCE_ENDPOINT[] = "{{path}}";  // used path for this resource
 static char g{{path|variablesyntax}}_RESOURCE_TYPE[][MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; // rt value (as an array)
 int g{{path|variablesyntax}}_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
@@ -107,6 +109,9 @@ static int
 app_init(void)
 {
   int ret = oc_init_platform("{{manufacturer}}", NULL, NULL);
+  // the settings determine the appearance of the device on the network
+  // can be OCF1.3.1 or OCF2.0.0 (or even higher)
+  // supplied values are for OCF1.3.1  
   ret |= oc_add_device("/oic/d", "{{device_type}}", "{{json_data['info']['title']}}", 
                        "ocf.1.0.0", // icv value
                        "ocf.res.1.3.0, ocf.sh.1.3.0",  // dmv value
@@ -115,8 +120,9 @@ app_init(void)
 }
 
 /**
-*  function to convert the interface string definition to the constant
+* helper function to convert the interface string definition to the constant defintion used by the stack.
 * @param interface the interface string e.g. "oic.if.a"
+* @return the stack constant for the interface
 */
 static int
 convert_if_string(char *interface_name)
@@ -136,7 +142,9 @@ convert_if_string(char *interface_name)
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %} 
 /**
-* get method for "{{path}}" endpoint to intialize the returned values from the global values
+* get method for "{{path}}" endpoint 
+* function is called to intialize the return values of the GET method 
+* initialisation of the returned values are done from the global property values
 {{method_data.description| code_indent("* ")}}
 * @param request the request representation.
 * @param interfaces the interface used for this call
@@ -206,7 +214,10 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "post" %} 
 /**
-* post method for "{{path}}" endpoint to assign the returned values to the global values.
+* post method for "{{path}}" endpoint 
+* the function has as input the request body, which are the input values of the POST method.
+* the input values (as a set) are checked if all supplied values are correct.
+* if the input values are correct, they will be assigned to the global  property values.
 {{method_data.description | code_indent("* ")}}
 * @param requestRep the request representation.
 */
@@ -397,7 +408,14 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
 {% endfor -%}  
 
 /**
-*  register all the resources
+* register all the resources to the stack
+* this function registers all application level resources:
+* - each resource path is bind to a specific function for the supported methods (GET, POST, PUT)
+* - each resource is 
+*   - secure
+*   - observable
+*   - discoverable 
+*   - used interfaces (from the global variables).
 */
 static void
 register_resources(void)
@@ -435,7 +453,8 @@ register_resources(void)
 
 #ifdef WIN32
 /**
-* signal the event loop
+* signal the event loop (windows version)
+* wakes up the main function to handle the next callback
 */
 static void
 signal_event_loop(void)
@@ -445,7 +464,8 @@ signal_event_loop(void)
 #endif
 #ifdef __linux__
 /**
-* signal the event loop
+* signal the event loop (Linux)
+* wakes up the main function to handle the next callback
 */
 static void
 signal_event_loop(void)

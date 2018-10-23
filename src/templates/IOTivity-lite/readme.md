@@ -38,7 +38,8 @@ The generated code acts as a simulator:
          
 # introspection IDD
 The introspection IDD is handled via an header file.
-The header file is at include/server_introspection.dat.h
+
+The header file is at &lt;installation folder&gt;/include/server_introspection.dat.h
 
 # what is missing/incorrect:
 - creation/deletion of resources (PUT/DELETE functions)
@@ -51,7 +52,7 @@ The header file is at include/server_introspection.dat.h
 https://github.com/iotivity/iotivity-constrained  e.g. IOTivity-Lite
 
 ## windows:
-- easiest way to build and run is to rename the generated file to the simpleserver_windows.c file in the apps folder 
+- rename the generated file to the simpleserver_windows.c file in the apps folder 
 - use the existing visual studio project in folder &lt;installation folder&gt;/port/windows
 - note that there are 3 project, 1 for the library, 1 for the client and 1 for server.
 

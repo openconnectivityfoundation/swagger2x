@@ -1,4 +1,4 @@
-# Template: IOTivity Constrained C server
+# Template: IOTivity Lite C server
 
 
 The generated code acts as a simulator:
@@ -14,15 +14,15 @@ The generated code acts as a simulator:
         - sets the type and which OCF spec is being used (default to OCF1.3)
     - global variables, for each property per resources
         - type 
-        - naming convention g_<resource>_<propertyname>
+        - naming convention g_&lt;resource&gt;_&lt;propertyname&gt;
         
     - functions:
-        - get_<resource> 
+        - get_&lt;resource&gt; 
             - function to convert the  member variables to the response document
             - note: always returns the same document, regardless of the interface
                 - this works for testcase CT1.2.2
             - handles: boolean, number, integer, string
-        - post_<resource>(
+        - post_&lt;resource&gt;
             - function to convert the input request document to the member variables
             - checks if input is correct :
                 - no write to readOnly properties
@@ -35,7 +35,11 @@ The generated code acts as a simulator:
     - PICT file that list the implemented resources in the generated code
       to be used with CTT
       
-            
+         
+# introspection IDD
+The introspection IDD is handled via an header file.
+The header file is at include/server_introspection.dat.h
+
 # what is missing/incorrect:
 - creation/deletion of resources (PUT/DELETE functions)
 - handling in get/post of
@@ -48,11 +52,9 @@ https://github.com/iotivity/iotivity-constrained  e.g. IOTivity-Lite
 
 ## windows:
 - easiest way to build and run is to rename the generated file to the simpleserver_windows.c file in the apps folder 
-- use the existing visual studio project in folder port/windows
-- note that there are 3 project, 1 for the library, client and server.
+- use the existing visual studio project in folder &lt;installation folder&gt;/port/windows
+- note that there are 3 project, 1 for the library, 1 for the client and 1 for server.
 
-- other instructions
-    - place the server_introspection.dat file in the folder port/windows
     
 # CTT instructions
 - When CTT pops up: "reset to on-boarding state" means one needs to:

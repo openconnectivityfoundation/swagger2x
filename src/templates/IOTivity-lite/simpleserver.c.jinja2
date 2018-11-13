@@ -436,7 +436,14 @@ register_resources(void)
   oc_resource_set_default_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]));  
   PRINT("     default interface: %d (%s)\n", convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]), g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
   oc_resource_set_discoverable(res{{path|variablesyntax}}, true);
+  // periodic observabled
+  // to be used when one wants to send an event per time slice
+  // period is 1 second
   oc_resource_set_periodic_observable(res{{path|variablesyntax}}, 1);
+  // set observable
+  // events are send when oc_notify_observers(oc_resource_t *resource) is called.
+  // this function must be called when the value changes, perferable on an interrupt when something is read from the hardware.
+  //oc_resource_set_observable(res{{path|variablesyntax}}, true);
   {% for methodName, method_data in path_data.items() -%}
   {% if methodName == "get" %} 
   oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_GET, get{{path|variablesyntax}}, NULL);

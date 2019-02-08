@@ -78,7 +78,7 @@ static CONDITION_VARIABLE cv;   // event loop variable
 static CRITICAL_SECTION cs;     // event loop variable
 #endif
 
-#define MAX_STRING 65   // max size of the strings.
+#define MAX_STRING 128 //65   // max size of the strings.
 volatile int quit = 0;  // stop variable, used by handle_signal
 {% for path, path_data in json_data['paths'].items() %}
 // global property variables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
@@ -86,9 +86,9 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% if var_data.type == "boolean" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "number" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}"  {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "integer" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
-{% if var_data.type == "string" %}char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_STRING] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "string" %}char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_STRING] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) }}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
-{% if var_data.type == "array" -%}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "array" %}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
 {% endfor -%} 
 {% endfor -%} 
 // registration data variables for the resources
@@ -194,9 +194,9 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
-    {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled%s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     {% endif -%}
-    {% if var_data.type == "array" %}PRINT("   ARRAY NOT handled%s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {% if var_data.type == "array" %}PRINT("   ARRAY NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     {% endif -%}
     {% endfor -%}
     break;
@@ -359,11 +359,11 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {
         // assign {{var}}
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
-      }{% endif -%} 
+      }{% endif -%}
       {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
       {
         // assign {{var}}
-        //strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, rep->value.string);
+        strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), MAX_STRING);
       }{% endif -%} 
       {% if var_data.type == "array" -%}// TODO: ARRAY NOT HANDLED "{{var}}"
       {% endif -%} 
@@ -382,7 +382,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     {% endif -%}
     {% if var_data.type == "integer" %}oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     {% endif -%}
-    {% if var_data.type == "string" %}oc_rep_set_text_string(root, g{{path|variablesyntax}}{{var}}, {{var}} ); 
+    {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
     {% endif -%}
     {% if var_data.type == "array" -%}// TODO: array not handled "{{var}}"
     {% endif -%} 

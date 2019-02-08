@@ -756,13 +756,19 @@ def convert_value_to_c_value(my_value):
             my_value = my_value[0]
         else:
             my_value = ""  # default is empty string
+        #return my_value
     
     if isinstance(my_value, bool) :
         if my_value is True:
             my_value = "true"
         else:
             my_value = "false"
-
+        return my_value
+    
+    if isinstance(my_value, str) :
+        new = escape_quotes(my_value)
+        my_value = new
+        
     return my_value
     
     
@@ -786,6 +792,36 @@ def init_value_if_empty(my_value, value_type):
 
     return new_value
 
+def escape_quotes(my_string):
+    """
+    convert " quotes in to \"
+    :param my_value the string to be escaped
+    :return: string with escaped
+    """
+    print ("escape_quotes: my_value:", my_string)
+    data= my_string.split('"')
+    new_string=""
+    for item in data:
+        if item == data[-1]:
+            new_string = new_string + item 
+        else: 
+            new_string = new_string + item + '\\"'
+    print ("escape_quotes: escaped :", new_string)
+    
+    # remove new line
+    new_string2=""
+    data= new_string.split('\n')
+    for item in data:
+      new_string2 = new_string2 + item 
+    # remove carrage return
+    new_string3=""
+    data= new_string2.split('\r')
+    for item in data:
+      new_string3 = new_string3 + item 
+          
+    return new_string3
+    
+    
 #
 #   main of script
 #
@@ -877,6 +913,7 @@ try:
     env.filters['code_indent'] = code_indent
     env.filters['convert_value_to_c_value'] = convert_value_to_c_value
     env.filters['init_value_if_empty'] = init_value_if_empty
+    env.filters['escape_quotes'] = escape_quotes
 
     for template_file in template_files:
         print ("processing:", template_file)

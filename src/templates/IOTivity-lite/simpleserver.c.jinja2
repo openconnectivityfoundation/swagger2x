@@ -1,6 +1,6 @@
 //******************************************************************
 //
-// Copyright 2017 Open Connectivity Foundation
+// Copyright 2017-2019 Open Connectivity Foundation
 //
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 //
@@ -79,6 +79,7 @@ static CRITICAL_SECTION cs;     // event loop variable
 #endif
 
 #define MAX_STRING 128 //65   // max size of the strings.
+#define MAX_ARRAY STRING_ARRAY_ITEM_MAX_LEN  // max size of the array
 volatile int quit = 0;  // stop variable, used by handle_signal
 {% for path, path_data in json_data['paths'].items() %}
 // global property variables for path: {{path}}{% for var, var_data in query_properties_filtered(json_data, path).items() %}
@@ -88,7 +89,22 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% if var_data.type == "integer" %}{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "string" %}char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_STRING] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) }}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
-{% if var_data.type == "array" %}// array not handled {{var}}  {{var_data["description"]}}{% endif -%}
+{% if var_data.type == "array" %}// array {{var}}  {{var_data["description"]}}
+  {# array of strings #}
+  // {{var_data |convert_to_cplus_array_type}}
+  {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
+char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY][MAX_STRING];
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
+  {# array of doubles/numbers #}
+double g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+{%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
+  {# array of integer #}
+int g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+{%- elif var_data |convert_to_cplus_array_type == "std::vector<boolean>" %}
+  {# array of integer #}
+boolean g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+  {% endif -%}
+{% endif -%}
 {% endfor -%} 
 {% endfor -%} 
 // registration data variables for the resources
@@ -127,14 +143,13 @@ app_init(void)
 static int
 convert_if_string(char *interface_name)
 {
-  if (strcmp(interface_name, "oic.if.baseline") == 0) return OC_IF_BASELINE;
-  if (strcmp(interface_name, "oic.if.rw") == 0) return OC_IF_RW;
-  if (strcmp(interface_name, "oic.if.r" )== 0) return OC_IF_R;
-  if (strcmp(interface_name, "oic.if.s") == 0) return OC_IF_S;
-  if (strcmp(interface_name, "oic.if.a") == 0) return OC_IF_A;
-  if (strcmp(interface_name, "oic.if.b") == 0) return OC_IF_B;
-  //if strcmp(interface_name, "oic.if.lb") == 0) return OC_IF_LB;
-  if (strcmp(interface_name, "oic.if.ll") == 0) return OC_IF_LL;
+  if (strcmp(interface_name, "oic.if.baseline") == 0) return OC_IF_BASELINE;  // baseline interface
+  if (strcmp(interface_name, "oic.if.rw") == 0) return OC_IF_RW;              // read write interface
+  if (strcmp(interface_name, "oic.if.r" )== 0) return OC_IF_R;                // read interface
+  if (strcmp(interface_name, "oic.if.s") == 0) return OC_IF_S;                // sensor interface
+  if (strcmp(interface_name, "oic.if.a") == 0) return OC_IF_A;                // actuator interface
+  if (strcmp(interface_name, "oic.if.b") == 0) return OC_IF_B;                // batch interface
+  if (strcmp(interface_name, "oic.if.ll") == 0) return OC_IF_LL;              // linked list interface
   return OC_IF_A;
 }
 
@@ -154,7 +169,6 @@ static void
 get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
 {
   (void)user_data;  // not used
-  
   // TODO: SENSOR add here the code to talk to the HW if one implements a sensor.
   // the call to the HW needs to fill in the global variable before it returns to this function here.
   // alternative is to have a callback from the hardware that sets the global variables.
@@ -194,9 +208,43 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
     {% endif -%}
-    {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {% if var_data.type == "array" %}
+    PRINT(" array handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" -%}
+    {% if swagger_property_data_schema(json_data, path, var) |length > 0 -%}
+    oc_rep_set_array(root, {{var}});
+    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    oc_rep_add_text_string({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
+    {% endfor -%} {# items in array #}
+    oc_rep_close_array(root, {{var}});
     {% endif -%}
-    {% if var_data.type == "array" %}PRINT("   ARRAY NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+    oc_rep_set_array(root, {{var}});
+    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
+    {% endfor -%} {# items in array #}
+    {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
+    {% if var == "range" -%}
+    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[0]);
+    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[1]);
+    {% endif -%}
+    {% endif -%}
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+    oc_rep_set_array(root, {{var}});
+    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
+    {% endfor -%} {# items in array #}
+    {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
+    {% if var == "range" -%}
+    oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[0]);
+    oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[1]);
+    {% endif -%}
+    {% endif -%}
+    oc_rep_close_array(root, {{var}});
+    {% endif -%} {# array #}
+    {% endif -%}
+    {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     {% endif -%}
     {% endfor -%}
     break;
@@ -538,19 +586,38 @@ int init;
   {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"
   {% endif -%}
   {% if var_data.type == "array" -%}
-  // initialize vector {{var}}  {{var_data["description"]}}
+  // initialize array "{{var}}" : {{var_data["description"]}} {# array of strings #}
+  // C++ type: {{var_data |convert_to_cplus_array_type}}
+  {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" -%}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-  {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
-  //m_var_value{{var|variablesyntax}}.push_back("{{var_value}}");
-  {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
-  // array of objects  ;; OBJECT NOT HANDLED YET
-  {%- else%}
-  //m_var_value{{var|variablesyntax}}.push_back({{var_value}});
+  strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}], "{{var_value}}", MAX_STRING-1);
+  {% endfor -%} {# items in array #}
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+  {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = var_value;
+  {% endfor -%} {# items in array #}
+  {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
+  {% if var == "range" -%}
+  // no values found for range, adding default (double) range
+  g{{path|variablesyntax}}{{var|variablesyntax}}[0] = 0.0;
+  g{{path|variablesyntax}}{{var|variablesyntax}}[1] = 100.0;
   {% endif -%}
-  {% endfor -%}
   {% endif -%}
-  {% endfor -%}
- {%- endfor %} 
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+  {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = var_value;
+  {% endfor -%} {# items in array #}
+  {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
+  {% if var == "range" -%}
+  // no values found for range, adding default (integer) range
+  g{{path|variablesyntax}}{{var|variablesyntax}}[0] = 0;
+  g{{path|variablesyntax}}{{var|variablesyntax}}[1] = 100;
+  {% endif -%}
+  {% endif -%}
+  {% endif -%}
+  {% endif -%}  {# type is array #}
+  {% endfor -%} {# items in path #}
+ {%- endfor %} {# paths #}
   
   // no oic/con resource.
   oc_set_con_res_announced(false);

@@ -90,19 +90,14 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% if var_data.type == "string" %}char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_STRING] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) }}"; // current value of property "{{var}}" {{var_data["description"]}}{% endif -%}
 {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"{% endif -%}
 {% if var_data.type == "array" %}// array {{var}}  {{var_data["description"]}}
-  {# array of strings #}
-  // {{var_data |convert_to_cplus_array_type}}
-  {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
+  {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %} {# array of strings #}
 char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY][MAX_STRING];
-  {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
-  {# array of doubles/numbers #}
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}    {# array of doubles/numbers #}
 double g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
-{%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
-  {# array of integer #}
+{%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integer #}
 int g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
-{%- elif var_data |convert_to_cplus_array_type == "std::vector<boolean>" %}
-  {# array of integer #}
-boolean g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+{%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of integer #}
+bool g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
   {% endif -%}
 {% endif -%}
 {% endfor -%} 
@@ -241,6 +236,12 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[1]);
     {% endif -%}
     {% endif -%}
+    oc_rep_close_array(root, {{var}});
+     {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+    oc_rep_set_array(root, {{var}});
+    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+    oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
+    {% endfor -%} {# items in array #}
     oc_rep_close_array(root, {{var}});
     {% endif -%} {# array #}
     {% endif -%}
@@ -594,7 +595,7 @@ int init;
   {% endfor -%} {# items in array #}
   {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = var_value;
+  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value}};
   {% endfor -%} {# items in array #}
   {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
   {% if var == "range" -%}
@@ -605,7 +606,7 @@ int init;
   {% endif -%}
   {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = var_value;
+  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value}};
   {% endfor -%} {# items in array #}
   {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
   {% if var == "range" -%}
@@ -614,6 +615,10 @@ int init;
   g{{path|variablesyntax}}{{var|variablesyntax}}[1] = 100;
   {% endif -%}
   {% endif -%}
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+  {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value|init_value_if_empty(var_data.type)}};
+  {% endfor -%} {# items in array #}
   {% endif -%}
   {% endif -%}  {# type is array #}
   {% endfor -%} {# items in path #}

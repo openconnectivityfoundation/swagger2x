@@ -452,7 +452,6 @@ def swagger_property_data_schema(json_data, input_path, name):
                     else:
                         print("swagger_property_data_schema: example could not find:", name)
                         pass    
-                
     return data_values
 
 
@@ -487,13 +486,9 @@ def swagger_property_names(json_data, input_path):
                         if prop_block is not None:
                             for prop_name, prop in prop_block.items():
                                 prop_values.append(prop_name)
-
             else:
                 print("swagger_property_names: schema not found:", input_path)
-
     return prop_values
-
-
 
 def swagger_properties(json_data, input_path):
     """
@@ -541,7 +536,6 @@ def swagger_properties_filtered(json_data, input_path):
                 my_dict[item] = item_val
    
     return my_dict
-    
 
 def query_rt_from_path(parse_tree, path):
     """
@@ -557,8 +551,6 @@ def query_rt_from_path(parse_tree, path):
         if value[0] == path:
             return value[1]
     return ""
-
-
 
 def query_path(parse_tree, my_path, value):
     """
@@ -644,10 +636,7 @@ def convert_to_cplus_type(json_type):
         return "std::string"
     if json_type in ["object"]:
         return "OCRepresentation"
-
-        
     return "void*"
-
 
 def convert_to_cplus_array_type(json_data):
     """
@@ -667,7 +656,6 @@ def convert_to_cplus_array_type(json_data):
             return "std::vector<OCRepresentation>"
     elif subtype_oneOff is not None:
         return "std::vector<OCRepresentation>"
-
     return "void*"
 
 def convert_to_c_type(json_type):
@@ -677,7 +665,6 @@ def convert_to_c_type(json_type):
     :return: c type.
     """
     print ("convert_to_c_type: json_type:", json_type)
-
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -686,7 +673,6 @@ def convert_to_c_type(json_type):
         return "int"  # uint8_t ?
     if json_type in ["string"]:
         return "char *"
-
     return "void*"
 
 
@@ -710,11 +696,7 @@ def convert_to_cplus_string_array(my_array):
         pass
 
     my_ret += '}'
-
-
     return my_ret
-
-
 
 def convert_array_size(my_array):
     """

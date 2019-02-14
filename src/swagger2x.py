@@ -654,10 +654,14 @@ def convert_to_cplus_array_type(json_data):
             return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
         if subtype in ["object"]:
             return "std::vector<OCRepresentation>"
+        if subtype in ["array"]:
+            return "std::vector<array>"
     elif subtype_oneOff is not None:
-        return "std::vector<OCRepresentation>"
+        return "char*"
     return "void*"
 
+    
+    
 def convert_to_c_type(json_type):
     """
     convert the json type to c type

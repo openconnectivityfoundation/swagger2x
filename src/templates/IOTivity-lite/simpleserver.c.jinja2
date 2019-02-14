@@ -92,12 +92,19 @@ static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}
 {% if var_data.type == "array" %}// array {{var}}  {{var_data["description"]}}
   {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %} {# array of strings #}
 char g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY][MAX_STRING];
+size_t g{{path|variablesyntax}}{{var|variablesyntax}}_size;
   {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}    {# array of doubles/numbers #}
 double g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+size_t g{{path|variablesyntax}}{{var|variablesyntax}}_size;
 {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integer #}
 int g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+size_t g{{path|variablesyntax}}{{var|variablesyntax}}_size;
 {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of integer #}
 bool g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY]; 
+size_t g{{path|variablesyntax}}{{var|variablesyntax}}_size;
+{%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" -%}
+  // array of objects
+  //std::vector<OCRepresentation>
   {% endif -%}
 {% endif -%}
 {% endfor -%} 
@@ -190,64 +197,65 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {% endif -%}
     PRINT("   Adding Baseline info\n" );
     oc_process_baseline_interface(request->resource);
-    {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+    {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
     {% if var_data.type == "boolean" %}oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
     PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  g{{path|variablesyntax}}{{var|variablesyntax}} );
-    {% endif -%}
+    {%- endif -%}
     {% if var_data.type == "number" %}oc_rep_set_double(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %f\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
-    {% endif -%}
+    {%- endif -%}
     {% if var_data.type == "integer" %}oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
-    {% endif -%}
+    {%- endif -%}
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
     PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
-    {% endif -%}
-    {% if var_data.type == "array" %}
+    {%- endif -%}
+    {%- if var_data.type == "array" -%}
     PRINT(" array handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" -%}
-    {% if swagger_property_data_schema(json_data, path, var) |length > 0 -%}
     oc_rep_set_array(root, {{var}});
-    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-    oc_rep_add_text_string({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
-    {% endfor -%} {# items in array #}
+    PRINT("   %s string = [\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_text_string({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("     %s\n ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
-    {% endif -%}
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" -%}
     oc_rep_set_array(root, {{var}});
-    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
-    {% endfor -%} {# items in array #}
-    {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
-    {% if var == "range" -%}
-    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[0]);
-    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[1]);
-    {% endif -%}
-    {% endif -%}
+    PRINT("   %s double = [ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %f ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" -%}
     oc_rep_set_array(root, {{var}});
-    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-    oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
-    {% endfor -%} {# items in array #}
-    {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
-    {% if var == "range" -%}
-    oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[0]);
-    oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[1]);
-    {% endif -%}
-    {% endif -%}
+    PRINT("   %s int = [ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %d ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
-     {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" -%} 
     oc_rep_set_array(root, {{var}});
-    {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
-    oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}]);
-    {% endfor -%} {# items in array #}
+    PRINT("   %s (bool) =[ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %d ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
-    {% endif -%} {# array #}
-    {% endif -%}
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" -%}
+    // array of objects
+    //std::vector<OCRepresentation>
+    {%- endif -%}
+    {%- endif -%}
     {% if var_data.type == "object" %}PRINT("   OBJECT NOT handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
-    {% endif -%}
-    {% endfor -%}
+    {%- endif -%}
+    {%- endfor -%}
     break;
   default:
     break;
@@ -278,69 +286,63 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   bool error_state = false;
   PRINT("post{{path|variablesyntax}}:\n");
   oc_rep_t *rep = request->request_payload;
+  // loop over the request document to check if all inputs are ok
   while (rep != NULL) {
     PRINT("key: (check) %s ", oc_string(rep->name));
     {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
-    {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
+    {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       // value exist in payload
-      {% if var_data.readOnly -%}
-      {% if var_data.readOnly == true %}
+      {%- if var_data.readOnly -%}
+      {%- if var_data.readOnly == true %}
       // check if "{{var}}" is read only
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
-      {% endif -%}{% endif %}
-      if (rep->type != OC_REP_BOOL)
-      {
+      {%- endif -%}{% endif %}
+      if (rep->type != OC_REP_BOOL) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type bool %d \n", rep->type);
       }
-    }{% endif -%}
-    {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
+    }{% endif %}
+    {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       // value exist in payload
-      {% if var_data.readOnly -%}
-      {% if var_data.readOnly == true %}
+      {%- if var_data.readOnly -%}
+      {%- if var_data.readOnly == true %}
       // check if "{{var}}" is read only
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
       {% endif -%}{% endif %}
-      if (rep->type != OC_REP_STRING)
-      {
+      if (rep->type != OC_REP_STRING) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type string %d \n", rep->type);
       }
-    }{% endif -%}
-    {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
+    }{% endif %}
+    {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       int value = rep->value.integer;
       // value exist in payload
-      {% if var_data.readOnly -%}
-      {% if var_data.readOnly == true %}
+      {%- if var_data.readOnly -%}
+      {%- if var_data.readOnly == true %}
       // check if "{{var}}" is read only
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
       {% endif -%}{% endif %}
-      if (rep->type != OC_REP_INT)
-      {
+      if (rep->type != OC_REP_INT) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type int %d \n", rep->type);
       }
-      {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-      {
+      {% if var_data.minimum -%}
+      if ( value < {{var_data.minimum}} ) {
         // check the minimum range
         PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
         error_state = true;
       }{% endif %}
-      {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-      {
+      {%- if var_data.maximum -%}
+      if ( value > {{var_data.maximum}} ) {
         // check the maximum range
         PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
         error_state = true;
       }{% endif %}
     } {% endif %}
-    {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
+    {% if var_data.type == "number" -%}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       double value = 0;
       if (rep->type == OC_REP_DOUBLE)
         value = rep->value.double_p;
@@ -352,70 +354,86 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       // check if "{{var}}" is read only
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
-      {% endif -%}{% endif %} 
-      if ( (rep->type != OC_REP_DOUBLE) || (rep->type != OC_REP_INT))
-      {
+      {% endif %}{% endif %} 
+      if ( (rep->type != OC_REP_DOUBLE) || (rep->type != OC_REP_INT)) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type double or int %d \n", rep->type);
       }
-      {% if var_data.minimum %}if ( value < {{var_data.minimum}} )
-      {
+      {% if var_data.minimum %}if ( value < {{var_data.minimum}} ) {
         // check the minimum range
-        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
+        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %f \n", value);
         error_state = true;
       }{% endif %}
-      {% if var_data.maximum %}if ( value > {{var_data.maximum}} )
-      {
+      {% if var_data.maximum %}if ( value > {{var_data.maximum}} ) {
         // check the maximum range
-        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
+        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %f \n", value);
         error_state = true;
       }{% endif %}
     }{% endif %}
-    {% if var_data.type == "array" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
-      // TODO: array not handled
+    {% if var_data.type == "array" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
+      // value exist in payload
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif %}{% endif %}
     } {% endif %}
-    {% if var_data.type == "object" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-    {
-      // TODO: object not handled
-      if (rep->type != OC_REP_OBJECT)
-      {
+    {% if var_data.type == "object" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
+      if (rep->type != OC_REP_OBJECT) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type object %d \n", rep->type);
       }
+      {% if var_data.readOnly -%}
+      {% if var_data.readOnly == true %}
+      // check if "{{var}}" is read only
+      error_state = true;
+      PRINT ("   property '{{var}}' is readOnly \n");
+      {% endif -%}{% endif -%}
     } {% endif %}
     {%- endfor -%}
     rep = rep->next;
   }
+  // if the input is ok, then process the input document and assign the global variables
   if (error_state == false)
   {
+    // loop over all the properties in the input document
     oc_rep_t *rep = request->request_payload;
     while (rep != NULL) {
       PRINT("key: (assign) %s ", oc_string(rep->name));
       // no error: assign the variables
       {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
-      {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0)
-      {
+      {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
         // assign {{var}}
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
       }{% endif -%}
-      {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-      {
+      {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         // assign {{var}}
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.integer;
       }{% endif -%}
-      {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-      {
+      {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         // assign {{var}}
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
       }{% endif -%}
-      {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0)
-      {
+      {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         // assign {{var}}
-        strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), MAX_STRING);
+        strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), MAX_STRING-1);
       }{% endif -%} 
-      {% if var_data.type == "array" -%}// TODO: ARRAY NOT HANDLED "{{var}}"
-      {% endif -%} 
+      {% if var_data.type == "array" -%}
+        {%- if var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
+        for (int j = 0; j < (int)oc_string_array_get_allocated_size(rep->value.array); j++) {
+          PRINT(" string %s ", oc_string_array_get_item(rep->value.array, j));
+          strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}[j], oc_string_array_get_item(rep->value.array, j), MAX_STRING-1);
+        }
+        g{{path|variablesyntax}}{{var|variablesyntax}}_size = (size_t)oc_string_array_get_allocated_size(rep->value.array);
+        {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+        //oc_rep_get_double_array(rep, "{{var}}", (double **)&g{{path|variablesyntax}}{{var|variablesyntax}}, &g{{path|variablesyntax}}{{var|variablesyntax}}_size);
+        {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+        //oc_rep_get_int_array(rep, "{{var}}", (int **)&g{{path|variablesyntax}}{{var|variablesyntax}}, &g{{path|variablesyntax}}{{var|variablesyntax}}_size);
+        {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+        //oc_rep_get_bool_array(rep, "{{var}}", (bool **)&g{{path|variablesyntax}}{{var|variablesyntax}}, &g{{path|variablesyntax}}{{var|variablesyntax}}_size);
+        {%- endif %}   {# std::vector<std::xxx> array #}
+      {% endif -%} {# var_data.type == "array" #}
       {% if var_data.type == "object" %}// TODO: OBJECT NOT HANDLED "{{var}}"
       {% endif -%}
       {%- endfor %}
@@ -433,8 +451,34 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     {% endif -%}
     {% if var_data.type == "string" %}oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
     {% endif -%}
-    {% if var_data.type == "array" -%}// TODO: array not handled "{{var}}"
-    {% endif -%} 
+    {% if var_data.type == "array" %}
+    PRINT(" array handled : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
+    {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" -%}
+    oc_rep_set_array(root, {{var}});
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_text_string({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+    oc_rep_set_array(root, {{var}});
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+    oc_rep_set_array(root, {{var}});
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+    oc_rep_set_array(root, {{var}});
+    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_size; i++) {
+      oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {% endif -%} {# array #}
+    {% endif -%}
     {% if var_data.type == "object" %}// TODO: OBJECT NOT HANDLED  "{{var}}"
     {% endif -%}
     {% endfor -%}
@@ -470,20 +514,18 @@ static void
 register_resources(void)
 {
 {% for path, path_data in json_data['paths'].items() %}
-  PRINT("register resource with path {{path}}\n");
+  PRINT("Register Resource with local path \"{{path}}\"\n");
   oc_resource_t *res{{path|variablesyntax}} = oc_new_resource(NULL, g{{path|variablesyntax}}_RESOURCE_ENDPOINT, g{{path|variablesyntax}}_nr_resource_types, 0);
-  PRINT("     number of resource types: %d\n", g{{path|variablesyntax}}_nr_resource_types);
-  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_types; a++ )
-  {
-    PRINT("     resource type: %s\n", g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
+  PRINT("     number of Resource Types: %d\n", g{{path|variablesyntax}}_nr_resource_types);
+  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_types; a++ ) {
+    PRINT("     Resource Type: \"%s\"\n", g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
     oc_resource_bind_resource_type(res{{path|variablesyntax}},g{{path|variablesyntax}}_RESOURCE_TYPE[a]);
   }
-  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_interfaces; a++ )
-  {
+  for( int a = 0; a < g{{path|variablesyntax}}_nr_resource_interfaces; a++ ) {
     oc_resource_bind_resource_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[a]));
   }
   oc_resource_set_default_interface(res{{path|variablesyntax}}, convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]));  
-  PRINT("     default interface: %d (%s)\n", convert_if_string(g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]), g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
+  PRINT("     Default OCF Interface: \"%s\"\n", g{{path|variablesyntax}}_RESOURCE_INTERFACE[0]);
   oc_resource_set_discoverable(res{{path|variablesyntax}}, true);
   // periodic observabled
   // to be used when one wants to send an event per time slice
@@ -586,43 +628,52 @@ int init;
   {% endif -%}
   {% if var_data.type == "object" %}// OBJECT NOT HANDLED  "{{var}}"
   {% endif -%}
-  {% if var_data.type == "array" -%}
+  {%- if var_data.type == "array" -%}
   // initialize array "{{var}}" : {{var_data["description"]}} {# array of strings #}
   // C++ type: {{var_data |convert_to_cplus_array_type}}
   {% if var_data |convert_to_cplus_array_type == "std::vector<std::string>" -%}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
   strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}], "{{var_value}}", MAX_STRING-1);
-  {% endfor -%} {# items in array #}
-  {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of doubles/numbers #}
+  {% endfor -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = {{swagger_property_data_schema(json_data, path, var) | length }};
+  {% elif var_data |convert_to_cplus_array_type == "std::vector<double>" -%}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
   g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value}};
-  {% endfor -%} {# items in array #}
+  {% endfor -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = {{swagger_property_data_schema(json_data, path, var) | length }};
   {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
-  {% if var == "range" -%}
+  {%- if var == "range" -%}
   // no values found for range, adding default (double) range
   g{{path|variablesyntax}}{{var|variablesyntax}}[0] = 0.0;
   g{{path|variablesyntax}}{{var|variablesyntax}}[1] = 100.0;
-  {% endif -%}
-  {% endif -%}
-  {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %} {# array of integers #}
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = 2;
+  {%- endif %}{% endif -%}
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" -%}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
   g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value}};
-  {% endfor -%} {# items in array #}
+  {% endfor -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = {{swagger_property_data_schema(json_data, path, var) | length }};
   {% if swagger_property_data_schema(json_data, path, var) |length == 0 -%}
-  {% if var == "range" -%}
+  {%- if var == "range" -%}
   // no values found for range, adding default (integer) range
   g{{path|variablesyntax}}{{var|variablesyntax}}[0] = 0;
   g{{path|variablesyntax}}{{var|variablesyntax}}[1] = 100;
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = 2;
+  {%- endif -%}
   {% endif -%}
-  {% endif -%}
-  {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<bool>" -%}
   {% for var_value in swagger_property_data_schema(json_data, path, var) -%}
   g{{path|variablesyntax}}{{var|variablesyntax}}[{{loop.index0}}] = {{var_value|init_value_if_empty(var_data.type)}};
-  {% endfor -%} {# items in array #}
+  {% endfor -%}
+  g{{path|variablesyntax}}{{var|variablesyntax}}_size = {{swagger_property_data_schema(json_data, path, var) | length }};
+  {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" -%}
+  // array of objects
+  //std::vector<OCRepresentation>
+  
   {% endif -%}
-  {% endif -%}  {# type is array #}
-  {% endfor -%} {# items in path #}
- {%- endfor %} {# paths #}
+  {% endif -%}
+  {% endfor -%}
+  {%- endfor -%}
   
   // no oic/con resource.
   oc_set_con_res_announced(false);
@@ -638,11 +689,11 @@ int init;
                                        };
   oc_clock_time_t next_event;
   
-  PRINT("file : {{input_file}}\n");
-  PRINT("title: {{json_data['info']['title']}}\n");
+  PRINT("Used input file : \"{{input_file}}\"\n");
+  PRINT("OCF Server name : \"{{json_data['info']['title']}}\"\n");
 
 #ifdef OC_SECURITY
-  PRINT("intialize secure resources\n");
+  PRINT("Intialize Secure Resources\n");
   oc_storage_config("./device_builder_server_creds/");
 #endif /* OC_SECURITY */
 
@@ -651,6 +702,8 @@ int init;
   if (init < 0)
     return init;
 
+  PRINT("OCF server \"{{json_data['info']['title']}}\" running, waiting on incomming connections.\n");
+    
 #ifdef WIN32
   // windows specific loop
   while (quit != 1) {

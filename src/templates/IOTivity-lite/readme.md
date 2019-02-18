@@ -1,13 +1,17 @@
-# Template: IOTivity Lite C server
+# Template: IOTivity Lite OCF server
 
-
-The generated code acts as a simulator:
-- the server creates (initial) values at start up (from default/examples)
-- handles incomming requests (GET/POST)
-    - stores the values on POST
-    - respond on GET by handing out the stored values
-
-## what is generated:
+The generated code acts as a OCF server acting as an simulator.
+- The server creates values at start up 
+  - using the default/examples from the resource definition, and stores these values in global variables.
+- It handles incomming requests 
+    - RETIEVE (GET)
+        - creates the response by using the global variables
+    - UPDATE (POST)
+        - checks if the incomming request is valid 
+        - updates the global variables by using the values of the incomming request
+        - creates the response by using the global variables
+        
+## What is generated:
 - simpleserver.c implementation code
     - app_init
         - function to create the device
@@ -37,6 +41,7 @@ The generated code acts as a simulator:
                 - properties of the correct type (using type in the struct)
                 - properties in MIN/MAX range given in by schema 
                     - e.g. __no check by property range__
+                - note that not all possible checks are implemented.
                returns error if this is not satisfied.
                     - note that if error occurs, the global variable(s) are not assigned.
             - handles property types: 
@@ -60,9 +65,9 @@ The introspection IDD is handled via an header file.
 
 The header file is at &lt;installation folder&gt;/include/server_introspection.dat.h
 
-# what is missing:
-- creation/deletion of resources (PUT/DELETE functions)
-- handling in get/post of:
+# What is missing:
+- Creation/deletion of resources (PUT/DELETE functions)
+- Handling in get/post of:
     - arrays of arrays, arrays of objects
     - handing of json objects
 

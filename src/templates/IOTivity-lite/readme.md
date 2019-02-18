@@ -69,9 +69,13 @@ The header file is at &lt;installation folder&gt;/include/server_introspection.d
     
 # Building instructions
 ## code repo
-https://github.com/iotivity/iotivity-constrained  e.g. IOTivity-lite
+The code repo of IOTivity lite is available at:
 
-## windows:
+https://github.com/iotivity/iotivity-constrained 
+
+see iotivity-constrained/port/&lt;port&gt; for more instructions.
+
+## Windows:
 - rename the generated file to the simpleserver_windows.c file in the apps folder 
 - use the existing visual studio project in folder &lt;installation folder&gt;/port/windows
 - note that there are 3 project, 1 for the library, 1 for the client and 1 for server.

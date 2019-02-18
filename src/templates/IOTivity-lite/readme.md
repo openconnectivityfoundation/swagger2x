@@ -48,6 +48,8 @@ The generated code acts as a simulator:
                 - array of integers,
                 - array of numbers,
                 - array of strings
+                
+                
 -PICS.json
     - PICT file that list the implemented resources in the generated code
       to be used with CTT

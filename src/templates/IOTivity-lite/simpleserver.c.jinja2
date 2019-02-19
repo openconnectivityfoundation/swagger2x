@@ -244,7 +244,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     }
     PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
-    {% elif var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}/* property /{{var}}" */
+    {% elif var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}/* property "{{var}}" */
     oc_rep_set_array(root, {{var}});
     PRINT("   %s string = [\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {

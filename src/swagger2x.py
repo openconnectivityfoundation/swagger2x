@@ -519,11 +519,10 @@ def swagger_properties(json_data, input_path):
                         #print("swagger_properties: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
                         for var, var_data in prop_block.items():
-                            print ("  var:", var)
+                            print ("  swagger_properties var:", var)
                         return prop_block
             else:
                 print("swagger_properties: schema not found:", input_path)
-
     return prop_block
     
 def swagger_properties_filtered(json_data, input_path):
@@ -531,10 +530,10 @@ def swagger_properties_filtered(json_data, input_path):
     my_dict = {}
     for item, item_val in properties_list.items():
         if item not in ["n", "if", "rt"]:
-            type = item_val.get("type")
-            if type != None:
-                my_dict[item] = item_val
-   
+            #type = item_val.get("type")
+            #if type != None:
+            my_dict[item] = item_val
+            print ("swagger_properties_filtered: ", item, item_val)
     return my_dict
 
 def query_rt_from_path(parse_tree, path):

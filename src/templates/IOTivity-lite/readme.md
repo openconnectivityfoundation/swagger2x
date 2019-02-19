@@ -41,6 +41,8 @@ The generated code acts as a OCF server acting as an simulator.
                 - properties of the correct type (using type in the struct)
                 - properties in MIN/MAX range given in by schema 
                     - e.g. __no check by property range__
+                - strings are not too long for the allocated size
+                - array (bool, int, double, string) size equal or less than the allocated array size
                 - note that not all possible checks are implemented.
                returns error if this is not satisfied.
                     - note that if error occurs, the global variable(s) are not assigned.

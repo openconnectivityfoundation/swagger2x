@@ -370,7 +370,7 @@ def swagger_if_exist(json_data, input_path, if_value):
     
 
 def swagger_property_data_schema(json_data, input_path, name):
-    """
+    """convert_to_c_type
     get the value of the property name from the schema that is referenced by the path in get (or put)
     it tries to get first the enum values or the default value.
     if this is not found then it will try to get the value from the example
@@ -440,15 +440,16 @@ def swagger_property_data_schema(json_data, input_path, name):
 
             if value_found is False:
                 if example is not None:
-                    print("swagger_property_data_schema: example", example)
-                    value = example.get(name)
-                    if value is not None:
-                        value = example[name]
-                        if isinstance(value, list):
-                            for val in value:
-                                data_values.append(val)
-                        else:
-                            data_values.append(value)
+                    print("swagger_property_data_schema: name,example:", name, example)
+                    if isinstance(example, dict):
+                        value = example.get(name)
+                        if value is not None:
+                            value = example[name]
+                            if isinstance(value, list):
+                                for val in value:
+                                    data_values.append(val)
+                            else:
+                                data_values.append(value)
                     else:
                         print("swagger_property_data_schema: example could not find:", name)
                         pass    
@@ -667,7 +668,7 @@ def convert_to_c_type(json_type):
     :param json_type: the json type
     :return: c type.
     """
-    print ("convert_to_c_type: json_type:", json_type)
+    #print ("convert_to_c_type: json_type:", json_type)
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:

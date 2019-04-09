@@ -76,6 +76,8 @@ static CONDITION_VARIABLE cv;   /* event loop variable */
 static CRITICAL_SECTION cs;     /* event loop variable */
 #endif
 
+#define btoa(x) ((x)?"true":"false")
+
 #define MAX_STRING 30           /* max size of the strings. */
 #define MAX_PAYLOAD_STRING 65   /* max size strings in the payload */
 #define MAX_ARRAY 10            /* max size of the array */
@@ -203,7 +205,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
     {% if var_data.type == "boolean" %}/* property "{{var}}" */
     oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
-    PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  g{{path|variablesyntax}}{{var|variablesyntax}} );
+    PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(g{{path|variablesyntax}}{{var|variablesyntax}} ));
     {%- endif -%}
     {% if var_data.type == "integer" %}/* property "{{var}}" */
     oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
@@ -223,7 +225,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     PRINT("   %s (bool) =[ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} );
     for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
       oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %d ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %s ", btoa(g{{path|variablesyntax}}{{var|variablesyntax}}[i]));
     }
     PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
@@ -373,7 +375,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       if (strlen(oc_string(rep->value.string)) >=  ({{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1) )
       {
         error_state = true;
-        PRINT ("   property '{{var}}' is too long %d expected: {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1 \n", strlen(oc_string(rep->value.string)));
+        PRINT ("   property '{{var}}' is too long %d expected: {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1 \n", (int)strlen(oc_string(rep->value.string)));
       }
     }{%- endif -%}
     {% if var_data.type == "array" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
@@ -428,18 +430,22 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
       {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
         /* assign "{{var}}" */
+        PRINT ("  property '{{var}}' %s\n", btoa(rep->value.boolean));
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
       }{% endif -%}
       {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
+        PRINT ("  property '{{var}}' %d\n", rep->value.integer);
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.integer;
       }{% endif -%}
       {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
+        PRINT ("  property '{{var}}' %f\n", rep->value.double_p);
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
       }{% endif -%}
       {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
+        PRINT ("  property '{{var}}' %s\n", oc_string(rep->value.string));
         strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1);
       }{% endif -%} 
       {% if var_data.type == "array" -%}

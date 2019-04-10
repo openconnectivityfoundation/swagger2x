@@ -78,7 +78,7 @@ The header file is at &lt;installation folder&gt;/include/server_introspection.d
 ## code repo
 The code repo of IOTivity lite is available at:
 
-https://github.com/iotivity/iotivity-constrained 
+https://github.com/iotivity/iotivity-lite 
 
 see iotivity-constrained/port/&lt;port&gt; for more instructions.
 

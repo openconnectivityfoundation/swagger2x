@@ -431,22 +431,22 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
       {% if var_data.type == "boolean" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
         /* assign "{{var}}" */
-        PRINT ("  property '{{var}}' %s\n", btoa(rep->value.boolean));
+        PRINT ("  property '{{var}}' : %s\n", btoa(rep->value.boolean));
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
       }{% endif -%}
       {% if var_data.type == "integer" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
-        PRINT ("  property '{{var}}' %d\n", rep->value.integer);
+        PRINT ("  property '{{var}}' : %d\n", rep->value.integer);
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.integer;
       }{% endif -%}
       {% if var_data.type == "number" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
-        PRINT ("  property '{{var}}' %f\n", rep->value.double_p);
+        PRINT ("  property '{{var}}' : %f\n", rep->value.double_p);
         g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p;
       }{% endif -%}
       {% if var_data.type == "string" %}if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
         /* assign "{{var}}" */
-        PRINT ("  property '{{var}}' %s\n", oc_string(rep->value.string));
+        PRINT ("  property '{{var}}' : %s\n", oc_string(rep->value.string));
         strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1);
       }{% endif -%} 
       {% if var_data.type == "array" -%}

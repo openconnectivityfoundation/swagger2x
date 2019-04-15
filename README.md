@@ -4,7 +4,7 @@ python tool
 generate implementations based on templates from json swagger2.0 file.
 templates engine: jinga2
 
-## installation
+## Installation
 This tool is python3 based.
 
 run ```src\install.py``` to install the dependencies.
@@ -18,7 +18,7 @@ Note that the test directory is set up for bash.
 These examples can be used on windows with git-bash.
 
 
-## usage
+## Usage
 swagger2x is an command line tool.
 To run the tool enter this on the command line:
 
@@ -30,7 +30,7 @@ use -h to see all the options.
 __note: see/use https://github.com/openconnectivityfoundation/DeviceBuilder for usage in the development chain.__
 
 
-# templates
+# Templates
 
 The code generator is using jinja2 templates.
 Using templates decouples the generated code from looping over the hierarchy.
@@ -54,7 +54,7 @@ The template is an mix of the library calls, the supported operating system in t
 jinja2 takes the json swagger information and make it iteratable by looping over the end points, methods etc. and uses then the info from json to fill in the library/os calls.
 
 
-## template directory structure
+## Template directory structure
 The templates can be found at /src/templates
 the following structure is defined:
 
@@ -92,7 +92,7 @@ https://github.com/otcshare/iotivity-node
 
     
     
-## jinja2 templates information
+## jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
 information about jinja2 commands can be found at:
 
@@ -319,16 +319,7 @@ typical usage:
 
 
 
-## TODO list
 
-- template for client code for IOTivity node
-- template for client code for IOTivity c++
-- wheel installation of the tool
-- rename option for generated files
-
-## Fixes
-
-<list fixes here>
 
 
 

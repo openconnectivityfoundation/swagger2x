@@ -1,11 +1,11 @@
 # Template: IOTivity Lite OCF server
 
-The generated code acts as a OCF server acting as an simulator.
-- The server creates values at start up 
-  - using the default/examples from the resource definition, and stores these values in global variables.
-- It handles incomming requests 
+The generated code acts as a OCF server acting as a simulator.
+- The server creates initial values at start up 
+  - using the default/examples from the resource definition, and stores these initial values in global variables.
+- It handles incomming requests:
     - RETIEVE (GET)
-        - creates the response by using the global variables
+        - creates the response by using the global variables intialized at start up.
     - UPDATE (POST)
         - checks if the incomming request is valid 
         - updates the global variables by using the values of the incomming request
@@ -83,11 +83,13 @@ https://github.com/iotivity/iotivity-lite
 see iotivity-constrained/port/&lt;port&gt; for more instructions.
 
 ## Windows:
-- rename the generated file to the simpleserver_windows.c file in the apps folder 
+- the generated file is renamed to the simpleserver_windows.c file in the apps folder.
+    - current file is kept.
 - use the existing visual studio project in folder &lt;installation folder&gt;/port/windows
 - note that there are 3 project, 1 for the library, 1 for the client and 1 for server.
 
 Note: to reduce the amount of debug information, remove OC_DEBUG from the compile flags in the property menu.
+      please do this for the library.
     
 # CTT instructions
 - When CTT pops up: "reset to on-boarding state" means one needs to:

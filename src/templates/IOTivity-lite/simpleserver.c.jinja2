@@ -776,6 +776,22 @@ int init;
 
   /* start the stack */
   init = oc_main_init(&handler);
+  
+#if defined(OC_SECURITY) && defined(OC_PKI)
+/* code to include an pki certificate and root trust anchor */
+#include "oc_pki.h"
+#include "pki_certs.h"
+  int credid =
+    oc_pki_add_mfg_cert(0, my_cert, sizeof(my_cert), my_key, sizeof(my_key));
+
+  oc_pki_add_mfg_intermediate_cert(0, credid, int_ca, sizeof(int_ca));
+
+  oc_pki_add_mfg_trust_anchor(0, root_ca, sizeof(root_ca));
+
+  oc_pki_set_security_profile(0, OC_SP_BLACK, OC_SP_BLACK, credid);
+#endif /* OC_SECURITY && OC_PKI */
+  
+  
   if (init < 0)
     return init;
 

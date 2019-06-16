@@ -658,6 +658,38 @@ random_pin_cb(const unsigned char *pin, size_t pin_len, void *data)
 }
 #endif /* OC_SECURITY */
 
+void
+factory_presets_cb(size_t device, void *data)
+{
+  (void)device;
+  (void)data;
+#if defined(OC_SECURITY) && defined(OC_PKI)
+/* code to include an pki certificate and root trust anchor */
+#include "oc_pki.h"
+#include "pki_certs.h"
+  int credid =
+    oc_pki_add_mfg_cert(0, (const unsigned char *)my_cert, strlen(my_cert), (const unsigned char *)my_key, strlen(my_key));
+  if (credid < 0) {
+    PRINT("ERROR installing manufacturer certificate\n");
+  } else {
+    PRINT("Successfully installed manufacturer certificate\n");
+  }
+
+  if (oc_pki_add_mfg_intermediate_cert(0, credid, (const unsigned char *)int_ca, strlen(int_ca)) < 0) {
+    PRINT("ERROR installing intermediate CA certificate\n");
+  } else {
+    PRINT("Successfully installed intermediate CA certificate\n");
+  }
+
+  if (oc_pki_add_mfg_trust_anchor(0, (const unsigned char *)root_ca, strlen(root_ca)) < 0) {
+    PRINT("ERROR installing root certificate\n");
+  } else {
+    PRINT("Successfully installed root certificate\n");
+  }
+
+  oc_pki_set_security_profile(0, OC_SP_BLACK, OC_SP_BLACK, credid);
+#endif /* OC_SECURITY && OC_PKI */
+}
 
 /**
 * main application.
@@ -774,29 +806,16 @@ int init;
   oc_set_random_pin_callback(random_pin_cb, NULL);
 #endif /* OC_SECURITY */
 
+  oc_set_factory_presets_cb(factory_presets_cb, NULL);
+
   /* start the stack */
   init = oc_main_init(&handler);
-  
-#if defined(OC_SECURITY) && defined(OC_PKI)
-/* code to include an pki certificate and root trust anchor */
-#include "oc_pki.h"
-#include "pki_certs.h"
-  int credid =
-    oc_pki_add_mfg_cert(0, my_cert, sizeof(my_cert), my_key, sizeof(my_key));
 
-  oc_pki_add_mfg_intermediate_cert(0, credid, int_ca, sizeof(int_ca));
-
-  oc_pki_add_mfg_trust_anchor(0, root_ca, sizeof(root_ca));
-
-  oc_pki_set_security_profile(0, OC_SP_BLACK, OC_SP_BLACK, credid);
-#endif /* OC_SECURITY && OC_PKI */
-  
-  
   if (init < 0)
     return init;
 
   PRINT("OCF server \"{{json_data['info']['title']}}\" running, waiting on incoming connections.\n");
-    
+
 #ifdef WIN32
   /* windows specific loop */
   while (quit != 1) {

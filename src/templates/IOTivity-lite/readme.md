@@ -30,10 +30,18 @@ The generated code acts as a OCF server acting as a simulator.
                 - integer,
                 - number, 
                 - string
+                - object
+                    - boolean
+                    - integer
+                    - number
+                    - string
+                    - array of strings
                 - array of booleans,
                 - array of integers,
                 - array of numbers,
                 - array of strings
+                - array of object
+                    - see object
         - post_&lt;resource&gt;
             - function to convert the input request document to the member variables
             - checks if input is correct :
@@ -55,6 +63,7 @@ The generated code acts as a OCF server acting as a simulator.
                 - array of integers,
                 - array of numbers,
                 - array of strings
+            - returns the same information as "GET"
                 
                 
 -PICS.json

@@ -166,6 +166,7 @@ typical usage:
 
 #### query_property_names
 retrieve an list of properties values of an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
 - input: full swagger file
 - input: path
 - return: if value (as part of the resolved schema)
@@ -183,6 +184,7 @@ typical usage:
 
 #### query_properties
 retrieve an list of properties an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
 - input: full swagger file
 - input: path
 - return: if value (as part of the resolved schema)
@@ -196,6 +198,66 @@ typical usage:
 {% endfor %}
 {% endfor %}
 ```
+
+
+
+#### query_properties_filtered
+retrieve an list of properties an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
+filtered, e.g. removing the values [ "n", "if", "rt" ]
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+#### query_properties_post
+retrieve an list of properties an schema belonging to the path
+from the POST request, if that is not available then from the GET 200 response
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_post(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+
+#### query_properties_post_filtered
+retrieve an list of properties an schema belonging to the path
+from the POST request, if that is not available then from the GET 200 response
+filtered, e.g. removing the values [ "n", "if", "rt" ]
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_post_filtered(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
 
 #### query_ref
 retrieve an reference 
@@ -287,6 +349,20 @@ typical usage:
 {% if var_data.type == "array" %}
         {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
 {% endif -%}
+```
+
+
+#### get_c_data
+convert the properties into an dict so that one can iterate over it
+returns a dict with key array pairs
+array value 0 = type
+array value 1 = description
+
+typical usage:
+```
+    {%- set my_data = var_data.properties |get_c_data() %}
+    {%- for k,v in my_data.items() %}
+    ...
 ```
 
 

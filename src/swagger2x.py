@@ -102,6 +102,62 @@ def get_dir_list(dir, ext=None):
         new_list = [x for x in cur_list if x.endswith(ext)]
     return new_list
 
+def create_c_struct(nested_json):
+    """
+        ...
+        Args:
+            nested_json: A nested json object.
+        Returns:
+            dict,  [0 = type, 1 = description ]
+    """
+    try:
+        out = {}
+        to_flatten = nested_json
+
+        def my_flatten(my_dict, name=''):
+            print (" my_flatten :")
+            if isinstance(my_dict, dict):
+                for my_name, my_sdict in my_dict.items():
+                    if my_name not in ["properties", "allOf", "anyOf", "items", "description", "type", "enum"]:
+                        # this is a property name
+                        print ("  property: ",my_name, " type: ",my_sdict.get("type"))
+                        my_type = my_sdict.get("type")
+                        description = my_sdict.get("description")
+                        if my_type in ["string", "integer", "number", "boolean"]:
+                            out[my_name] = [my_type, description]
+                        elif my_type in ["array"]:
+                            # handle array
+                            type_array = my_sdict["items"].get("type")
+                            n_description = my_sdict["items"].get("description")
+                            if n_description is not None: 
+                                # only use this one if it exists
+                                description = n_description
+                            out[my_name] = [type_array + "[]", description]
+                        elif my_type in ["object"]:
+                            # handle object
+                            print ( " my_flatten : handle object => go recursive")
+                            my_flatten(my_sdict)
+            elif isinstance(my_dict, list):
+                # dead code so far... e.g. need to be clean up
+                i = 0
+                for a in my_dict:
+                    my_flatten(a, name + str(i) + '_')
+                    i += 1
+            else:
+                print (name)
+                if name not in ["properties", "allOf", "anyOf", "items", "description", "type"]:
+                    out[name] = my_dict
+        
+        cur_type = nested_json.get("type")
+        if cur_type in ["array"]:
+            to_flatten = nested_json["items"]["properties"]
+        
+        my_flatten(to_flatten)
+        
+    except:
+        traceback.print_exc()
+    return out
+
 
 def find_key(rec_dict, target, depth=0):
     """
@@ -320,7 +376,7 @@ def query_ref(parse_tree, parameter_ref, value):
     """
     keys = parameter_ref.split("/")
     index = len(keys)
-    print ("query_ref: reference:",keys[index-1])
+    #print ("query_ref: reference:",keys[index-1])
     parameter_block = get_value_by_path_name(parse_tree, "parameters", keys[index-1])
     try:
         return parameter_block[value]
@@ -370,7 +426,7 @@ def swagger_if_exist(json_data, input_path, if_value):
     
 
 def swagger_property_data_schema(json_data, input_path, name):
-    """convert_to_c_type
+    """swagger_property_data_schema
     get the value of the property name from the schema that is referenced by the path in get (or put)
     it tries to get first the enum values or the default value.
     if this is not found then it will try to get the value from the example
@@ -381,7 +437,7 @@ def swagger_property_data_schema(json_data, input_path, name):
     data_values = []
     schema = None
     example = None
-    print("swagger_property_data_schema: path/name:", input_path, name)
+    #print("swagger_property_data_schema: path/name:", input_path, name)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             # get the schema
@@ -406,14 +462,14 @@ def swagger_property_data_schema(json_data, input_path, name):
 
             value_found = False        
             if schema is not None:
-                print("swagger_property_data_schema: schema", schema)
+                #print("swagger_property_data_schema: schema", schema)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
-                        print("swagger_property_data_schema: found", full_def_name)
+                        #print("swagger_property_data_schema: found", full_def_name)
                         name_block = find_key_link(def_item, name)
-                        print("swagger_property_data_schema: found name", name, name_block)
+                        #print("swagger_property_data_schema: found name", name, name_block)
                         if name_block is not None:
                             # get it from the schema::enum
                             try:
@@ -440,7 +496,7 @@ def swagger_property_data_schema(json_data, input_path, name):
 
             if value_found is False:
                 if example is not None:
-                    print("swagger_property_data_schema: name,example:", name, example)
+                    #print("swagger_property_data_schema: name,example:", name, example)
                     if isinstance(example, dict):
                         value = example.get(name)
                         if value is not None:
@@ -465,7 +521,7 @@ def swagger_property_names(json_data, input_path):
     """
     prop_values = []
     schema = None
-    print("swagger_property_names: path:", input_path)
+    #print("swagger_property_names: path:", input_path)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             try:
@@ -476,14 +532,14 @@ def swagger_property_names(json_data, input_path):
                 except:
                     pass
             if schema is not None:
-                print("swagger_property_names: schema", schema)
+                #print("swagger_property_names: schema", schema)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
                         #print("swagger_property_names: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
-                        print("swagger_property_names: found", prop_block)
+                        #print("swagger_property_names: found", prop_block)
                         if prop_block is not None:
                             for prop_name, prop in prop_block.items():
                                 prop_values.append(prop_name)
@@ -493,13 +549,13 @@ def swagger_property_names(json_data, input_path):
 
 def swagger_properties(json_data, input_path):
     """
-    get the properties  from the schema that is referenced by the path in get (or put)
+    get the properties  from the schema that is referenced by the path in get (or post)
     :param json_data: the swagger file as json struct
     :param input_path: the path to which the if should be queried
     :return: list of if values
     """
     prop_block = []
-    print("swagger_properties: path:", input_path)
+    #print("swagger_properties: path:", input_path)
     schema = None
     for path, path_item in json_data["paths"].items():
         if input_path == path:
@@ -512,18 +568,58 @@ def swagger_properties(json_data, input_path):
                     pass
             if schema is not None:
                 schema_ref = schema["$ref"]
-                print("swagger_properties: schema", schema, schema_ref)
+                #print("swagger_properties: schema", schema, schema_ref)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name in [schema_ref]:
                         #print("swagger_properties: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
-                        for var, var_data in prop_block.items():
-                            print ("  swagger_properties var:", var)
+                        #for var, var_data in prop_block.items():
+                        #    print ("  swagger_properties var:", var)
                         return prop_block
             else:
                 print("swagger_properties: schema not found:", input_path)
+    return prop_block
+    
+    
+def swagger_properties_post(json_data, input_path):
+    """
+    get the properties  from the schema that is referenced by the path in post (or get)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    prop_block = []
+    #print("swagger_properties_post: path:", input_path)
+    schema = None
+    for path, path_item in json_data["paths"].items():
+        if input_path == path:
+            try:
+                #schema = path_item["post"]["responses"]["200"]["schema"]
+                schema_param = path_item["post"]["parameters"]
+                for item in schema_param:
+                    schema_found = item.get("schema")
+                    if schema_found is not None:
+                      schema = schema_found
+            except:
+                try:
+                    schema = path_item["get"]["responses"]["200"]["schema"]
+                except:
+                    pass
+            if schema is not None:
+                schema_ref = schema["$ref"]
+                #print("swagger_properties_post: schema", schema, schema_ref)
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name in [schema_ref]:
+                        #print("swagger_properties_post: found", def_item)
+                        prop_block = find_key_link(def_item, "properties")
+                        #for var, var_data in prop_block.items():
+                        #    print ("  swagger_properties_post
+            else:
+                print("swagger_properties_post: schema not found:", input_path)
     return prop_block
     
 def swagger_properties_filtered(json_data, input_path):
@@ -534,8 +630,22 @@ def swagger_properties_filtered(json_data, input_path):
             #type = item_val.get("type")
             #if type != None:
             my_dict[item] = item_val
-            print ("swagger_properties_filtered: ", item, item_val)
+            #print ("swagger_properties_filtered: ", item, item_val)
     return my_dict
+    
+    
+def swagger_properties_filtered_post(json_data, input_path):
+    properties_list =  swagger_properties_post(json_data, input_path)
+    my_dict = {}
+    for item, item_val in properties_list.items():
+        if item not in ["n", "if", "rt"]:
+            #type = item_val.get("type")
+            #if type != None:
+            my_dict[item] = item_val
+            #print ("swagger_properties_filtered: ", item, item_val)
+    return my_dict
+    
+
 
 def query_rt_from_path(parse_tree, path):
     """
@@ -545,7 +655,7 @@ def query_rt_from_path(parse_tree, path):
     :param value: key in the reference to be found
     :return:
     """
-    print ("query_rt_from_path: rt from path:", path)
+    #print ("query_rt_from_path: rt from path:", path)
     found_values = swagger_rt(parse_tree)
     for value in found_values:
         if value[0] == path:
@@ -562,7 +672,7 @@ def query_path(parse_tree, my_path, value):
     """
     keys = my_path.split("/")
     index = len(keys)
-    print ("query_ref: reference:",keys[index-1])
+    #print ("query_ref: reference:",keys[index-1])
     parameter_block = get_value_by_path_name(parse_tree, "parameters", keys[index-1])
     try:
         return parameter_block[value]
@@ -625,7 +735,7 @@ def convert_to_cplus_type(json_type):
     :param json_type: the json type
     :return: c++ type.
     """
-    print ("convert_to_c_type: json_type:", json_type)
+    #print ("convert_to_cplus_type: json_type:", json_type)
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -644,11 +754,11 @@ def convert_to_cplus_array_type(json_data):
     :param json_type: the json type
     :return: c++ type.
     """
-    print ("convert_to_c_type: json_data:", json_data)
+    #print ("convert_to_cplus_array_type: json_data:", json_data)
     subtype = json_data["items"].get("type")
     subtype_oneOff = json_data["items"].get("oneOf")
     
-    print ("convert_to_c_type: json_data: Type:", type)
+    #print ("convert_to_cplus_array_type: json_data: Type:", type)
     if subtype is not None:
         if subtype in ["string", "number", "boolean", "integer"]:
             return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
@@ -668,7 +778,7 @@ def convert_to_c_type(json_type):
     :param json_type: the json type
     :return: c type.
     """
-    #print ("convert_to_c_type: json_type:", json_type)
+    print ("convert_to_c_type: json_type:", json_type)
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -676,8 +786,183 @@ def convert_to_c_type(json_type):
     if json_type in ["integer"]:
         return "int"  # uint8_t ?
     if json_type in ["string"]:
-        return "char *"
+        return "char*"
+    
+    # array versions e.g. postpended with []
+    if json_type in ["string[]"]:
+        return "char**"
+    if json_type in ["integer[]"]:
+        return "int*"
+    if json_type in ["boolean[]"]:
+        return "bool*"
+    if json_type in ["number[]"]:
+        return "double*"
+        
     return "void*"
+
+
+def convert_to_c_type_no_pointer(json_type):
+    """
+    convert the json type to c type
+    :param json_type: the json type
+    :return: c type.
+    """
+    print ("convert_to_c_type: json_type:", json_type)
+    if json_type == "boolean":
+        return "bool"
+    if json_type == "number":
+        return "double"
+    if json_type == "integer":
+        return "int"  # uint8_t ?
+    if json_type == "string":
+        return "char"
+    
+    # array versions e.g. postpended with []
+    if json_type == "string[]":
+        return "char"
+    if json_type == "integer[]":
+        return "int"
+    if json_type == "boolean[]":
+        return "bool"
+    if json_type == "number[]":
+        return "double"
+        
+    # 2D array versions e.g. postpended with [][]
+    if json_type == "string[][]":
+        return "char"
+    if json_type == "integer[][]":
+        return "int"
+    if json_type == "boolean[][]":
+        return "bool"
+    if json_type == "number[][]":
+        return "double"
+        
+    return "void*"
+
+def convert_to_c_type_array_size (json_type):
+    """
+    convert the json type to c type
+    :param json_type: the json type
+    :return: c type.
+    """
+    print ("convert_to_c_type: json_type:", json_type)
+    if json_type == "boolean":
+        return 0
+    if json_type == "number":
+        return 0
+    if json_type == "integer":
+        return 0
+    if json_type == "string":  
+        # string is already an array
+        return 1
+    
+    # array versions e.g. postpended with []
+    if json_type == "string[]":
+        return 2
+    if json_type == "integer[]":
+        return 1
+    if json_type == "boolean[]":
+        return 1
+    if json_type == "number[]":
+        return 1
+        
+    # array versions e.g. postpended with [][]
+    if json_type == "string[][]":
+        return 3
+    if json_type == "integer[][]":
+        return 2
+    if json_type == "boolean[][]":
+        return 2
+    if json_type == "number[][]":
+        return 2
+        
+    return "void*"
+
+
+def convert_to_c_struct(json_data):
+    """
+    convert the json type to c struct
+    :param json_type: the json type
+    :return: c type.
+    """
+    print ("convert_to_c_struct ")
+    blah = create_c_struct(json_data)
+    blah_str = "\n{\n"
+    for keys, values in blah.items():
+        #print(keys, values)
+        blah_str = blah_str + "  "+ convert_to_c_type(values[0]) + " " + keys +"; /* " + str(values[1]) + " */\n"
+        if "[]" in values[0]:
+            blah_str = blah_str + "  int "+ keys +"_array_size; /* current size of the array */\n"
+    blah_str = blah_str + "};"
+    return blah_str
+
+
+
+def initialize_c_struct(json_data, prefix=""):
+    """
+    convert the json type to c struct initialisation code
+    :param json_type: the json type
+    :return: c type.
+    """
+    print ("initialize_c_struct ")
+    prefix2 = prefix
+    if len(prefix) > 0:
+        prefix2 = "  "+ prefix + "."
+    blah = create_c_struct(json_data)
+    blah_str = ""
+    for keys, values in blah.items():
+        if "integer" == values[0]:
+            blah_str = blah_str + prefix2 + keys +" = 0;\n"
+        elif "integer[]" == values[0]:
+            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
+            blah_str = blah_str + prefix2 +keys +'[0] = 1;\n'
+            blah_str = blah_str + prefix2 +keys +'[1] = 2;\n'
+            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
+        elif "boolean" == values[0]:
+            blah_str = blah_str + prefix2 +keys +" = true;\n"
+        elif "boolean[]" == values[0]:
+            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
+            blah_str = blah_str + prefix2 +keys +'[0] = true;\n'
+            blah_str = blah_str + prefix2 +keys +'[1] = false;\n'
+            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
+        elif "number" == values[0]:
+            blah_str = blah_str + prefix2 +keys +" = 0.0;\n"
+        elif "number[]" == values[0]:
+            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
+            blah_str = blah_str + prefix2 +keys +'[0] = 0.0;\n'
+            blah_str = blah_str + prefix2 +keys +'[1] = 0.0;\n'
+            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
+        elif "string" == values[0]:
+            blah_str = blah_str + prefix2 +keys +' = "my string";\n'
+        elif "string[]" == values[0]:
+            blah_str = blah_str + "  malloc(" + prefix2 +keys +",2);\n"
+            blah_str = blah_str + prefix2 +keys +'[0] = "my string1";\n'
+            blah_str = blah_str + prefix2 +keys +'[1] = "my string1";\n'
+            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
+            
+        
+        
+    #blah_str = blah_str + ""
+    return blah_str
+
+
+def get_c_data(json_data, prefix=""):
+    """
+    convert the json type to c struct retrieve code 
+    :param json_type: the json type
+    : Args:
+            nested_json: A nested json object.
+    ;Returns:
+            dict=  {keyname, [0 = type, 1 = description ]}
+    """
+    print ("get_c_data ")
+    prefix2 = prefix
+    if len(prefix) > 0:
+        prefix2 = "  "+ prefix + "."
+    blah = create_c_struct(json_data)
+   
+    return blah
+
 
 
 def convert_to_cplus_string_array(my_array):
@@ -735,7 +1020,7 @@ def convert_value_to_c_value(my_value):
     :param my_value the value from swagger_property_data_schema
     :return: c value.
     """
-    print ("convert_value_to_c_type: my_value:", my_value)
+    #print ("convert_value_to_c_type: my_value:", my_value)
     
     if isinstance(my_value, list) :
         if len (my_value) > 0:
@@ -784,7 +1069,7 @@ def escape_quotes(my_string):
     :param my_value the string to be escaped
     :return: string with escaped
     """
-    print ("escape_quotes: my_value:", my_string)
+    #print ("escape_quotes: my_value:", my_string)
     data= my_string.split('"')
     new_string=""
     for item in data:
@@ -792,7 +1077,7 @@ def escape_quotes(my_string):
             new_string = new_string + item 
         else: 
             new_string = new_string + item + '\\"'
-    print ("escape_quotes: escaped :", new_string)
+    #print ("escape_quotes: escaped :", new_string)
     
     # remove new line
     new_string2=""
@@ -891,6 +1176,11 @@ try:
     env.filters['variablesyntax'] = variablesyntax
     env.filters['variableforbidden'] = variableforbidden
     env.filters['convert_to_c_type'] = convert_to_c_type
+    env.filters['convert_to_c_type_no_pointer'] = convert_to_c_type_no_pointer
+    env.filters['convert_to_c_type_array_size'] = convert_to_c_type_array_size
+    env.filters['get_c_data'] = get_c_data
+    
+    
     env.filters['convert_to_cplus_type'] = convert_to_cplus_type
     env.filters['convert_to_cplus_array_type'] =convert_to_cplus_array_type
 
@@ -914,7 +1204,9 @@ try:
         template_environment.globals['query_property_names'] = swagger_property_names
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties
+        template_environment.globals['query_properties_post'] = swagger_properties_post
         template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
+        template_environment.globals['query_properties_filtered_post'] = swagger_properties_filtered_post
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict

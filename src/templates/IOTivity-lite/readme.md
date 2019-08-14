@@ -79,8 +79,7 @@ The header file is at &lt;installation folder&gt;/include/server_introspection.d
 # What is missing:
 - Creation/deletion of resources (PUT/DELETE functions)
 - Handling in get/post of:
-    - arrays of arrays, arrays of objects
-    - handing of json objects
+    - recursively arrays of arrays, arrays of objects, object within objects
 
     
 # Building instructions
@@ -95,10 +94,12 @@ see iotivity-constrained/port/&lt;port&gt; for more instructions.
 - the generated file is renamed to the simpleserver_windows.c file in the apps folder.
     - current file is kept.
 - use the existing visual studio project in folder &lt;installation folder&gt;/port/windows
-- note that there are 3 project, 1 for the library, 1 for the client and 1 for server.
+- note that there are multiple projects: 
+    - project for the library,
+    - project for the server 
 
 Note: to reduce the amount of debug information, remove OC_DEBUG from the compile flags in the property menu.
-      please do this for the library.
+      please do this for the __library__.
     
 # CTT instructions
 - When CTT pops up: "reset to on-boarding state" means one needs to:

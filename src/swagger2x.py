@@ -623,10 +623,15 @@ def swagger_properties_post(json_data, input_path):
     return prop_block
     
 def swagger_properties_filtered(json_data, input_path):
+    """
+      returns the properties of "GET 200".
+      remove common properties & resource properties from the list of properties in the resource
+      see Resource spec
+    """
     properties_list =  swagger_properties(json_data, input_path)
     my_dict = {}
     for item, item_val in properties_list.items():
-        if item not in ["n", "if", "rt"]:
+        if item not in ["n", "if", "rt", "id", "range", "step", "precision"]:
             #type = item_val.get("type")
             #if type != None:
             my_dict[item] = item_val
@@ -635,10 +640,14 @@ def swagger_properties_filtered(json_data, input_path):
     
     
 def swagger_properties_filtered_post(json_data, input_path):
+    """
+      remove common properties & resource properties from the list of properties in the resource
+      see Resource spec
+    """
     properties_list =  swagger_properties_post(json_data, input_path)
     my_dict = {}
     for item, item_val in properties_list.items():
-        if item not in ["n", "if", "rt"]:
+        if item not in ["n", "if", "rt", "id", "range", "step", "precision" ]:
             #type = item_val.get("type")
             #if type != None:
             my_dict[item] = item_val

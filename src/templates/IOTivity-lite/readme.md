@@ -45,7 +45,8 @@ The generated code acts as a OCF server acting as a simulator.
         - post_&lt;resource&gt;
             - function to convert the input request document to the member variables
             - checks if input is correct :
-                - no write to readOnly properties
+                - no write to readOnly properties of the common and resource properties.
+                - no write to readOnly properties resource dependend
                 - properties of the correct type (using type in the struct)
                 - properties in MIN/MAX range given in by schema 
                     - e.g. __no check by property range__

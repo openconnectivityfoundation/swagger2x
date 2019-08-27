@@ -187,6 +187,44 @@ convert_if_string(char *interface_name)
   return OC_IF_A;
 }
 
+/**
+* helper function to check if the POST input document contains 
+* the common readOnly properties or the resouce readOnly properties
+* @param name the name of the property
+* @return the error_status, e.g. if error_status is true, then the input document contains something illegal
+*/
+static bool
+check_on_readonly_common_resource_properties(oc_string_t name, bool error_state)
+{
+  if (strcmp ( oc_string(name), "n") == 0) {
+    error_state = true;
+    PRINT ("   property \"n\" is ReadOnly \n");
+  }else if (strcmp ( oc_string(name), "if") == 0) {
+    error_state = true;
+    PRINT ("   property \"if\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "rt") == 0) {
+    error_state = true;
+    PRINT ("   property \"rt\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "id") == 0) {
+    error_state = true;
+    PRINT ("   property \"id\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "id") == 0) {
+    error_state = true;
+    PRINT ("   property \"id\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "range") == 0) {
+    error_state = true;
+    PRINT ("   property \"range\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "step") == 0) {
+    error_state = true;
+    PRINT ("   property \"step\" is ReadOnly \n");
+  } else if (strcmp ( oc_string(name), "precision") == 0) {
+    error_state = true;
+    PRINT ("   property \"precision\" is ReadOnly \n");
+  }
+  return error_state;
+}
+
+
 {% for path, path_data in json_data['paths'].items() -%}
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %} 
@@ -396,6 +434,8 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   /* loop over the request document to check if all inputs are ok */
   while (rep != NULL) {
     PRINT("key: (check) %s \n", oc_string(rep->name));
+    {# common & resource properties that are readOnly "n", "if", "rt", "id", "range", "step", "precision" #}
+    error_state = check_on_readonly_common_resource_properties(rep->name, error_state);
     {%- for var, var_data in query_properties_filtered_post(json_data, path).items() -%}
     {%- if var_data.type == "boolean" %}
     if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {

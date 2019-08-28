@@ -42,6 +42,10 @@ The generated code acts as a OCF server acting as a simulator.
                 - array of strings
                 - array of object
                     - see object
+            - handles query parameters
+                - as strings
+                - if there is an enum, the input value is checked against the enum
+                - NOTE the code needs to be changed to add the behaviour of what the enum should do
         - post_&lt;resource&gt;
             - function to convert the input request document to the member variables
             - checks if input is correct :
@@ -65,6 +69,10 @@ The generated code acts as a OCF server acting as a simulator.
                 - array of numbers,
                 - array of strings
             - returns the same information as "GET"
+            - handles query parameters
+                - as strings
+                - if there is an enum, the input value is checked against the enum
+                - NOTE the code needs to be changed to add the behaviour of what the enum should do
                 
                 
 -PICS.json

@@ -656,7 +656,7 @@ def swagger_properties_filtered_post(json_data, input_path):
     
 
 
-def query_rt_from_path(parse_tree, path):
+def retrieve_rt_from_path(parse_tree, path):
     """
     find the rt from path level
     :param parse_tree: full json parse tree of the swagger file
@@ -664,7 +664,7 @@ def query_rt_from_path(parse_tree, path):
     :param value: key in the reference to be found
     :return:
     """
-    #print ("query_rt_from_path: rt from path:", path)
+    #print ("retrieve_rt_from_path: rt from path:", path)
     found_values = swagger_rt(parse_tree)
     for value in found_values:
         if value[0] == path:
@@ -687,6 +687,41 @@ def query_path(parse_tree, my_path, value):
         return parameter_block[value]
     except:
         return ""
+
+def list_query_params(json_data, input_path):
+    """
+    list all query param blocks
+    """
+    query_params = []
+    for path, path_item in json_data["paths"].items():
+        if input_path == path:
+            try:
+                params = path_item["get"]["parameters"]
+                for item in params:
+                    if item.get("in") == "query":
+                        #print (  " param in of", item_name, item.get("in"))
+                        if item.get("name") != "if": 
+                          query_params.append(item)
+                    elif item.get("$ref") != None:
+                        #resolve reference
+                        #print ("  ===>", item)
+                        reference_name = item.get("$ref")
+                        ref = reference_name.split("/")[2]
+                        #print ("  ==---=>", reference_name, ref)
+                        for param_item_name, param_item in json_data["parameters"].items():
+                            #print (param_item_name)
+                            if param_item_name == ref:
+                                if param_item.get("in") == "query":
+                                    if param_item.get("name") != "if": 
+                                        query_params.append(param_item)
+                        
+            except:
+                traceback.print_exc()
+           
+    #print (query_params)
+    return query_params
+    
+
 
 #
 #  jinga custom functions : tests
@@ -886,74 +921,6 @@ def convert_to_c_type_array_size (json_type):
         return 2
         
     return "void*"
-
-
-def convert_to_c_struct(json_data):
-    """
-    convert the json type to c struct
-    :param json_type: the json type
-    :return: c type.
-    """
-    print ("convert_to_c_struct ")
-    blah = create_c_struct(json_data)
-    blah_str = "\n{\n"
-    for keys, values in blah.items():
-        #print(keys, values)
-        blah_str = blah_str + "  "+ convert_to_c_type(values[0]) + " " + keys +"; /* " + str(values[1]) + " */\n"
-        if "[]" in values[0]:
-            blah_str = blah_str + "  int "+ keys +"_array_size; /* current size of the array */\n"
-    blah_str = blah_str + "};"
-    return blah_str
-
-
-
-def initialize_c_struct(json_data, prefix=""):
-    """
-    convert the json type to c struct initialisation code
-    :param json_type: the json type
-    :return: c type.
-    """
-    print ("initialize_c_struct ")
-    prefix2 = prefix
-    if len(prefix) > 0:
-        prefix2 = "  "+ prefix + "."
-    blah = create_c_struct(json_data)
-    blah_str = ""
-    for keys, values in blah.items():
-        if "integer" == values[0]:
-            blah_str = blah_str + prefix2 + keys +" = 0;\n"
-        elif "integer[]" == values[0]:
-            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
-            blah_str = blah_str + prefix2 +keys +'[0] = 1;\n'
-            blah_str = blah_str + prefix2 +keys +'[1] = 2;\n'
-            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
-        elif "boolean" == values[0]:
-            blah_str = blah_str + prefix2 +keys +" = true;\n"
-        elif "boolean[]" == values[0]:
-            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
-            blah_str = blah_str + prefix2 +keys +'[0] = true;\n'
-            blah_str = blah_str + prefix2 +keys +'[1] = false;\n'
-            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
-        elif "number" == values[0]:
-            blah_str = blah_str + prefix2 +keys +" = 0.0;\n"
-        elif "number[]" == values[0]:
-            blah_str = blah_str + "malloc(" + prefix2 +keys +",2);\n"
-            blah_str = blah_str + prefix2 +keys +'[0] = 0.0;\n'
-            blah_str = blah_str + prefix2 +keys +'[1] = 0.0;\n'
-            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
-        elif "string" == values[0]:
-            blah_str = blah_str + prefix2 +keys +' = "my string";\n'
-        elif "string[]" == values[0]:
-            blah_str = blah_str + "  malloc(" + prefix2 +keys +",2);\n"
-            blah_str = blah_str + prefix2 +keys +'[0] = "my string1";\n'
-            blah_str = blah_str + prefix2 +keys +'[1] = "my string1";\n'
-            blah_str = blah_str + prefix2 +keys +'_array_size = 2;\n'
-            
-        
-        
-    #blah_str = blah_str + ""
-    return blah_str
-
 
 def get_c_data(json_data, prefix=""):
     """
@@ -1207,7 +1174,7 @@ try:
         template_environment.globals['replace_chars'] = replace_chars
         template_environment.globals['path_names'] = path_names
         template_environment.globals['query_ref'] = query_ref
-        template_environment.globals['query_rt'] = query_rt_from_path
+        template_environment.globals['query_rt'] = retrieve_rt_from_path
         template_environment.globals['query_if'] = swagger_if
         template_environment.globals['query_if_exist'] = swagger_if_exist
         template_environment.globals['query_property_names'] = swagger_property_names
@@ -1216,6 +1183,8 @@ try:
         template_environment.globals['query_properties_post'] = swagger_properties_post
         template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
         template_environment.globals['query_properties_filtered_post'] = swagger_properties_filtered_post
+        
+        template_environment.globals['list_query_params'] = list_query_params
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict

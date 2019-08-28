@@ -249,6 +249,23 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   
      The implementation always return everything that belongs to the resource.
      this implementation is not optimal, but is functionally correct and will pass CTT1.2.2 */
+  bool error_state = false;
+  {% set query_list = list_query_params(json_data, path)  %}
+  {%- for item in query_list %}
+  /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
+  char *{{item.name}} = NULL; /* {{item.description}} */
+  int {{item.name}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name}});
+  if ({{item.name}}_len != -1) {
+    PRINT (" query value '{{item.name}}': %s\n",{{item.name}}[0]);
+    bool query_ok = false;
+  {% for enum_value in item.enum %}
+    if ( strcmp ({{item.name}}[0], "{{enum_value}}") == 0)  query_ok = true;
+  {%- endfor %}
+    if (query_ok == false) error_state = true;
+    
+    /* TODO: use the query value to tailer the response*/
+  }
+  {%- endfor %}
   
   PRINT("-- Begin get{{path|variablesyntax}}: interface %d\n", interfaces);
   oc_rep_start_root_object();
@@ -401,7 +418,12 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
     break;
   }
   oc_rep_end_root_object();
-  oc_send_response(request, OC_STATUS_OK);
+  if (error_state == false) {
+    oc_send_response(request, OC_STATUS_OK);
+  }
+  else {
+    oc_send_response(request, OC_STATUS_BAD_OPTION);
+  }
   PRINT("-- End get{{path|variablesyntax}}\n");
 }
 {% endif -%}
@@ -431,6 +453,21 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   bool error_state = false;
   PRINT("-- Begin post{{path|variablesyntax}}:\n");
   oc_rep_t *rep = request->request_payload;
+  {% set query_list = list_query_params(json_data, path)  %}
+  {%- for item in query_list %}
+  /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
+  char *{{item.name}} = NULL; /* {{item.description}} */
+  int {{item.name}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name}});
+  if ({{item.name}}_len != -1) {
+    bool query_ok = false;
+  {% for enum_value in item.enum %}
+    if ( strcmp ({{item.name}}[0], "{{enum_value}}") == 0)  query_ok = true;
+  {%- endfor %}
+    if (query_ok == false) error_state = true;
+    PRINT (" query value '{{item.name}}': %s\n",{{item.name}}[0]);
+    /* TODO: use the query value to tailer the response*/
+  }
+  {%- endfor %}
   /* loop over the request document to check if all inputs are ok */
   while (rep != NULL) {
     PRINT("key: (check) %s \n", oc_string(rep->name));

@@ -253,13 +253,13 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {% set query_list = list_query_params(json_data, path)  %}
   {%- for item in query_list %}
   /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
-  char *{{item.name}} = NULL; /* not null terminated {{item.description}} */
-  int {{item.name}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name}});
-  if ({{item.name}}_len != -1) {
-    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name}}_len, {{item.name}});
+  char *{{item.name|variablesyntax}} = NULL; /* not null terminated {{item.description}} */
+  int {{item.name|variablesyntax}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name|variablesyntax}});
+  if ({{item.name|variablesyntax}}_len != -1) {
+    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
     bool query_ok = false;
   {% for enum_value in item.enum %}
-    if ( strncmp ({{item.name}}, "{{enum_value}}", {{item.name}}_len) == 0)  query_ok = true;
+    if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
   {%- endfor %}
     if (query_ok == false) error_state = true;
     
@@ -456,15 +456,15 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   {% set query_list = list_query_params(json_data, path)  %}
   {%- for item in query_list %}
   /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
-  char *{{item.name}} = NULL; /* not null terminated {{item.description}} */
-  int {{item.name}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name}});
-  if ({{item.name}}_len != -1) {
+  char *{{item.name|variablesyntax}} = NULL; /* not null terminated {{item.description}} */
+  int {{item.name|variablesyntax}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name|variablesyntax}});
+  if ({{item.name|variablesyntax}}_len != -1) {
     bool query_ok = false;
   {% for enum_value in item.enum %}
-    if ( strncmp ({{item.name}}, "{{enum_value}}", {{item.name}}_len) == 0)  query_ok = true;
+    if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
   {%- endfor %}
     if (query_ok == false) error_state = true;
-    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name}}_len, {{item.name}});
+    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
     /* TODO: use the query value to tailer the response*/
   }
   {%- endfor %}

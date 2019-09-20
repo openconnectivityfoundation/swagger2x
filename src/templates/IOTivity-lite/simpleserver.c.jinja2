@@ -211,16 +211,7 @@ check_on_readonly_common_resource_properties(oc_string_t name, bool error_state)
   } else if (strcmp ( oc_string(name), "id") == 0) {
     error_state = true;
     PRINT ("   property \"id\" is ReadOnly \n");
-  } else if (strcmp ( oc_string(name), "range") == 0) {
-    error_state = true;
-    PRINT ("   property \"range\" is ReadOnly \n");
-  } else if (strcmp ( oc_string(name), "step") == 0) {
-    error_state = true;
-    PRINT ("   property \"step\" is ReadOnly \n");
-  } else if (strcmp ( oc_string(name), "precision") == 0) {
-    error_state = true;
-    PRINT ("   property \"precision\" is ReadOnly \n");
-  }
+  } 
   return error_state;
 }
 
@@ -524,7 +515,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
       {%- endif -%}{% endif -%} 
-      if ( (rep->type != OC_REP_DOUBLE) || (rep->type != OC_REP_INT)) {
+      if ( (rep->type != OC_REP_DOUBLE) & (rep->type != OC_REP_INT)) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type double or int %d \n", rep->type);
       }

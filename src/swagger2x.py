@@ -622,6 +622,45 @@ def swagger_properties_post(json_data, input_path):
                 print("swagger_properties_post: schema not found:", input_path)
     return prop_block
     
+    
+    
+def swagger_required_items(json_data, input_path):
+    """
+    get the required properties list from the schema that is referenced by the path in post (or get)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    prop_block = []
+    #print("swagger_properties_post: path:", input_path)
+    schema = None
+    for path, path_item in json_data["paths"].items():
+        if input_path == path:
+            try:
+                #schema = path_item["post"]["responses"]["200"]["schema"]
+                schema_param = path_item["post"]["parameters"]
+                for item in schema_param:
+                    schema_found = item.get("schema")
+                    if schema_found is not None:
+                      schema = schema_found
+            except:
+                try:
+                    schema = path_item["get"]["responses"]["200"]["schema"]
+                except:
+                    pass
+            if schema is not None:
+                schema_ref = schema["$ref"]
+                #print("swagger_required_items: schema", schema, schema_ref)
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name in [schema_ref]:
+                        prop_block = find_key_link(def_item, "required")                
+            else:
+                print("swagger_required_items: schema not found:", input_path)
+    return prop_block
+    
+    
 def swagger_properties_filtered(json_data, input_path):
     """
       returns the properties of "GET 200".
@@ -1185,6 +1224,7 @@ try:
         template_environment.globals['query_properties_post'] = swagger_properties_post
         template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
         template_environment.globals['query_properties_filtered_post'] = swagger_properties_filtered_post
+        template_environment.globals['query_required_items'] = swagger_required_items
         
         template_environment.globals['list_query_params'] = list_query_params
 

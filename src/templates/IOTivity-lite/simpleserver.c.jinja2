@@ -459,7 +459,24 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     /* TODO: use the query value to tailer the response*/
   }
   {%- endfor %}
+  /* loop over the request document for each required input field to check if all required input fields are present */
+  {%- for required_var in query_required_items(json_data, path) %}
+  {% if loop.first %}bool var_in_request= false; {% else %}var_in_request= false; {% endif %}
+  rep = request->request_payload;
+  while (rep != NULL) {
+    if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{required_var|variablesyntax}}) == 0) {
+      var_in_request = true;
+    }
+    rep = rep->next;
+  }
+  if ( var_in_request == false) 
+  { 
+      error_state = true;
+      PRINT (" required property: '{{required_var}}' not in request\n");
+  }
+  {%- endfor %}
   /* loop over the request document to check if all inputs are ok */
+  rep = request->request_payload;
   while (rep != NULL) {
     PRINT("key: (check) %s \n", oc_string(rep->name));
     {# common & resource properties that are readOnly "n", "if", "rt", "id", "range", "step", "precision" #}
@@ -765,7 +782,8 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   {
     PRINT("  Returning Error \n");
     /* TODO: add error response, if any */
-    oc_send_response(request, OC_STATUS_NOT_MODIFIED);
+    //oc_send_response(request, OC_STATUS_NOT_MODIFIED);
+    oc_send_response(request, OC_STATUS_BAD_REQUEST);
   }
   PRINT("-- End post{{path|variablesyntax}}\n");
 }

@@ -522,28 +522,35 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     {%- elif var_data.type == "number" %}
     if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       /* property "{{var}}" of type double exist in payload */
-      double value = 0;
-      if (rep->type == OC_REP_DOUBLE)
-        value = rep->value.double_p;
-      if (rep->type == OC_REP_INT)
-        value = (double) rep->value.integer;
-      {%- if var_data.readOnly -%}
+      {%- if var_data.readOnly %}
       {% if var_data.readOnly == true %}/* check if "{{var}}" is read only */
       error_state = true;
       PRINT ("   property '{{var}}' is readOnly \n");
-      {%- endif -%}{% endif -%} 
+      {%- endif -%}{% endif %} 
       if ( (rep->type != OC_REP_DOUBLE) & (rep->type != OC_REP_INT)) {
         error_state = true;
         PRINT ("   property '{{var}}' is not of type double or int %d \n", rep->type);
       }
-      {% if var_data.minimum %}if ( value < {{var_data.minimum}} ) {
+      {%- if var_data.minimum %}
+      double value_min_check = 0;
+      if (rep->type == OC_REP_DOUBLE)
+        value_min_check = rep->value.double_p;
+      if (rep->type == OC_REP_INT)
+        value_min_check = (double) rep->value.integer;
+      if ( value_min_check < {{var_data.minimum}} ) {
         /* check the minimum range */
-        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %f \n", value);
+        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %f \n", value_min_check);
         error_state = true;
       }{% endif -%}
-      {% if var_data.maximum %}if ( value > {{var_data.maximum}} ) {
+      {% if var_data.maximum %}
+      double value_max_check = 0;
+      if (rep->type == OC_REP_DOUBLE)
+        value_max_check = rep->value.double_p;
+      if (rep->type == OC_REP_INT)
+        value_max_check = (double) rep->value.integer;
+      if ( value_max_check > {{var_data.maximum}} ) {
         /* check the maximum range */
-        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %f \n", value);
+        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %f \n", value_max_check);
         error_state = true;
       }{%- endif %}
     }

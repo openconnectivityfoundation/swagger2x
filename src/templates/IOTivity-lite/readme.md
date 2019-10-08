@@ -3,12 +3,12 @@
 The generated code acts as a OCF server acting as a simulator.
 - The server creates initial values at start up 
   - using the default/examples from the resource definition, and stores these initial values in global variables.
-- It handles incomming requests:
+- It handles incoming requests:
     - RETIEVE (GET)
         - creates the response by using the global variables intialized at start up.
     - UPDATE (POST)
-        - checks if the incomming request is valid 
-        - updates the global variables by using the values of the incomming request
+        - checks if the incoming request is valid 
+        - updates the global variables by using the values of the incoming request
         - creates the response by using the global variables
         
 ## What is generated:
@@ -85,6 +85,13 @@ The introspection IDD is handled via an header file.
 
 The header file is at &lt;installation folder&gt;/include/server_introspection.dat.h
 
+# Security
+The following mechanisms are supported:
+- just works
+- random pin (can be compiled out)
+- pki (can be compiled out)
+note that the code stores the credential information under ./devicebuilderserver_creds
+
 # What is missing:
 - Creation/deletion of resources (PUT/DELETE functions)
 - Handling in get/post of:
@@ -113,7 +120,7 @@ Note: to reduce the amount of debug information, remove OC_DEBUG from the compil
 # CTT instructions
 - When CTT pops up: "reset to on-boarding state" means one needs to:
   - stop the device
-  - delete all files in port/windows/simpleserver_creds  
+  - delete all files in port/windows/devicebuilderserver_creds  
   - start the server.
     
 

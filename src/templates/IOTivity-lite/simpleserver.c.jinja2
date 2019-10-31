@@ -928,35 +928,15 @@ factory_presets_cb(size_t device, void *data)
 #endif /* OC_SECURITY && OC_PKI */
 }
 
+
 /**
-* main application.
 * intializes the global variables
 * registers and starts the handler
-* handles (in a loop) the next event.
-* shuts down the stack
-*/
-int
-main(void)
-{
-int init;
 
-#ifdef WIN32
-  /* windows specific */
-  InitializeCriticalSection(&cs);
-  InitializeConditionVariable(&cv);
-  /* install Ctrl-C */
-  signal(SIGINT, handle_signal);
-#endif
-#ifdef __linux__
-  /* linux specific */
-  struct sigaction sa;
-  sigfillset(&sa.sa_mask);
-  sa.sa_flags = 0;
-  sa.sa_handler = handle_signal;
-  /* install Ctrl-C */
-  sigaction(SIGINT, &sa, NULL);
-#endif
-  
+*/
+void
+initialize_variables(void)
+{
 {%- for path, path_data in json_data['paths'].items() %}
   /* initialize global variables for resource "{{path}}" */
 {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
@@ -1048,6 +1028,46 @@ int init;
   /* set the flag for NO oic/con resource. */
   oc_set_con_res_announced(false);
 
+}
+
+#ifndef NO_MAIN
+/**
+* main application.
+* intializes the global variables
+* registers and starts the handler
+* handles (in a loop) the next event.
+* shuts down the stack
+*/
+int
+main(void)
+{
+int init;
+  oc_clock_time_t next_event;
+
+#ifdef WIN32
+  /* windows specific */
+  InitializeCriticalSection(&cs);
+  InitializeConditionVariable(&cv);
+  /* install Ctrl-C */
+  signal(SIGINT, handle_signal);
+#endif
+#ifdef __linux__
+  /* linux specific */
+  struct sigaction sa;
+  sigfillset(&sa.sa_mask);
+  sa.sa_flags = 0;
+  sa.sa_handler = handle_signal;
+  /* install Ctrl-C */
+  sigaction(SIGINT, &sa, NULL);
+#endif
+
+  PRINT("Used input file : \"{{input_file}}\"\n");
+  PRINT("OCF Server name : \"{{json_data['info']['title']}}\"\n");
+
+  /*intialize the variables */
+  initialize_variables();
+  
+  
   /* initializes the handlers structure */
   static const oc_handler_t handler = {.init = app_init,
                                        .signal_event_loop = signal_event_loop,
@@ -1057,10 +1077,6 @@ int init;
                                        .requests_entry = 0 
 #endif
                                        };
-  oc_clock_time_t next_event;
-  
-  PRINT("Used input file : \"{{input_file}}\"\n");
-  PRINT("OCF Server name : \"{{json_data['info']['title']}}\"\n");
 
 #ifdef OC_SECURITY
   PRINT("Intialize Secure Resources\n");
@@ -1076,12 +1092,15 @@ int init;
 #endif /* OC_SECURITY */
 
   oc_set_factory_presets_cb(factory_presets_cb, NULL);
-
+  
+  
   /* start the stack */
   init = oc_main_init(&handler);
 
-  if (init < 0)
+  if (init < 0) {
+    PRINT("oc_main_init failed %d, exiting.\n", init);
     return init;
+  }
 
   PRINT("OCF server \"{{json_data['info']['title']}}\" running, waiting on incoming connections.\n");
 
@@ -1121,3 +1140,4 @@ int init;
   oc_main_shutdown();
   return 0;
 }
+#endif /* NO_MAIN */

@@ -498,7 +498,6 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     {%- elif var_data.type == "integer" %}
     if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
       /* property "{{var}}" of type integer exist in payload */
-      int value = rep->value.integer;
       {%- if var_data.readOnly -%}
       {% if var_data.readOnly == true %}/* check if "{{var}}" is read only */
       error_state = true;
@@ -508,14 +507,16 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
         error_state = true;
         PRINT ("   property '{{var}}' is not of type int %d \n", rep->type);
       }
-      {% if var_data.minimum %}if ( value < {{var_data.minimum}} ) {
+      {% if var_data.minimum %}int value_min = rep->value.integer;
+      if ( value_min < {{var_data.minimum}} ) {
         /* check the minimum range */
-        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value);
+        PRINT ("   property '{{var}}' value smaller than minimum : {{var_data.minimum}} <  value: %d \n", value_min);
         error_state = true;
       }{% endif %}
-      {% if var_data.maximum %}if ( value > {{var_data.maximum}} ) {
+      {% if var_data.maximum %}int value_max = rep->value.integer;
+      if ( value_max > {{var_data.maximum}} ) {
         /* check the maximum range */
-        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value);
+        PRINT ("   property '{{var}}' value exceed max : {{var_data.minimum}} >  value: %d \n", value_max);
         error_state = true;
       }{% endif %}
     } 

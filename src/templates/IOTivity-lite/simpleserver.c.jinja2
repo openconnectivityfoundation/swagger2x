@@ -64,9 +64,11 @@
 #ifdef __linux__
 /* linux specific code */
 #include <pthread.h>
+#ifndef NO_MAIN
 static pthread_mutex_t mutex;
 static pthread_cond_t cv;
 static struct timespec ts;
+#endif /* NO_MAIN */
 #endif
 
 #ifdef WIN32
@@ -848,42 +850,6 @@ register_resources(void)
 {% endfor -%}
 }
 
-#ifdef WIN32
-/**
-* signal the event loop (windows version)
-* wakes up the main function to handle the next callback
-*/
-static void
-signal_event_loop(void)
-{
-  WakeConditionVariable(&cv);
-}
-#endif
-#ifdef __linux__
-/**
-* signal the event loop (Linux)
-* wakes up the main function to handle the next callback
-*/
-static void
-signal_event_loop(void)
-{
-  pthread_mutex_lock(&mutex);
-  pthread_cond_signal(&cv);
-  pthread_mutex_unlock(&mutex);
-}
-#endif
-
-/**
-* handle Ctrl-C
-* @param signal the captured signal
-*/
-void
-handle_signal(int signal)
-{
-  (void)signal;
-  signal_event_loop();
-  quit = 1;
-}
 
 #ifdef OC_SECURITY
 void
@@ -908,9 +874,9 @@ factory_presets_cb(size_t device, void *data)
   int credid =
     oc_pki_add_mfg_cert(0, (const unsigned char *)my_cert, strlen(my_cert), (const unsigned char *)my_key, strlen(my_key));
   if (credid < 0) {
-    PRINT("ERROR installing manufacturer certificate\n");
+    PRINT("ERROR installing PKI certificate\n");
   } else {
-    PRINT("Successfully installed manufacturer certificate\n");
+    PRINT("Successfully installed PKI certificate\n");
   }
 
   if (oc_pki_add_mfg_intermediate_cert(0, credid, (const unsigned char *)int_ca, strlen(int_ca)) < 0) {
@@ -926,6 +892,8 @@ factory_presets_cb(size_t device, void *data)
   }
 
   oc_pki_set_security_profile(0, OC_SP_BLACK, OC_SP_BLACK, credid);
+#else
+    PRINT("No PKI certificates installed\n");
 #endif /* OC_SECURITY && OC_PKI */
 }
 
@@ -1032,6 +1000,46 @@ initialize_variables(void)
 }
 
 #ifndef NO_MAIN
+
+#ifdef WIN32
+/**
+* signal the event loop (windows version)
+* wakes up the main function to handle the next callback
+*/
+static void
+signal_event_loop(void)
+{
+  WakeConditionVariable(&cv);
+}
+#endif /* WIN32 */
+
+#ifdef __linux__
+/**
+* signal the event loop (Linux)
+* wakes up the main function to handle the next callback
+*/
+static void
+signal_event_loop(void)
+{
+  pthread_mutex_lock(&mutex);
+  pthread_cond_signal(&cv);
+  pthread_mutex_unlock(&mutex);
+}
+#endif /* __linux__ */
+
+/**
+* handle Ctrl-C
+* @param signal the captured signal
+*/
+void
+handle_signal(int signal)
+{
+  (void)signal;
+  signal_event_loop();
+  quit = 1;
+}
+
+
 /**
 * main application.
 * intializes the global variables

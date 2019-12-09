@@ -1230,6 +1230,7 @@ try:
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
+        template_environment.globals['escape_quotes'] = escape_quotes
         text = template_environment.render( json_data=json_data,
             version=my_version,
             uuid= str(args.uuid),

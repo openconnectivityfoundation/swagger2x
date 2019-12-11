@@ -460,6 +460,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   }
   {%- endfor %}
   /* loop over the request document for each required input field to check if all required input fields are present */
+  {%- if query_required_items(json_data, path) %}
   {%- for required_var in query_required_items(json_data, path) %}
   {% if loop.first %}bool var_in_request= false; {% else %}var_in_request= false; {% endif %}
   rep = request->request_payload;
@@ -475,6 +476,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       PRINT (" required property: '{{required_var}}' not in request\n");
   }
   {%- endfor %}
+  {%- endif %}
   /* loop over the request document to check if all inputs are ok */
   rep = request->request_payload;
   while (rep != NULL) {

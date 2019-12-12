@@ -36,6 +36,8 @@ from os import listdir
 from os.path import isfile, join
 from shutil import copyfile
 from  collections import OrderedDict
+import requests
+import re
 
 
 if sys.version_info < (3, 5):
@@ -1109,7 +1111,113 @@ def escape_quotes(my_string):
           
     return new_string3
     
-    
+#JLR
+def odm_enumArray(enumArray):
+    """
+    load the JSON schema file
+    :param url: location of schema file, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json
+    :return: json_dict
+    """
+    output = "["
+    for i, item in enumerate(enumArray):
+        output = output + "\"" + item + "\""
+        if i < len(enumArray)-1:
+            output = output + ","
+        else:
+            output = output + "]"
+    return output
+
+def load_json_schema_fromURL(url):
+    """
+    load the JSON schema file
+    :param url: location of schema file, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
+    :return: json_dict
+    """
+
+    response = requests.get(url)
+    json_dict = json.loads(response.text, parse_float=float, object_pairs_hook=OrderedDict)
+    return json_dict
+
+def odm_refProperties(url):
+    """
+    load referenced json property and return string formatted as json schema
+    :param url: location of schema file and reference property, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
+    :return: string formatted as json schema
+    """
+    #set indentation based on a referenced property
+    exit =        "        "
+    indent =      "          "
+    itemsIndent = "            "
+    odmItemFields = ["items","minItems","maxItems","uniqueItems"]
+    ref_json_dict = load_json_schema_fromURL(url)
+    keyValue = url.split("/")[-1]
+
+    lookup = ref_json_dict['definitions'][keyValue]
+    itemsBlock = {}
+    output = ""
+    #convert readOnly to writable per ODM requirement
+    for i, (key,value) in enumerate(lookup.items()):
+        if key == "readOnly":
+            key = "writable"
+            if value == True:
+                value = False
+            else: 
+                value = True
+        #top reference block
+        if key not in odmItemFields:
+            if type (value) == bool:
+                if value:
+                    output = output + "\"" + str(key) + "\"" + ": true" 
+                else:
+                    output = output + "\"" + str(key) + "\"" + ": false" 
+            elif type(value) != str:
+                output = output + "\"" + str(key) + "\"" + ": " + str(value) 
+            else:
+                output = output + "\"" + str(key) + "\"" + ": \"" + str(value) + "\""
+            #add indentation
+
+            if i < len(lookup)-1 and len(itemsBlock) == 0: 
+                output = output + ",\n" + indent
+            elif len(itemsBlock) == 0:
+                pass
+        else:
+            if key == "items":
+                for subkey,subval in value.items():
+                    itemsBlock[subkey]=subval
+            else: 
+                itemsBlock[key]=value 
+    #process Items block
+    if len(itemsBlock) > 0:
+        output = output + "\"items\": {" + "\n" +  itemsIndent
+        #process Item Type
+        for i, (key,value) in enumerate(itemsBlock.items()):
+            if key != "items":
+                if type(value) != str:
+                    output = output + "\"" + str(key) + "\"" + ": " + str(value)
+                else:
+                    output = output + "\"" + str(key) + "\"" + ": \"" + str(value) + "\""
+            if i < (len(itemsBlock)-1):
+                output = output + ",\n" + itemsIndent
+            else:
+                output = output + "\n" + indent + "}"
+    output = output + "\n" + exit
+    return output 
+
+def odm_return_name(name, type="short"):
+    """
+    Remove ResURI from OCF path names as well as /, also converts camelCase to space delimited strings
+    :name: OCF name, e.g. /ContinuousGlucoseMeterStatusResURI 
+    :type: "short": returns e.g. ContinuousGlucoseMeterStatus or "long" e.g. Continuous Glucose Meter Status
+    :return: string formatted 
+    """
+    name = name.replace('/','')
+    name = name.replace('ResURI','')
+
+    if type == "short":
+        return name
+    else: 
+        return re.sub("([A-Z])"," \g<0>",name)
+
 #
 #   main of script
 #
@@ -1150,12 +1258,17 @@ parser.add_argument( "-manufacturer"  , "--manufacturer"  , default="ocf",
                      help="manufacturer name",  nargs='?', const="", required=False)
 parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
                      help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
+#output file
+parser.add_argument( "-output_file"  , "--output_file"  , default=None,
+                     help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
+
 
 args = parser.parse_args()
 
 
 print("file          : " + str(args.swagger))
 print("out_dir       : " + str(args.out_dir))
+print("out_file      : " + str(args.output_file))
 #print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
 print("template      : " + str(args.template))
@@ -1231,6 +1344,9 @@ try:
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
         template_environment.globals['escape_quotes'] = escape_quotes
+        template_environment.globals['odm_refProperties'] = odm_refProperties
+        template_environment.globals['odm_return_name'] = odm_return_name
+        template_environment.globals['odm_enumArray'] = odm_enumArray
         text = template_environment.render( json_data=json_data,
             version=my_version,
             uuid= str(args.uuid),
@@ -1239,11 +1355,32 @@ try:
             input_file = args.swagger )
 
         if args.out_dir is not None:
-            outputfile = template_file.replace(".jinja2", "")
-            out_file = os.path.join(args.out_dir, outputfile)
-            f = open(out_file, 'w')
-            f.write(text)
-            f.close()
+            if (args.output_file) is None:
+                outputfile = template_file.replace(".jinja2", "")
+                out_file = os.path.join(args.out_dir, outputfile)
+            else:
+                out_file = os.path.join(args.out_dir, args.output_file)            
+
+            
+            if args.template == "one-data-model":
+                #standard file output
+                f = open(out_file + ".tmp", 'w')
+                f.write(text)
+                f.close()
+                #cleanup for json out
+                file1 = open(out_file + ".tmp", 'r').read()
+                json_dict = json.loads(file1, object_pairs_hook=OrderedDict)
+                os.remove(out_file + ".tmp")
+
+                f = open(out_file, 'w')
+                f.write(json.dumps(json_dict,sort_keys=True, indent=2))
+                f.close()
+            else:
+                #standard file output
+                f = open(out_file, 'w')
+                f.write(text)
+                f.close()
+
 
     # copy none jinja2 files from Template dir
     all_files = get_dir_list(full_path)

@@ -437,7 +437,7 @@ def swagger_property_data_schema(json_data, input_path, name):
     data_values = []
     schema = None
     example = None
-    #print("swagger_property_data_schema: path/name:", input_path, name)
+    print("swagger_property_data_schema: path/name:", input_path, name)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             # get the schema
@@ -501,6 +501,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                         value = example.get(name)
                         if value is not None:
                             value = example[name]
+                            print("swagger_property_data_schema: getting name, value:", name, value)
                             if isinstance(value, list):
                                 for val in value:
                                     data_values.append(val)
@@ -508,7 +509,9 @@ def swagger_property_data_schema(json_data, input_path, name):
                                 data_values.append(value)
                     else:
                         print("swagger_property_data_schema: example could not find:", name)
-                        pass    
+                        pass   
+                else:
+                     print("swagger_property_data_schema: example is none")
     return data_values
 
 
@@ -1076,6 +1079,10 @@ def init_value_if_empty(my_value, value_type):
             new_value = 0
         if new_value in [""]:
             new_value = 0
+            
+    if value_type in ["boolean"]:
+        my_value = "false"
+        return my_value
     #if value_type in []
 
     return new_value

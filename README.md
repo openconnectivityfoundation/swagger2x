@@ -97,7 +97,6 @@ https://github.com/otcshare/iotivity-node
 
 ### one-data-model
 - generates schemas files for One Data Model in Simple Data Format (SDF) language.  
-    - this is an HTTP server
 - __NO OCF implemenation__
 - more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model    
 - One Data Model SDF Format, more details: https://github.com/one-data-model/language  

@@ -1,6 +1,6 @@
 #############################
 #
-#    copyright 2016 Open Interconnect Consortium, Inc. All rights reserved.
+#    copyright 2016, 2020 Open Interconnect Consortium, Inc. All rights reserved.
 #    Redistribution and use in source and binary forms, with or without modification,
 #    are permitted provided that the following conditions are met:
 #    1.  Redistributions of source code must retain the above copyright notice,
@@ -38,6 +38,7 @@ from shutil import copyfile
 from  collections import OrderedDict
 import requests
 import re
+from numbers import Number
 
 
 if sys.version_info < (3, 5):
@@ -670,7 +671,7 @@ def swagger_properties_filtered(json_data, input_path):
       see Resource spec
     """
     properties_list =  swagger_properties(json_data, input_path)
-    my_dict = {}
+    my_dict = OrderedDict()
     for item, item_val in properties_list.items():
         #if item not in ["n", "if", "rt", "id", "range", "step", "precision"]:
         if item not in ["n", "if", "rt", "id"]:
@@ -678,6 +679,7 @@ def swagger_properties_filtered(json_data, input_path):
             #if type != None:
             my_dict[item] = item_val
             #print ("swagger_properties_filtered: ", item, item_val)
+
     return my_dict
     
     
@@ -687,14 +689,14 @@ def swagger_properties_filtered_post(json_data, input_path):
       see Resource spec
     """
     properties_list =  swagger_properties_post(json_data, input_path)
-    my_dict = {}
+    my_dict = OrderedDict()
     for item, item_val in properties_list.items():
         #if item not in ["n", "if", "rt", "id", "range", "step", "precision" ]:
         if item not in ["n", "if", "rt", "id" ]:
             #type = item_val.get("type")
             #if type != None:
             my_dict[item] = item_val
-            #print ("swagger_properties_filtered: ", item, item_val)
+            #print ("swagger_properties_filtered_post: ", item, item_val)
     return my_dict
     
 
@@ -1110,13 +1112,233 @@ def escape_quotes(my_string):
       new_string3 = new_string3 + item 
           
     return new_string3
+
+#JLR New functions for ODM     
+def odm_supported_model(json_data, name):
+    # if there are multiple paths defined, the model is currently not supported (likely a collection or atomic model)
+    unsupported = False
+    numPaths = 0
+    #Test for incompatible model
+    try:
+        Paths = json_data["paths"].items()
+        numPaths = len(Paths)
+    except:
+        print("WARNING: Model may have no path and is unsupported")
+        unsupported = True
+        #oic.baseresource.properties-schema.json is caught here
+        Paths = {"oic.baseresource.properties-schema.json": "baseresource_path"}.items()
+        numPaths = 0
+    if numPaths > 1:
+        print("WARNING: More than one path found")
+        unsupported = True 
+    if 'anyOf' in str(json_data):
+        print("WARNING: anyOf encountered in schema")
+        unsupported = True;
+    if 'oneOf' in str(json_data):
+        print("WARNING: oneOf encountered in schema")
+        unsupported = True;     
     
-#JLR
-def odm_enumArray(enumArray):
+    if unsupported:
+        #debug, write filenames that are supported to hardcoded filename
+        #f = open("C:/BUILD/out/iot/unsupported.txt", 'a+')
+        #f.write(name + '\n')
+        #f.close()
+        return False
+    else:
+        #debug, write filenames that are unsupported to hardcoded filename
+        #f = open("C:/BUILD/out/iot/supported.txt", 'a+')
+        #f.write(name + '\n')
+        #f.close()
+        return True
+
+def odm_supported_property(property_name):
     """
-    load the JSON schema file
-    :param url: location of schema file, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json
-    :return: json_dict
+    Check to verify that this property is support natively in ODM (without modification)
+    :param property_name name to check
+    :return: boolean true/false
+    """
+    #these supported items, assume the input models are valid JSON, and do no addition verification of linking properties to valid types.
+    #basic JSON properties
+    supportedProperties = ["type", "minimum", "maximum", "uniqueItems", "format"]
+    #extended JSON properties
+    supportedProperties.extend(["minItems", "maxItems", "default", "exclusiveMinimum", "exclusiveMaximum"])
+    #properties used for strings, other modifiers 
+    supportedProperties.extend(["maxLength", "minLength"])
+    # description, readOnly, enum, $ref handled in a special function, to rename / reorder properties
+    if property_name in supportedProperties:
+        return True
+    else:
+        return False
+
+def odm_supported_property_non_string(property_name):
+    """
+    Check to verify that this property is support natively in ODM (without modification)
+    :param property_name name to check
+    :return: boolean true/false
+    """
+    supportedProperties = ["minimum", "maximum", "uniqueItems", "default", "exclusiveMinimum"]
+    # readOnly, enum, $ref handled in a special function, to rename / reorder properties
+    if property_name in supportedProperties:
+        return True
+    else:
+        return False
+
+def odm_property_object(json_data, level):
+    """
+    Take the property values from a resource type and reformat for odm 
+    :param json_data: odmProperty's json_data from resource type
+    :param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
+    :return: json formatted string
+    """
+    if (level == "top"):
+        iter_json_data = swagger_properties_filtered(json_data, odm_return_path_info(json_data, "path")).items()
+    else:
+        #json_data passed in is what's required for iteration below, embedded property blocks
+        iter_json_data = json_data.items()
+
+    output = ""
+    for i, (property_name, property_data) in enumerate(iter_json_data):
+        #print("Pname,Pdata: ", property_name, '\n', property_data)
+        output += "\"" + property_name + "\": {"
+        #new name field
+        output += "\"name\": \"" + decamel_name(property_name) + "\","
+        output += odm_properties_block(property_data)
+        output += "}"
+        if i+1 < len(iter_json_data):
+            output += ","
+    return output
+
+def odm_properties_block(propertyData):
+    output = ""
+    for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
+        if odm_supported_property(propertyData_key):
+            if isinstance(propertyData_value, bool) and propertyData_value == True:
+                output += "\"" + propertyData_key + "\":  true"
+            elif isinstance(propertyData_value, bool) and propertyData_value == False:
+                output += "\"" + propertyData_key + "\":  false"
+            elif isinstance(propertyData_value, Number):
+                output += "\"" + propertyData_key + "\": "+ str(propertyData_value)
+            else:
+                output += "\"" + propertyData_key + "\": "+ "\"" + propertyData_value + "\""
+        elif propertyData_key == "description":
+            output += ("\"" + propertyData_key + "\": \"" + escape_quotes(propertyData_value) + "\"")
+        elif propertyData_key == "enum":
+            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value))
+        elif propertyData_key == "pattern":
+            output += ("\"" + propertyData_key + "\": \"" + escape_escapes(propertyData_value) + "\"")
+        elif propertyData_key == "readOnly":
+            output += ("\"writeable\": "  + odm_readOnly_object(propertyData_value))
+        elif propertyData_key == "items":
+            output += ("\"" + propertyData_key + "\": " + odm_item_object(propertyData_value))
+        elif propertyData_key == "$ref":
+            output += odm_ref_properties(json_data, propertyData_value)
+        elif propertyData_key == "properties":
+            output += ("\"" + propertyData_key + "\": {" + odm_property_object(propertyData_value, "sub")) + "}"
+        else:
+            output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
+        if j+1 < len(propertyData.items()):
+            output += ","
+    return output
+
+def odm_required_block_check(json_data):
+    """
+    Return True/False if a required block should be populated
+    :json_data: inputted resource type file
+    :return: True/False
+    """
+    if swagger_required_items(json_data, odm_return_path_info(json_data, "path")) is None:
+        return False
+    else:
+        return True
+
+def odm_required_object(json_value):
+    """
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: json formatted string for odm required block
+    """ 
+    output = "["
+    requiredItems = swagger_required_items(json_data, odm_return_path_info(json_data, "path"))
+
+    for i, requiredItem in enumerate(requiredItems):
+        output += "\"0/odmProperty/" + requiredItem + "\""
+        if i+1 < len(requiredItems):
+            output += ","
+    output += "]"
+    return output
+
+def odm_item_object(itemObject):
+    """
+    Take the item value and additionally parse for odm 
+    :param itemObject: item's value
+    :return: json formatted string
+    """
+    i=0
+    #print('\n', itemObject, '\n')
+    output = "{"
+    for i, (itemKey, itemValue) in enumerate(itemObject.items()):
+        output = output + "\"" + itemKey + "\": " 
+        if itemKey == "enum":
+            output = output + odm_enum_array(itemValue)
+        else:
+            if itemValue == True:
+                output = output + "true"
+            elif itemValue == False:
+                output += "false"
+            elif itemKey == "properties":
+                output += "{" + odm_property_object(itemValue, "sub") + "}"
+            elif isinstance(itemValue, Number):
+                print('\n', type(itemValue), '\n')
+                output += itemValue
+            else:
+                output += "\"" + str(itemValue) + "\""
+        if i < len(itemObject)-1:
+            output += ","
+        else:
+            output += "}"
+        i = i+1
+    return output
+
+def odm_ref_properties(json_data, url):
+    """
+    load referenced json property and return string formatted as odm json schema
+    :param json_data: json_data of the inputted resource type
+    :param url: location of schema file and reference property, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
+    :           or if local reference, #/definitions/AirFlowControlBatch-Retrieve
+    :return: string formatted as json schema
+    """
+    if "https" in url:
+        ref_json_dict = load_json_schema_fromURL(url)
+    else:
+        ref_json_dict = json_data
+
+    keyValue = url.split("/")[-1]
+    lookup = ref_json_dict['definitions'][keyValue]
+
+    output = ""
+    output += odm_properties_block(lookup)
+    return output 
+
+def odm_readOnly_object(RO_value):
+    """
+    Take the read only value and convert it for odm writable property
+    :param RO_value: Read only value string
+    :return: json formatted string
+    """ 
+    if RO_value:
+        #"readOnly" = true
+        #"writeable" = false
+        return "false"
+    else:
+        #"readOnly" = false
+        #"writeable" = true
+        return "true"
+
+def odm_enum_array(enumArray):
+    """
+    Take the enum array value and additionally parse for odm 
+    :param enumArray: array of items associated with enum type
+    :return: json formatted string
     """
     output = "["
     for i, item in enumerate(enumArray):
@@ -1133,90 +1355,91 @@ def load_json_schema_fromURL(url):
     :param url: location of schema file, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
     :return: json_dict
     """
-
     response = requests.get(url)
     json_dict = json.loads(response.text, parse_float=float, object_pairs_hook=OrderedDict)
     return json_dict
 
-def odm_refProperties(url):
+def odm_return_path_info(json_data, returnType):
     """
-    load referenced json property and return string formatted as json schema
-    :param url: location of schema file and reference property, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
-    :return: string formatted as json schema
+    Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
+    :json_data: inputted resource type file
+    :returnType: "name" or "path" or "description"
+    :return: if returnType: "name" - string formatted name: e.g. grinder 
+                returnType: "description" - returns the description property of the "get" path, 
+                returnType: "path" the path name, e.g. /GrinderResURI
     """
-    #set indentation based on a referenced property
-    exit =        "        "
-    indent =      "          "
-    itemsIndent = "            "
-    odmItemFields = ["items","minItems","maxItems","uniqueItems"]
-    ref_json_dict = load_json_schema_fromURL(url)
-    keyValue = url.split("/")[-1]
+    rt = swagger_rt(json_data)
+    name = rt[0][1]
+    path = rt[0][0]
+    name = name.replace('oic.r.','')
 
-    lookup = ref_json_dict['definitions'][keyValue]
-    itemsBlock = {}
-    output = ""
-    #convert readOnly to writable per ODM requirement
-    for i, (key,value) in enumerate(lookup.items()):
-        if key == "readOnly":
-            key = "writable"
-            if value == True:
-                value = False
-            else: 
-                value = True
-        #top reference block
-        if key not in odmItemFields:
-            if type (value) == bool:
-                if value:
-                    output = output + "\"" + str(key) + "\"" + ": true" 
-                else:
-                    output = output + "\"" + str(key) + "\"" + ": false" 
-            elif type(value) != str:
-                output = output + "\"" + str(key) + "\"" + ": " + str(value) 
-            else:
-                output = output + "\"" + str(key) + "\"" + ": \"" + str(value) + "\""
-            #add indentation
-
-            if i < len(lookup)-1 and len(itemsBlock) == 0: 
-                output = output + ",\n" + indent
-            elif len(itemsBlock) == 0:
-                pass
-        else:
-            if key == "items":
-                for subkey,subval in value.items():
-                    itemsBlock[subkey]=subval
-            else: 
-                itemsBlock[key]=value 
-    #process Items block
-    if len(itemsBlock) > 0:
-        output = output + "\"items\": {" + "\n" +  itemsIndent
-        #process Item Type
-        for i, (key,value) in enumerate(itemsBlock.items()):
-            if key != "items":
-                if type(value) != str:
-                    output = output + "\"" + str(key) + "\"" + ": " + str(value)
-                else:
-                    output = output + "\"" + str(key) + "\"" + ": \"" + str(value) + "\""
-            if i < (len(itemsBlock)-1):
-                output = output + ",\n" + itemsIndent
-            else:
-                output = output + "\n" + indent + "}"
-    output = output + "\n" + exit
-    return output 
-
-def odm_return_name(name, type="short"):
-    """
-    Remove ResURI from OCF path names as well as /, also converts camelCase to space delimited strings
-    :name: OCF name, e.g. /ContinuousGlucoseMeterStatusResURI 
-    :type: "short": returns e.g. ContinuousGlucoseMeterStatus or "long" e.g. Continuous Glucose Meter Status
-    :return: string formatted 
-    """
-    name = name.replace('/','')
-    name = name.replace('ResURI','')
-
-    if type == "short":
+    if len(rt) > 1:
+        print("WARNING: More than one path found: ", rt)
+    if returnType == "name":
         return name
-    else: 
-        return re.sub("([A-Z])"," \g<0>",name)
+    elif returnType == "description":
+        return escape_quotes (remove_nl_crs (json_data["paths"][path]["get"]["description"], True))
+    else:
+        return path
+
+def odm_verify_writeable_properties(json_data):
+    """
+    (Unused) Return ocf  type name: OCF name, e.g. oic.r.grinder returns grinder
+    :json_data: inputted resource type file
+    :input_path: pathname for get/post
+    :returnType: "name" or "path"
+    :return: if returnType = "name, string formatted name: e.g. grinder
+    :        else, the path name, e.g. GrinderResURI
+    """
+    input_path = odm_return_path_info(json_data, "path")
+    postList = swagger_properties_filtered_post(json_data, input_path)
+    getList = swagger_properties_filtered(json_data, input_path)
+    if postList == getList:
+        print("Lists are the same")
+    else:
+        print("Lists are different")
+
+def remove_nl_crs(my_string, replaceWithSpaces=False):
+    """
+    Remove New line (slash-n) and Carriage Returns (slash-r)
+    :param my_value the string to be escaped
+    :return: flattened string
+    """
+    # remove new line
+    new_string=""
+    data= my_string.split('\n')
+    for item in data:
+      #remove spaces, then add a single space (catches newlines without spaces)
+      new_string = new_string.rstrip() + " " + item.lstrip() 
+    
+    # remove carrage return
+    new_string2=""
+    data= new_string.split('\r')
+    for item in data:
+        #remove spaces, then add a single space (catches CRs without spaces)
+        new_string2 = new_string2.rstrip() + " " + item.lstrip() 
+    if replaceWithSpaces:
+        new_string2 = re.sub(r'\.(?! )', '. ', new_string2)
+        new_string2 = new_string2.strip()
+    return new_string2
+
+def escape_escapes(my_string):
+    """
+    convert '\' to '\\''
+    :param my_value the string to be escaped
+    :return: string with escaped
+    """
+    my_string = my_string.replace('\\','\\\\')
+    return my_string
+
+def decamel_name(name):
+    """
+    Return decamelized name:grinderAppliance returns grinder appliance
+    :name: inputted resource type file
+    :return: space delimited name
+    """
+    name = re.sub(r'((?<=[a-z])[A-Z]|(?<!\A)[A-Z](?=[a-z]))', r' \1', name)
+    return name.lower()
 
 #
 #   main of script
@@ -1262,7 +1485,8 @@ parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
 parser.add_argument( "-output_file"  , "--output_file"  , default=None,
                      help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
 
-
+#(args) supports batch scripts providing arguments
+print (sys.argv)
 args = parser.parse_args()
 
 
@@ -1343,44 +1567,50 @@ try:
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
-        template_environment.globals['escape_quotes'] = escape_quotes
-        template_environment.globals['odm_refProperties'] = odm_refProperties
-        template_environment.globals['odm_return_name'] = odm_return_name
-        template_environment.globals['odm_enumArray'] = odm_enumArray
+        # new functions for ODM
+        template_environment.globals['odm_return_path_info'] = odm_return_path_info
+        template_environment.globals['odm_property_object'] = odm_property_object
+        template_environment.globals['odm_required_block_check'] = odm_required_block_check
+        template_environment.globals['odm_required_object'] = odm_required_object
+        
+        #check for whether this model is supported for one-data-model
+        if args.template == "one-data-model":
+            if not odm_supported_model(json_data, args.swagger):
+                #prevent parsing of file
+                raise Exception("modelNotSupported", args.swagger)
+
         text = template_environment.render( json_data=json_data,
             version=my_version,
             uuid= str(args.uuid),
             manufacturer= str(args.manufacturer),
             device_type= str(args.devicetype),
-            input_file = args.swagger )
+            input_file = args.swagger,
+            output_file = args.output_file)
 
         if args.out_dir is not None:
             if (args.output_file) is None:
                 outputfile = template_file.replace(".jinja2", "")
                 out_file = os.path.join(args.out_dir, outputfile)
             else:
-                out_file = os.path.join(args.out_dir, args.output_file)            
+                out_file = os.path.join(args.out_dir, args.output_file) 
 
-            
             if args.template == "one-data-model":
-                #standard file output
-                f = open(out_file + ".tmp", 'w')
-                f.write(text)
-                f.close()
-                #cleanup for json out
-                file1 = open(out_file + ".tmp", 'r').read()
-                json_dict = json.loads(file1, object_pairs_hook=OrderedDict)
-                os.remove(out_file + ".tmp")
-
+                #clean json structure. remove extra lines from jinja2 template 
+                #(break if invalid json, caught by outer try loop)
+                if args.output_file == "auto":
+                    #Generate name from resource name for ODM, override out_file
+                    out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name") + ".sdf.json"))
+                output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
                 f = open(out_file, 'w')
-                f.write(json.dumps(json_dict,sort_keys=True, indent=2))
+                f.write(json.dumps(output_json_dict,indent=2))
+                #Add final \n for github
+                f.write('\n')
                 f.close()
             else:
                 #standard file output
                 f = open(out_file, 'w')
                 f.write(text)
                 f.close()
-
 
     # copy none jinja2 files from Template dir
     all_files = get_dir_list(full_path)

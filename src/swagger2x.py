@@ -1606,7 +1606,8 @@ try:
                 #(break if invalid json, caught by outer try loop)
                 if args.output_file == "auto":
                     #Generate name from resource name for ODM, override out_file
-                    out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name") + ".sdf.json"))
+                    #Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
+                    out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
                 output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
                 f = open(out_file, 'w')
                 f.write(json.dumps(output_json_dict,indent=2))

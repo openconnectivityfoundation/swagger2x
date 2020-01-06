@@ -2,7 +2,7 @@
 
 python tool
 generate implementations based on templates from json swagger2.0 file.
-templates engine: jinga2
+templates engine: jinja2
 
 ## Installation
 This tool is python3 based.
@@ -95,8 +95,13 @@ https://github.com/otcshare/iotivity-node
 - more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask     
     
 
-    
-    
+### one-data-model
+- generates schemas files for One Data Model in Simple Data Format (SDF) language.  
+- __NO OCF implemenation__
+- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model    
+- One Data Model SDF Format, more details: https://github.com/one-data-model/language  
+
+
 ## jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
 information about jinja2 commands can be found at:
@@ -270,7 +275,7 @@ typical usage:
 
 #### path_names (string, array of chars to be replaced by "")
 any input string.
-function: santize strings to be part of the target language.
+function: sanitize strings to be part of the target language.
 
 typical value = "+-? ,./"
 
@@ -290,6 +295,72 @@ typical usage:
 {{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; 
 {% endfor -%}
 {% endfor -%}
+```
+
+#### odm_return_path_info
+    Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
+    param json_data: inputted resource type file
+    param returnType: "name" or "path" or "description"
+    return: if returnType: "name" - string formatted name: e.g. grinder returnType: "description" - returns the description property of the "get" path, returnType: "path" the path name, e.g. /GrinderResURI
+
+typical usage: 
+```
+  "odmObject": {
+    "{{ odm_return_path_info(json_data, "name") }}": {
+    "name": "{{ odm_return_path_info(json_data, "name") }}",
+    "description": "{{ odm_return_path_info(json_data, "description") }}",
+      "odmProperty": {
+        {{odm_property_object(json_data, "top")}}
+      } 
+    }
+  }
+```
+
+#### odm_property_object
+    Take the property values from a resource type and reformat for odm 
+    param json_data: odmProperty's json_data from resource type
+    param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
+    return: json formatted string
+
+typical usage: 
+```
+  "odmObject": {
+    "{{ odm_return_path_info(json_data, "name") }}": {
+    "name": "{{ odm_return_path_info(json_data, "name") }}",
+    "description": "{{ odm_return_path_info(json_data, "description") }}",
+      "odmProperty": {
+        {{odm_property_object(json_data, "top")}}
+      } 
+    }
+  }
+```
+
+#### odm_required_block_check
+    Return True/False if the odmRequired block should be populated
+    :json_data: inputted resource type file
+    :return: True/False
+
+typical usage: 
+```
+      {% if odm_required_block_check(json_data) is sameas True %}
+      ,
+      "odmRequired": 
+        {{odm_required_object(json_data)}}
+      {% endif %} 
+```
+
+#### odm_required_object
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: json formatted string for odm required block
+
+typical usage: 
+```
+      {% if odm_required_block_check(json_data) is sameas True %}
+      ,
+      "odmRequired": 
+        {{odm_required_object(json_data)}}
+      {% endif %} 
 ```
 
 ### jinja2 filter functions

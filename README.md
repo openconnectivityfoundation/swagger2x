@@ -126,7 +126,7 @@ function: santize strings to be part of the target language.
 typical value = "+-? ,./"
 
 #### retrieve_path_value
-retrieve an specific value from a property
+retrieve an specific value from a property:
 - input: json_object
 - input: path leading from that object
 - input: property name to retrieve the value from, e.g. will be prefixed with path

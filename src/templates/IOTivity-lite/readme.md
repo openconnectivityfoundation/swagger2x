@@ -15,7 +15,7 @@ The generated code acts as a OCF server acting as a simulator.
 - simpleserver.c implementation code
     - app_init
         - function to create the device
-        - sets the type and which OCF spec is being used (default to OCF1.3)
+        - sets the type and which OCF spec is being used (default to OCF2.0)
     - global variables, for each property per resources
         - type 
         - naming convention g_&lt;resource&gt;_&lt;propertyname&gt;

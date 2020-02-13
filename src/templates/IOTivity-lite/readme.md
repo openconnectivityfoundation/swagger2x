@@ -122,8 +122,7 @@ concurrent.
         
 -PICS.json
 
-    PICT file that list the implemented resources in the generated code
-      to be used with CTT. Note: generated file not up to date.
+ PICT file that list the implemented resources in the generated code to be used with CTT. Note: generated file not up to date.
       
 ## IoTivity_lite
 IoTivity Lite already has a set of build-in resources.

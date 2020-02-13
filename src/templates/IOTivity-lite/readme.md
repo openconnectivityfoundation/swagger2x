@@ -45,11 +45,11 @@ concurrent.
     - register_resources 
       - function  to register for each generated resource
       it will register:
-      - Resource Type (rt)
-      - Interface (if), including the default interface
-      - indicates if the resource is discoverable (e.g. listed in oic/res)
-      - indicates if the resource is observable.
-      - sets the call backs to the resource handling functions
+        - Resource Type (rt)
+        - Interface (if), including the default interface
+        - indicates if the resource is discoverable (e.g. listed in oic/res)
+        - indicates if the resource is observable.
+        - sets the call backs to the resource handling functions
         
     - Resource handling functions:
         - get_&lt;resource path&gt; 
@@ -121,9 +121,9 @@ concurrent.
         naming convention g_&lt;resource path&gt;_RESOURCE_PROPERTY_NAME_&lt;propertyname&gt;
         
 -PICS.json
-    - PICT file that list the implemented resources in the generated code
-      to be used with CTT
-    - not up to date
+
+    PICT file that list the implemented resources in the generated code
+      to be used with CTT. Note: generated file not up to date.
       
 ## IoTivity_lite
 IoTivity Lite already has a set of build-in resources.

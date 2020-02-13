@@ -1,0 +1,366 @@
+
+### jinja2 test functions
+
+#### has_body (method_name)
+method name of an swagger path name
+
+### jinja2 custom (global) functions
+
+#### replace_chars (string, array of chars to be replaced by "")
+any input string.
+function: santize strings to be part of the target language.
+typical value = "+-? ,./"
+
+#### retrieve_path_value
+retrieve an specific value from a property:
+- input: json_object
+- input: path leading from that object
+- input: property name to retrieve the value from, e.g. will be prefixed with path
+- return: value of the property
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() -%}
+ var {{path|variablesyntax}}_resourceTypes = {{retrieve_path_value(path_data, "get/200/x-example", "rt")}};
+{% endfor -%}
+```
+
+
+#### query_rt
+retrieve an rt value for an path
+- input: full swagger file
+- input: path
+- return: rt value (as part of the x-example)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{{query_rt(json_data,path)}}
+{% endfor -%}
+```
+
+#### query_if
+retrieve an list of if values for an path
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{{query_if(json_data, path)}}
+{% endfor -%}
+```
+
+#### query_property_names
+retrieve an list of properties values of an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{% for propname in query_property_names(json_data, path) -%}
+{{propname}}
+{% endfor -%}
+{% endfor -%}
+```
+
+
+#### query_properties
+retrieve an list of properties an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+
+#### query_properties_filtered
+retrieve an list of properties an schema belonging to the path
+from the GET 200 response, if that is not available then from the POST 200 response
+filtered, e.g. removing the values [ "n", "if", "rt" ]
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+#### query_properties_post
+retrieve an list of properties an schema belonging to the path
+from the POST request, if that is not available then from the GET 200 response
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_post(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+
+#### query_properties_post_filtered
+retrieve an list of properties an schema belonging to the path
+from the POST request, if that is not available then from the GET 200 response
+filtered, e.g. removing the values [ "n", "if", "rt" ]
+- input: full swagger file
+- input: path
+- return: if value (as part of the resolved schema)
+
+typical usage:
+
+```
+{% for path, path_data in json_data['paths'].items() %}
+{% for var, var_data in query_properties_post_filtered(json_data, path).items() %}
+    {{var_data.type|convert_to_c_type}} m{{path|variablesyntax}}{{var|variablesyntax}}; 
+{% endfor %}
+{% endfor %}
+```
+
+
+
+#### query_ref
+retrieve an reference 
+
+typical usage:
+
+```
+{{query_ref(json_data, parameter_data["$ref"], "enum")}}
+```
+
+#### path_names (string, array of chars to be replaced by "")
+any input string.
+function: sanitize strings to be part of the target language.
+
+typical value = "+-? ,./"
+
+#### swagger_property_data_schema
+    get the value of the property name from the schema that is referenced by the path in get (or put)
+    it tries to get first the enum values or the default value.
+    if this is not found then it will try to get the value from the example
+    param json_data: the swagger file as json struct
+    param input_path: the path to which the if should be queried
+    return: list of if values
+
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{% for var, var_data in query_properties(json_data, path).items() -%}
+{{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; 
+{% endfor -%}
+{% endfor -%}
+```
+
+#### odm_return_path_info
+    Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
+    param json_data: inputted resource type file
+    param returnType: "name" or "path" or "description"
+    return: if returnType: "name" - string formatted name: e.g. grinder returnType: "description" - returns the description property of the "get" path, returnType: "path" the path name, e.g. /GrinderResURI
+
+typical usage: 
+```
+  "odmObject": {
+    "{{ odm_return_path_info(json_data, "name") }}": {
+    "name": "{{ odm_return_path_info(json_data, "name") }}",
+    "description": "{{ odm_return_path_info(json_data, "description") }}",
+      "odmProperty": {
+        {{odm_property_object(json_data, "top")}}
+      } 
+    }
+  }
+```
+
+#### odm_property_object
+    Take the property values from a resource type and reformat for odm 
+    param json_data: odmProperty's json_data from resource type
+    param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
+    return: json formatted string
+
+typical usage: 
+```
+  "odmObject": {
+    "{{ odm_return_path_info(json_data, "name") }}": {
+    "name": "{{ odm_return_path_info(json_data, "name") }}",
+    "description": "{{ odm_return_path_info(json_data, "description") }}",
+      "odmProperty": {
+        {{odm_property_object(json_data, "top")}}
+      } 
+    }
+  }
+```
+
+#### odm_required_block_check
+    Return True/False if the odmRequired block should be populated
+    :json_data: inputted resource type file
+    :return: True/False
+
+typical usage: 
+```
+      {% if odm_required_block_check(json_data) is sameas True %}
+      ,
+      "odmRequired": 
+        {{odm_required_object(json_data)}}
+      {% endif %} 
+```
+
+#### odm_required_object
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: json formatted string for odm required block
+
+typical usage: 
+```
+      {% if odm_required_block_check(json_data) is sameas True %}
+      ,
+      "odmRequired": 
+        {{odm_required_object(json_data)}}
+      {% endif %} 
+```
+
+### jinja2 filter functions
+
+#### variablesyntax
+replace chars so that the data can be used as an variable.
+note that it prefixes the variable with "_" so that names don't get in the
+way of language defined names (like "if")
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{{path|variablesyntax}}
+{% endfor -%}
+```
+
+#### classsyntax
+replace chars so that the data can be used for an class name.
+note that it capitalizes the first letter of the string.
+this also solves issue with keywords like "if" won't occur.
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{{path|classsyntax}}
+{% endfor -%}
+```
+
+#### variableforbidden
+if the variable is "if", "var", "function", "null"
+it will be prefixed with "_" 
+all other names will be kept intact (e.g. just pass through)
+
+#### convert_to_c_type
+convert the json types into C types.
+typical usage:
+```
+{{var|convert_to_c_type}}
+```
+note string will be mapped to char*
+note does not do array type.
+
+#### convert_to_cplus_type
+convert the json types into C++ types.
+typical usage:
+```
+{{var|convert_to_cplus_type}}
+```
+note string will be mapped to std:string
+note does not do array type.
+
+
+#### convert_to_cplus_array_type
+convert the json array types into C++ vector types.
+typical usage:
+```
+{% if var_data.type == "array" %}
+        {{var_data |convert_to_cplus_array_type}}  m_var_value{{var|variablesyntax}};
+{% endif -%}
+```
+
+
+#### get_c_data
+convert the properties into an dict so that one can iterate over it
+returns a dict with key array pairs
+array value 0 = type
+array value 1 = description
+
+typical usage:
+```
+    {%- set my_data = var_data.properties |get_c_data() %}
+    {%- for k,v in my_data.items() %}
+    ...
+```
+
+
+#### convert_array_size
+determines the size of the array.
+for single strings, 1 is returned.
+
+typical usage:
+```
+{{var|convert_array_size}}
+```
+
+#### code_indent
+indents the descriptions with an prefix per line.
+
+typical usage:
+```
+{{ method_data["description"] | code_indent(" * ")}}
+```
+
+#### convert_value_to_c_value
+    used in combination with swagger_property_data_schema
+    the filter is then unwrapping the array and gives out the variable in c style
+    e.g. boolean True False are corrected to true and false
+    string needs to be with quotes in the jinga2 template.
+
+typical usage:
+```
+{% for path, path_data in json_data['paths'].items() -%}
+{% for var, var_data in query_properties(json_data, path).items() -%}
+{{swagger_property_data_schema(json_data, path, var) | convert_value_to_c_value}}; 
+{% endfor -%}
+{% endfor -%}
+```
+
+
+
+
+
+
+
+
+
+

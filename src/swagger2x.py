@@ -1491,6 +1491,9 @@ parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
 #output file
 parser.add_argument( "-output_file"  , "--output_file"  , default=None,
                      help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
+                     #output file
+parser.add_argument( "-jsonindent"  , "--jsonindent"  , default=None,
+                     help="jsonindent , e.g. 2",  nargs='?',  required=False)
 
 #(args) supports batch scripts providing arguments
 print (sys.argv)
@@ -1500,6 +1503,7 @@ args = parser.parse_args()
 print("file          : " + str(args.swagger))
 print("out_dir       : " + str(args.out_dir))
 print("out_file      : " + str(args.output_file))
+print("jsonindent    : " + str(args.jsonindent))
 #print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
 print("template      : " + str(args.template))
@@ -1617,7 +1621,13 @@ try:
             else:
                 #standard file output
                 f = open(out_file, 'w')
-                f.write(text)
+                if args.jsonindent is not None:
+                    output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
+                    f.write(json.dumps(output_json_dict,indent=2))
+                    #Add final \n for github
+                    f.write('\n')
+                else:
+                    f.write(text)
                 f.close()
 
     # copy none jinja2 files from Template dir

@@ -1,0 +1,94 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "{{json_data['info']['title']}}",
+    "version": "{{json_data['info']['version']}}",
+    "license": {
+      "name": "OCF Data Model License",
+      "url": "https://github.com/openconnectivityfoundation/core/blob/e28a9e0a92e17042ba3e83661e4c0fbce8bdc4ba/LICENSE.md",
+      "x-copyright": "{{json_data['info']['copyright']}}"
+    },
+    "termsOfService": "https://openconnectivityfoundation.github.io/core/DISCLAIMER.md"
+  },
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+  "/{{json_data['info']['title']}}ResURI": {
+      "get": {
+          "description" : "{% for odmObject, odmObject_data in json_data['odmObject'].items() %} {{odmObject_data.description | replace('"','\\"')}}{%- endfor %}",
+        "parameters": [
+          {
+            "$ref": "#/parameters/interface"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/{{json_data['info']['title']}}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "parameters": {
+    "interface": {
+      "in": "query",
+      "name": "if",
+      "type": "string",
+      "enum": [
+        "oic.if.s",
+        "oic.if.baseline"
+      ]
+    }
+  },
+  "definitions": { {% for odmObject, odmObject_data in json_data['odmObject'].items() %} 
+    "{{json_data['info']['title']}}" : {
+      "properties": {
+        "rt": {
+          "description": "The Resource Type.",
+          "items": {
+            "enum": [
+              "oic.r.{{odmObject}}"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "readOnly": true,
+          "type": "array"
+        },
+        "n": {
+          "$ref": "https://openconnectivityfoundation.github.io/core/schemas/oic.common.properties.core-schema.json#/definitions/n"
+        },
+        "if": {
+          "description": "The OCF Interface set supported by this Resource.",
+          "items": {
+            "enum": [
+              "oic.if.s", "oic.if.baseline"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "readOnly": true,
+          "type": "array"
+        },
+       {% for odmProp, odmProp_data in odmObject_data['odmProperty'].items() %} 
+        "{{odmProp}}" : {{odmProp_data |tojson(2)| replace("\\u0027","'")| replace('"name"','"x-name"') | replace('"writeable": false','"readOnly": true') | replace('"writeable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
+      },
+      "type": "object",
+      "required" : [{% for item in odmObject_data['odmRequired'] %} 
+        "{{item | replace("0/odmProperty/","")}}"{{ "," if not loop.last }}{% endfor %}]
+      {% endfor %}
+    }
+  } 
+}

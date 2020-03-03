@@ -102,6 +102,13 @@ https://github.com/otcshare/iotivity-node
 - One Data Model SDF Format, more details: https://github.com/one-data-model/language  
 
 
+### SDF2OAS
+- generates Open API Specification (2.0) files from SDF language (One Data Model).  
+- __NO OCF implemenation__
+- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS    
+- One Data Model SDF Format, more details: https://github.com/one-data-model/language  
+
+
 ## jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
 information about jinja2 commands can be found at:

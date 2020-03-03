@@ -20,9 +20,9 @@
     "application/json"
   ],
   "paths": {
-  "/{{json_data['info']['title']}}ResURI": {
+  "/{{json_data['info']['title']|classsyntax}}ResURI": {
       "get": {
-          "description" : "{% for odmObject, odmObject_data in json_data['odmObject'].items() %} {{odmObject_data.description | replace('"','\\"')}}{%- endfor %}",
+        "description" : "{% for odmObject, odmObject_data in json_data['odmObject'].items() %} {{odmObject_data.description | replace('"','\\"')}}{%- endfor %}",
         "parameters": [
           {
             "$ref": "#/parameters/interface"
@@ -32,11 +32,30 @@
           "200": {
             "description": "",
             "schema": {
-              "$ref": "#/definitions/{{json_data['info']['title']}}"
+              "$ref": "#/definitions/{{json_data['info']['title']|classsyntax}}"
             }
           }
         }
-      }
+      }{% if sdf_is_writeable(json_data) == True %},
+      "post": {
+        "parameters": [
+            { "$ref": "#/parameters/interface" },
+            {
+              "name": "body",
+              "in": "body",
+              "required": true,
+              "schema": { "$ref": "#/definitions/{{json_data['info']['title']|classsyntax}}" }
+            }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/{{json_data['info']['title']|classsyntax}}"
+            }
+          }
+        }
+      }{% endif %}
     }
   },
   "parameters": {
@@ -45,13 +64,13 @@
       "name": "if",
       "type": "string",
       "enum": [
-        "oic.if.s",
+        {% if sdf_is_writeable(json_data) == True %}"oic.if.a"{% else %}"oic.if.s"{% endif %},
         "oic.if.baseline"
       ]
     }
   },
   "definitions": { {% for odmObject, odmObject_data in json_data['odmObject'].items() %} 
-    "{{json_data['info']['title']}}" : {
+    "{{json_data['info']['title']|classsyntax}}" : {
       "properties": {
         "rt": {
           "description": "The Resource Type.",
@@ -73,7 +92,8 @@
           "description": "The OCF Interface set supported by this Resource.",
           "items": {
             "enum": [
-              "oic.if.s", "oic.if.baseline"
+              {% if sdf_is_writeable(json_data) == True %}"oic.if.a"{% else %}"oic.if.s"{% endif %},
+              "oic.if.baseline"
             ],
             "type": "string"
           },
@@ -83,11 +103,11 @@
           "type": "array"
         },
        {% for odmProp, odmProp_data in odmObject_data['odmProperty'].items() %} 
-        "{{odmProp}}" : {{odmProp_data |tojson(2)| replace("\\u0027","'")| replace('"name"','"x-name"') | replace('"writeable": false','"readOnly": true') | replace('"writeable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
+        "{{odmProp}}" : {{odmProp_data |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"name"','"x-name"')| replace('"subtype"','"x-subtype"') | replace('"readable":','"x_readable":')| replace('"writeable": false','"readOnly": true') | replace('"writeable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
       },
-      "type": "object",
+      "type": "object" {% if odmObject_data['odmRequired'] | length > 0  %},
       "required" : [{% for item in odmObject_data['odmRequired'] %} 
-        "{{item | replace("0/odmProperty/","")}}"{{ "," if not loop.last }}{% endfor %}]
+        "{{item | replace("0/odmProperty/","")}}"{{ "," if not loop.last }}{% endfor %}] {% endif %}
       {% endfor %}
     }
   } 

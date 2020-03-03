@@ -1274,6 +1274,33 @@ def odm_required_object(json_value):
     output += "]"
     return output
 
+def sdf_is_writeable(json_value):
+    """
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: true if one of the properties is writable
+    """ 
+    #print ( "sdf_is_writeable")
+    returnvalue=False
+    try:
+        odmObjects = json_data["odmObject"]
+        for objname, obj_param in odmObjects.items():
+            #print ("  ",objname)
+            for paramname, paramobj in obj_param["odmProperty"].items():
+               #print ("    ",paramname)
+               for qualname, qualobj in paramobj.items():
+                   #print ("        ",qualname)
+                   if qualname == "writeable":
+                       #print ("==>",qualname, qualobj)
+                       if qualobj == True:
+                            returnvalue=True
+    except:
+        print ("error in ", args.swagger)
+        traceback.print_exc()
+        pass
+    
+    return returnvalue
+
 def odm_item_object(itemObject):
     """
     Take the item value and additionally parse for odm 
@@ -1583,6 +1610,7 @@ try:
         template_environment.globals['odm_property_object'] = odm_property_object
         template_environment.globals['odm_required_block_check'] = odm_required_block_check
         template_environment.globals['odm_required_object'] = odm_required_object
+        template_environment.globals['sdf_is_writeable'] = sdf_is_writeable
         
         #check for whether this model is supported for one-data-model
         if args.template == "one-data-model":
@@ -1620,6 +1648,7 @@ try:
                 f.close()
             else:
                 #standard file output
+                #print(" \n\n\n ", text);
                 f = open(out_file, 'w')
                 if args.jsonindent is not None:
                     output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)

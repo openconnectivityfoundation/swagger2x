@@ -111,7 +111,11 @@ https://github.com/otcshare/iotivity-node
 
 ## jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
-information about jinja2 commands can be found at:
+
+Information on implemented commands can be found at:
+https://github.com/openconnectivityfoundation/swagger2x/blob/master/constructs.txt
+
+Information about jinja2 commands can be found at:
 
 http://jinja.pocoo.org/docs/dev/
 

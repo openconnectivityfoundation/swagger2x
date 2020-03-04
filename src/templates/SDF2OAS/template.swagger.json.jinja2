@@ -4,8 +4,8 @@
     "title": "{{json_data['info']['title']}}",
     "version": "{{json_data['info']['version']}}",
     "license": {
-      "name": "OCF Data Model License",
-      "url": "https://github.com/openconnectivityfoundation/core/blob/e28a9e0a92e17042ba3e83661e4c0fbce8bdc4ba/LICENSE.md",
+      "name": "one Data Model License",
+      "url": "{{json_data['info']['licence']}}",
       "x-copyright": "{{json_data['info']['copyright']}}"
     },
     "termsOfService": "https://openconnectivityfoundation.github.io/core/DISCLAIMER.md"
@@ -103,7 +103,7 @@
           "type": "array"
         },
        {% for odmProp, odmProp_data in odmObject_data['odmProperty'].items() %} 
-        "{{odmProp}}" : {{odmProp_data |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"name"','"x-name"')| replace('"subtype"','"x-subtype"') | replace('"readable":','"x-readable":')| replace('"writeable": false','"readOnly": true') | replace('"writeable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
+        "{{odmProp}}" : {{odmProp_data |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"name"','"x-name"')| replace('"subtype"','"x-subtype"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
       },
       "type": "object" {% if odmObject_data['odmRequired'] | length > 0  %},
       "required" : [{% for item in odmObject_data['odmRequired'] %} 

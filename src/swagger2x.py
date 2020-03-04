@@ -1234,7 +1234,7 @@ def odm_properties_block(propertyData):
         elif propertyData_key == "pattern":
             output += ("\"" + propertyData_key + "\": \"" + escape_escapes(propertyData_value) + "\"")
         elif propertyData_key == "readOnly":
-            output += ("\"writeable\": "  + odm_readOnly_object(propertyData_value))
+            output += ("\"writable\": "  + odm_readOnly_object(propertyData_value))
         elif propertyData_key == "items":
             output += ("\"" + propertyData_key + "\": " + odm_item_object(propertyData_value))
         elif propertyData_key == "$ref":
@@ -1242,7 +1242,8 @@ def odm_properties_block(propertyData):
         elif propertyData_key == "properties":
             output += ("\"" + propertyData_key + "\": {" + odm_property_object(propertyData_value, "sub")) + "}"
         else:
-            output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
+            print (" not handled in sdf.json.jinja2:odm_properties_block: ", propertyData_key)
+            #output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
         if j+1 < len(propertyData.items()):
             output += ","
     return output

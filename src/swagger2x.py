@@ -1219,11 +1219,14 @@ def odm_properties_block(propertyData):
     output = ""
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
         if odm_supported_property(propertyData_key):
+            print ("" ,propertyData_key,propertyData_value, isinstance(propertyData_value, int))
             if isinstance(propertyData_value, bool) and propertyData_value == True:
                 output += "\"" + propertyData_key + "\":  true"
             elif isinstance(propertyData_value, bool) and propertyData_value == False:
                 output += "\"" + propertyData_key + "\":  false"
             elif isinstance(propertyData_value, Number):
+                output += "\"" + propertyData_key + "\": "+ str(propertyData_value)
+            elif isinstance(propertyData_value, int):
                 output += "\"" + propertyData_key + "\": "+ str(propertyData_value)
             else:
                 output += "\"" + propertyData_key + "\": "+ "\"" + propertyData_value + "\""
@@ -1286,13 +1289,9 @@ def sdf_is_writeable(json_value):
     try:
         odmObjects = json_data["odmObject"]
         for objname, obj_param in odmObjects.items():
-            #print ("  ",objname)
             for paramname, paramobj in obj_param["odmProperty"].items():
-               #print ("    ",paramname)
                for qualname, qualobj in paramobj.items():
-                   #print ("        ",qualname)
                    if qualname == "writeable":
-                       #print ("==>",qualname, qualobj)
                        if qualobj == True:
                             returnvalue=True
     except:
@@ -1316,7 +1315,12 @@ def odm_item_object(itemObject):
         if itemKey == "enum":
             output = output + odm_enum_array(itemValue)
         else:
-            if itemValue == True:
+            print ("   item keyvalue",itemKey, itemValue)
+            if itemKey == "minimum":
+                output += str(itemValue)
+            elif itemKey == "maximum":
+                output += str(itemValue)
+            elif itemValue == True:
                 output = output + "true"
             elif itemValue == False:
                 output += "false"

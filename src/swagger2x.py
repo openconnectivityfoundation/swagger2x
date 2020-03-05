@@ -1316,9 +1316,13 @@ def odm_item_object(itemObject):
             output = output + odm_enum_array(itemValue)
         else:
             print ("   item keyvalue",itemKey, itemValue)
-            if itemKey == "minimum":
+            if itemKey == "maximum":
                 output += str(itemValue)
-            elif itemKey == "maximum":
+            elif itemKey == "minimum":
+                output += str(itemValue)
+            elif itemKey == "minItems":
+                output += str(itemValue)
+            elif itemKey == "masItems":
                 output += str(itemValue)
             elif itemValue == True:
                 output = output + "true"

@@ -30,6 +30,7 @@ import argparse
 import traceback
 from datetime import datetime
 from time import gmtime, strftime
+from sys import exit
 #import jsonref
 import os.path
 from os import listdir
@@ -1625,7 +1626,9 @@ try:
         if args.template == "one-data-model":
             if not odm_supported_model(json_data, args.swagger):
                 #prevent parsing of file
-                raise Exception("modelNotSupported", args.swagger)
+                print("modelNotSupported", args.swagger)
+                #quit()
+                exit()
 
         text = template_environment.render( json_data=json_data,
             version=my_version,
@@ -1682,6 +1685,6 @@ try:
 
 
 except:
-    print ("error in ", args.swagger)
     traceback.print_exc()
-    pass
+    #print ("error in ", args.swagger)
+    #pass

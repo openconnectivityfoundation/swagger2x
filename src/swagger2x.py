@@ -1218,6 +1218,7 @@ def odm_property_object(json_data, level):
 
 def odm_properties_block(propertyData):
     output = ""
+    not_outputted = 0
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
         if odm_supported_property(propertyData_key):
             print ("" ,propertyData_key,propertyData_value, isinstance(propertyData_value, int))
@@ -1245,10 +1246,13 @@ def odm_properties_block(propertyData):
             output += odm_ref_properties(json_data, propertyData_value)
         elif propertyData_key == "properties":
             output += ("\"" + propertyData_key + "\": {" + odm_property_object(propertyData_value, "sub")) + "}"
+        elif propertyData_key == "required":
+            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value,)) + ""
         else:
             print (" not handled in sdf.json.jinja2:odm_properties_block: ", propertyData_key)
             #output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
-        if j+1 < len(propertyData.items()):
+            not_outputted += 1
+        if j+1 < (len(propertyData.items())-not_outputted):
             output += ","
     return output
 
@@ -1652,12 +1656,22 @@ try:
                     #Generate name from resource name for ODM, override out_file
                     #Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
                     out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
-                output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
-                f = open(out_file, 'w')
-                f.write(json.dumps(output_json_dict,indent=2))
-                #Add final \n for github
-                f.write('\n')
-                f.close()
+                print(" ++++++++++++++\n\n\n ", text);
+                
+                
+                if args.jsonindent is not None:
+                    output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
+                    f = open(out_file, 'w')
+                    f.write(json.dumps(output_json_dict,indent=2))
+                    #Add final \n for github
+                    f.write('\n')
+                    f.close()
+                else:
+                    f = open(out_file, 'w')
+                    f.write(text)
+                    #Add final \n for github
+                    f.write('\n')
+                    f.close()
             else:
                 #standard file output
                 #print(" \n\n\n ", text);

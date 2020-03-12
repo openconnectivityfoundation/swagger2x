@@ -1197,7 +1197,10 @@ def odm_property_object(json_data, level):
     :param json_data: odmProperty's json_data from resource type
     :param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
     :return: json formatted string
+    
     """
+    print ( "odm_property_object :", level)
+    
     if (level == "top"):
         iter_json_data = swagger_properties_filtered(json_data, odm_return_path_info(json_data, "path")).items()
     else:
@@ -1214,14 +1217,18 @@ def odm_property_object(json_data, level):
         output += "}"
         if i+1 < len(iter_json_data):
             output += ","
+    print ( "odm_property_object : leave", level)
     return output
 
 def odm_properties_block(propertyData):
-    output = ""
+    print ( "odm_properties_block : entry", flush=True)
+
+    output_total = ""
     not_outputted = 0
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
+        output = ""
         if odm_supported_property(propertyData_key):
-            print ("" ,propertyData_key,propertyData_value, isinstance(propertyData_value, int))
+            #print ("" ,propertyData_key,propertyData_value, isinstance(propertyData_value, int))
             if isinstance(propertyData_value, bool) and propertyData_value == True:
                 output += "\"" + propertyData_key + "\":  true"
             elif isinstance(propertyData_value, bool) and propertyData_value == False:
@@ -1254,7 +1261,11 @@ def odm_properties_block(propertyData):
             not_outputted += 1
         if j+1 < (len(propertyData.items())-not_outputted):
             output += ","
-    return output
+        output_total += output
+        print ( "  odm_properties_block", output)
+        
+    print ( "odm_properties_block: leave", flush=True)
+    return output_total
 
 def odm_required_block_check(json_data):
     """
@@ -1300,7 +1311,7 @@ def sdf_is_writeable(json_value):
                        if qualobj == True:
                             returnvalue=True
     except:
-        print ("error in ", args.swagger)
+        print ("sdf_is_writeable: error in ", args.swagger)
         traceback.print_exc()
         pass
     
@@ -1312,8 +1323,8 @@ def odm_item_object(itemObject):
     :param itemObject: item's value
     :return: json formatted string
     """
+    print ( "odm_item_object : entry", flush=True)
     i=0
-    #print('\n', itemObject, '\n')
     output = "{"
     for i, (itemKey, itemValue) in enumerate(itemObject.items()):
         output = output + "\"" + itemKey + "\": " 
@@ -1327,24 +1338,28 @@ def odm_item_object(itemObject):
                 output += str(itemValue)
             elif itemKey == "minItems":
                 output += str(itemValue)
-            elif itemKey == "masItems":
+            elif itemKey == "maxItems":
                 output += str(itemValue)
             elif itemValue == True:
                 output = output + "true"
             elif itemValue == False:
                 output += "false"
             elif itemKey == "properties":
+                # recursive !!
+                print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output += "{" + odm_property_object(itemValue, "sub") + "}"
             elif isinstance(itemValue, Number):
-                print('\n', type(itemValue), '\n')
-                output += itemValue
+                output += str(itemValue)
             else:
+                print('\n  odm_item_object: default string type:', type(itemValue), '\n')
                 output += "\"" + str(itemValue) + "\""
         if i < len(itemObject)-1:
             output += ","
         else:
             output += "}"
         i = i+1
+    
+    print ( "odm_item_object : leave", flush=True)
     return output
 
 def odm_ref_properties(json_data, url):
@@ -1355,16 +1370,26 @@ def odm_ref_properties(json_data, url):
     :           or if local reference, #/definitions/AirFlowControlBatch-Retrieve
     :return: string formatted as json schema
     """
+    print (" odm_ref_properties : ", url, flush=True)
     if "https" in url:
+        ref_json_dict = load_json_schema_fromURL(url)
+    elif "http" in url:
         ref_json_dict = load_json_schema_fromURL(url)
     else:
         ref_json_dict = json_data
 
     keyValue = url.split("/")[-1]
-    lookup = ref_json_dict['definitions'][keyValue]
-
+    print (" odm_ref_properties : keyValue: ", keyValue)
+    
     output = ""
-    output += odm_properties_block(lookup)
+    try:
+        lookup = ref_json_dict['definitions'][keyValue]
+        output += odm_properties_block(lookup)
+    except:
+        print ("odm_ref_properties : error in finding/processing", keyValue)
+        traceback.print_exc()
+
+    print (" odm_ref_properties : leave ", flush=True)
     return output 
 
 def odm_readOnly_object(RO_value):
@@ -1634,6 +1659,7 @@ try:
                 #quit()
                 exit()
 
+        print(" rendering ...\n ");
         text = template_environment.render( json_data=json_data,
             version=my_version,
             uuid= str(args.uuid),
@@ -1641,6 +1667,7 @@ try:
             device_type= str(args.devicetype),
             input_file = args.swagger,
             output_file = args.output_file)
+        print(" rendering ...complete.\n ");
 
         if args.out_dir is not None:
             if (args.output_file) is None:

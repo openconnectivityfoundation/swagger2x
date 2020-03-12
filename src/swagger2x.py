@@ -1701,7 +1701,7 @@ try:
         if args.template == "one-data-model":
             if not odm_supported_model(json_data, args.swagger):
                 #prevent parsing of file
-                print("modelNotSupported", args.swagger)
+                print("modelNotSupported :", args.swagger)
                 #quit()
                 exit()
 
@@ -1729,8 +1729,6 @@ try:
                     #Generate name from resource name for ODM, override out_file
                     #Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
                     out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
-                print(" ++++++++++++++\n\n\n ", text);
-                
                 
                 if args.jsonindent is not None:
                     output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)

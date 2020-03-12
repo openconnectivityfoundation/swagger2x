@@ -1178,6 +1178,26 @@ def odm_supported_property(property_name):
     else:
         return False
 
+
+def odm_make_reference_external(iter_json_data, url):
+    """
+    Checks all $ref and prepend the url to it if it is a local reference (e.g. start with #)
+    :param json data
+    :param url url to be prefixed to the local reference
+    :return: data
+    """
+    url_base = url.split("#")[0]
+    #print ( "odm_make_reference_external :", url_base)
+    for property_name, property_data in iter_json_data.items():
+        #print (property_name)
+        if property_name == "$ref":
+            if property_data[0] == "#":
+                new_url = url_base + property_data
+                iter_json_data[property_name] = new_url
+        if isinstance(property_data, dict):
+            odm_make_reference_external(property_data, url)
+                
+
 def odm_supported_property_non_string(property_name):
     """
     Check to verify that this property is support natively in ODM (without modification)
@@ -1221,8 +1241,10 @@ def odm_property_object(json_data, level):
     return output
 
 def odm_properties_block(propertyData):
-    print ( "odm_properties_block : entry", flush=True)
+    #print ( "odm_properties_block : entry", flush=True)
 
+    if propertyData == None:
+        return ""
     output_total = ""
     not_outputted = 0
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
@@ -1262,9 +1284,9 @@ def odm_properties_block(propertyData):
         if j+1 < (len(propertyData.items())-not_outputted):
             output += ","
         output_total += output
-        print ( "  odm_properties_block", output)
+        #print ( "  odm_properties_block", output)
         
-    print ( "odm_properties_block: leave", flush=True)
+    #print ( "odm_properties_block: leave", flush=True)
     return output_total
 
 def odm_required_block_check(json_data):
@@ -1327,31 +1349,46 @@ def odm_item_object(itemObject):
     i=0
     output = "{"
     for i, (itemKey, itemValue) in enumerate(itemObject.items()):
-        output = output + "\"" + itemKey + "\": " 
+        #output = output + "\"" + itemKey + "\": " 
         if itemKey == "enum":
+            output = output + "\"" + itemKey + "\": " 
             output = output + odm_enum_array(itemValue)
         else:
             print ("   item keyvalue",itemKey, itemValue)
             if itemKey == "maximum":
+                output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "minimum":
+                output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "minItems":
+                output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "maxItems":
+                output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
+            elif itemKey == "$ref":
+                print('  odm_item_object: $ref!! ', itemKey, itemValue)
+                #odm_ref_properties(
+                output += odm_ref_properties(json_data, itemValue)
+                #output += str(itemValue)
             elif itemValue == True:
+                output = output + "\"" + itemKey + "\": " 
                 output = output + "true"
             elif itemValue == False:
+                output = output + "\"" + itemKey + "\": " 
                 output += "false"
             elif itemKey == "properties":
                 # recursive !!
                 print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
+                output = output + "\"" + itemKey + "\": " 
                 output += "{" + odm_property_object(itemValue, "sub") + "}"
             elif isinstance(itemValue, Number):
+                output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             else:
                 print('\n  odm_item_object: default string type:', type(itemValue), '\n')
+                output = output + "\"" + itemKey + "\": " 
                 output += "\"" + str(itemValue) + "\""
         if i < len(itemObject)-1:
             output += ","
@@ -1373,8 +1410,10 @@ def odm_ref_properties(json_data, url):
     print (" odm_ref_properties : ", url, flush=True)
     if "https" in url:
         ref_json_dict = load_json_schema_fromURL(url)
+        odm_make_reference_external(ref_json_dict,url)
     elif "http" in url:
         ref_json_dict = load_json_schema_fromURL(url)
+        odm_make_reference_external(ref_json_dict,url)
     else:
         ref_json_dict = json_data
 
@@ -1382,12 +1421,14 @@ def odm_ref_properties(json_data, url):
     print (" odm_ref_properties : keyValue: ", keyValue)
     
     output = ""
+    lookup = None
     try:
         lookup = ref_json_dict['definitions'][keyValue]
-        output += odm_properties_block(lookup)
     except:
-        print ("odm_ref_properties : error in finding/processing", keyValue)
-        traceback.print_exc()
+        print ("!!!!odm_ref_properties : error in finding", keyValue, flush=True)
+        
+
+    output += odm_properties_block(lookup)
 
     print (" odm_ref_properties : leave ", flush=True)
     return output 

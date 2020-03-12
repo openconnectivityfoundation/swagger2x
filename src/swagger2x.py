@@ -1276,7 +1276,7 @@ def odm_properties_block(propertyData):
         elif propertyData_key == "properties":
             output += ("\"" + propertyData_key + "\": {" + odm_property_object(propertyData_value, "sub")) + "}"
         elif propertyData_key == "required":
-            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value,)) + ""
+            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value))
         else:
             print (" not handled in sdf.json.jinja2:odm_properties_block: ", propertyData_key)
             #output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
@@ -1383,6 +1383,11 @@ def odm_item_object(itemObject):
                 print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output = output + "\"" + itemKey + "\": " 
                 output += "{" + odm_property_object(itemValue, "sub") + "}"
+            elif itemKey == "required":
+                # recursive !!
+                print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
+                output = output + "\"" + itemKey + "\": " 
+                output = output + odm_enum_array(itemValue)
             elif isinstance(itemValue, Number):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)

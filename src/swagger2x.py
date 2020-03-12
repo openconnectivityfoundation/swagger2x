@@ -1316,29 +1316,6 @@ def odm_required_object(json_value):
     output += "]"
     return output
 
-def sdf_is_writeable(json_value):
-    """
-    Return the required object block for one-data-model
-    :param json_value: json object for resource type
-    :return: true if one of the properties is writable
-    """ 
-    #print ( "sdf_is_writeable")
-    returnvalue=False
-    try:
-        odmObjects = json_data["odmObject"]
-        for objname, obj_param in odmObjects.items():
-            for paramname, paramobj in obj_param["odmProperty"].items():
-               for qualname, qualobj in paramobj.items():
-                   if qualname == "writeable":
-                       if qualobj == True:
-                            returnvalue=True
-    except:
-        print ("sdf_is_writeable: error in ", args.swagger)
-        traceback.print_exc()
-        pass
-    
-    return returnvalue
-
 def odm_item_object(itemObject):
     """
     Take the item value and additionally parse for odm 
@@ -1518,6 +1495,60 @@ def odm_verify_writeable_properties(json_data):
     else:
         print("Lists are different")
 
+def sdf_is_writeable(json_value):
+    """
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: true if one of the properties is writable
+    """ 
+    #print ( "sdf_is_writeable")
+    returnvalue=False
+    try:
+        odmObjects = json_data["odmObject"]
+        for objname, obj_param in odmObjects.items():
+            for paramname, paramobj in obj_param["odmProperty"].items():
+               for qualname, qualobj in paramobj.items():
+                   if qualname == "writeable":
+                       if qualobj == True:
+                            returnvalue=True
+    except:
+        print ("sdf_is_writeable: error in ", args.swagger)
+        traceback.print_exc()
+        pass
+    
+    return returnvalue
+    
+    
+def sdf_resolve_odmRef(json_dict):
+    """
+    Return the required object block for one-data-model
+    :param json_value: json object for resource type
+    :return: true if one of the properties is writable
+    """ 
+    try:
+        #print ( "sdf_resolve_odmRef", json_dict)
+        if isinstance(json_dict, dict):
+          if "odmRef" in json_dict:
+            my_path = json_dict["odmRef"]
+            #print ("    ", my_path)
+            #print ("    ", json_data)
+            my_path_segments = my_path.split("/")
+            my_data = json_data
+            for path_seg in my_path_segments:
+                print (path_seg)
+                if path_seg != "#":
+                    my_data = my_data[path_seg]
+            #print (my_data)
+            return my_data
+        else:
+            return json_dict
+    
+    except:
+                traceback.print_exc()
+    
+    return json_dict
+    
+
 def remove_nl_crs(my_string, replaceWithSpaces=False):
     """
     Remove New line (slash-n) and Carriage Returns (slash-r)
@@ -1667,6 +1698,7 @@ try:
     env.filters['convert_value_to_c_value'] = convert_value_to_c_value
     env.filters['init_value_if_empty'] = init_value_if_empty
     env.filters['escape_quotes'] = escape_quotes
+    env.filters['sdf_resolve_odmRef'] = sdf_resolve_odmRef
 
     for template_file in template_files:
         print ("processing:", template_file)
@@ -1696,6 +1728,7 @@ try:
         template_environment.globals['odm_required_block_check'] = odm_required_block_check
         template_environment.globals['odm_required_object'] = odm_required_object
         template_environment.globals['sdf_is_writeable'] = sdf_is_writeable
+        #template_environment.globals['sdf_resolve_odmRef'] = sdf_resolve_odmRef
         
         #check for whether this model is supported for one-data-model
         if args.template == "one-data-model":

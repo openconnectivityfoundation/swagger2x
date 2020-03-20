@@ -1162,6 +1162,7 @@ int init;
 
 #ifdef OC_CLOUD
   /* get the cloud context and start the cloud */
+  PRINT("Start Cloud Manager\n");
   oc_cloud_context_t *ctx = oc_cloud_get_context(0);
   if (ctx) {
     oc_cloud_manager_start(ctx, cloud_status_handler, NULL);
@@ -1204,6 +1205,7 @@ int init;
 
   /* shut down the stack */
 #ifdef OC_CLOUD
+  PRINT("Stop Cloud Manager\n");
   oc_cloud_manager_stop(ctx);
 #endif
   oc_main_shutdown();

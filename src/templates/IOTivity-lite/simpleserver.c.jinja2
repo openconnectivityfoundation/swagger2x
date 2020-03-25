@@ -181,7 +181,7 @@ app_init(void)
   uint8_t *buffer;
   size_t buffer_size;
   const char introspection_error[] =
-    "\tERROR Could not read server_introspection.cbor\n"
+    "\tERROR Could not read 'server_introspection.cbor'\n"
     "\tIntrospection data not set for device.\n";
   fp = fopen("./server_introspection.cbor", "rb");
   if (fp) {
@@ -195,7 +195,7 @@ app_init(void)
 
     if (fread_ret == 1) {
       oc_set_introspection_data(0, buffer, buffer_size);
-      PRINT("\tIntrospection data set for device.\n");
+      PRINT("\tIntrospection data set from 'server_introspection.cbor' for device %d [bytes]\n", (int)buffer_size);
     } else {
       PRINT("%s", introspection_error);
     }

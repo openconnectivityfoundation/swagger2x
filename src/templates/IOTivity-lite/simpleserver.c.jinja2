@@ -1156,8 +1156,26 @@ int init;
 
   /*intialize the variables */
   initialize_variables();
+
+#
+# The storage folder depends on the build system
+# for Windows the projects simpleserver and cloud_server are overwritten, hence the folders should be the same as those targets.
+# for Linux (as default) the folder is created in the makefile, with $target as name with _cred as post fix.
+#
+#ifdef OC_SECURITY
+  PRINT("Intialize Secure Resources\n");
+#ifdef WIN32
+#ifdef OC_CLOUD
+  oc_storage_config("./cloud_server_creds");
+#else
+  oc_storage_config("./simpleserver_creds/");
+#endif
+#else
+  oc_storage_config("./device_builder_server_creds");
+#endif
   
-  
+#endif /* OC_SECURITY */
+
   /* initializes the handlers structure */
   static const oc_handler_t handler = {.init = app_init,
                                        .signal_event_loop = signal_event_loop,
@@ -1168,10 +1186,7 @@ int init;
 #endif
                                        };
 
-#ifdef OC_SECURITY
-  PRINT("Intialize Secure Resources\n");
-  oc_storage_config("./devicebuilderserver_creds");
-#endif /* OC_SECURITY */
+
 
 #ifdef OC_SECURITY
   /* please comment out if the server:

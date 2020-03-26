@@ -203,6 +203,8 @@ app_init(void)
   } else {
     PRINT("%s", introspection_error);
   }
+#else
+    PRINT("\t introspection via header file\n");
 #endif
   return ret;
 }
@@ -1166,11 +1168,14 @@ int init;
   PRINT("Intialize Secure Resources\n");
 #ifdef WIN32
 #ifdef OC_CLOUD
-  oc_storage_config("./cloud_server_creds");
+  PRINT("\t storage at './cloudserver_creds' \n");
+  oc_storage_config("./cloudserver_creds");
 #else
+  PRINT("\t storage at './simpleserver_creds' \n");
   oc_storage_config("./simpleserver_creds/");
 #endif
 #else
+  PRINT("\t storage at './device_builder_server_creds' \n");
   oc_storage_config("./device_builder_server_creds");
 #endif
   

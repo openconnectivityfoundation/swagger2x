@@ -10,8 +10,14 @@ input options to use:
     -jsonindent <number>, nice format JSON with indent = 2
     -output_file <myfilename>, the output filename, should end with .swagger.json
 
-fixed parameters:
-- rt values are created as oic.r.XXXX  where XXXX is the odmObject name.
-  will also be done for models that are not originating from OCF.
+# Handling of rt
+The conversion template checks on the copyright. 
+If the copy right contains OCF then the rt is  
+- rt values are created as oic.r.XXXX  
+otherwise the 
+- rt values are created as x.unknown.XXXX  
+where XXXX is the odmObject name.
+
+# Fixed parameters
 - if parameter block
   this is fixed in the template, e.g. all OAS files will have the same set of interfaces

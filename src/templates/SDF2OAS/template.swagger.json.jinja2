@@ -76,7 +76,7 @@
           "description": "The Resource Type.",
           "items": {
             "enum": [
-              "oic.r.{{odmObject}}"
+{% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{odmObject}}"{% else %}"x.unknown.{{odmObject}}"{% endif %}
             ],
             "type": "string"
           },

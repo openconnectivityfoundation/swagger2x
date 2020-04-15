@@ -1081,14 +1081,23 @@ def init_value_if_empty(my_value, value_type):
     
     if value_type in ["number", "integer"]:
         if new_value is None:
-            new_value = 0
+            return 0
         if new_value in [""]:
-            new_value = 0
+            return 0
             
     if value_type in ["boolean"]:
-        my_value = "false"
-        return my_value
-    #if value_type in []
+        return "false"
+        
+    if new_value is None:
+        if value_type in ["string"]:
+            return ""
+            
+    if isinstance(my_value, list) :
+        if value_type in ["string"]:
+            return '""'
+        if value_type in ["number"]:
+            return 0
+    
 
     return new_value
 

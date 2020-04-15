@@ -24,6 +24,9 @@
 # version of input_file : {{json_data['info']['version']}}
 # title of input_file   : {{json_data['info']['title']}}
 
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+
 import os
 import shutil
 import subprocess
@@ -31,51 +34,105 @@ import sys
 import time
 import threading
 import json
+from collections import OrderedDict 
 
 from flask import Flask, render_template, jsonify, redirect, abort, request, send_from_directory, Response
 app = Flask(__name__)
 
+
+{% for path, path_data in json_data['paths'].items() %}
+# global property variables for path: "{{path}}"
+{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+# current value of property "{{var}}" 
+g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) | replace('false','False')| replace('true','True')}} 
+{% endfor -%} 
+{% endfor -%} 
 
 {% for path, path_data in json_data['paths'].items() -%}
 #
 # path {{ path }}
 #
 {% for methodName, method_data in path_data.items() %}
+{% if methodName == "get" %} 
 # method: {{methodName}}
 @app.route('{{path}}', methods=['{{methodName}}'])
-def {{methodName}}_{{path|variablesyntax}}({{path_names(json_data, path)}}):
+def {{methodName}}{{path|variablesyntax}}({{path_names(json_data, path)}}):
     # Method: {{methodName}}
-    {% for property_name, property_data in method_data.items() %}{% if property_name == "description" %}# description : {{property_data}}{% endif -%}{% endfor -%}
-    # query params
-    {% for property_name, property_data in method_data.items() -%}{% if property_name == "parameters" -%}
-    {% for parameter_data in property_data -%}
-    {% if parameter_data["in"] == "query" -%} 
-    # property name     : {{parameter_data["name"]}}  
-    #          enum     : {{parameter_data["enum"]}}
-    #          required : {{parameter_data["required"]}}
-    {% endif -%} {% if parameter_data["$ref"] -%} 
-    # property name : {{parameter_data["$ref"]}} : {{query_ref(json_data, parameter_data["$ref"], "name")}} 
-    # enum     : {{query_ref(json_data, parameter_data["$ref"], "enum")}}
-    # required     : {{query_ref(json_data, parameter_data["$ref"], "required")}}
-    _{{query_ref(json_data, parameter_data["$ref"], "name")|variablesyntax}} = request.args.get('{{query_ref(json_data, parameter_data["$ref"], "name")}}')
-    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}
-    {% if methodName is hasbody -%} {% for property_name, property_data in method_data.items() -%}{% if property_name == "parameters" -%} {% for parameter_data in property_data -%} {% if parameter_data["in"] == "body" -%} 
-    # example body: {{ parameter_data["x-example"] }}
-    # data in string format and you have to parse into dictionary
-    req_data = request.data
-    req_data_dict = json.loads(req_data)
-    {% endif -%}{% endfor -%}{% endif -%}{% endfor -%}{% endif -%}
+    print (" {{path}} {{methodName}} ")
+    response = {
+    'rt': ["{{query_rt(json_data,path)}}"], 
+    'if': {{query_if(json_data, path)}},
+    {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
+    '{{var}}': g{{path|variablesyntax}}{{var|variablesyntax}}{{ "," if not loop.last }}
+    {% endfor -%}
+    }
+    {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
+    print('  "{{var}}" = ', g{{path|variablesyntax}}{{var|variablesyntax}})
+    {% endfor -%}
+    
+    return Response(json.dumps(response),  mimetype='application/json')
+{% endif %}
 
-    {% for property_name, property_data in method_data.items() -%}{% if property_name == "responses" -%}
-    {% for response in property_data -%}
-    response_{{response}} = {{response}}
-    response_{{response}}_example = {{property_data[response]["x-example"]}}
-    # schema: {{property_data[response]["schema"]}}
-    return Response(json.dumps(response_{{response}}_example),  mimetype='application/json')
-    {% endfor -%}{% endif -%}{% endfor -%}
+{% if methodName == "post" %} 
+# method: {{methodName}}
+@app.route('{{path}}', methods=['{{methodName}}'])
+def {{methodName}}{{path|variablesyntax}}({{path_names(json_data, path)}}):
+    print (" {{path}} {{methodName}} ")
+    req_data = request.get_json(force=True)
+
+{% for var, var_data in query_properties_filtered_post(json_data, path).items() %}
+    if "{{var}}" in req_data.keys():
+        # assign "{{var}}" 
+        print (" {{var}} = ", req_data.get("{{var}}"))
+        global g{{path|variablesyntax}}{{var|variablesyntax}}
+        g{{path|variablesyntax}}{{var|variablesyntax}} = req_data.get("{{var}}");
+{% endfor %}
+
+    response = {
+    'rt': ["{{query_rt(json_data,path)}}"], 
+    'if': [{{query_if(json_data, path)}}],
+    {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
+    '{{var}}': g{{path|variablesyntax}}{{var|variablesyntax}}
+    {% endfor -%}
+    }
+    
+    return Response(json.dumps(response),  mimetype='application/json')
+{% endif %}
 
 {% endfor -%}
 {% endfor %}
+
+
+
+# method: get
+@app.route('/introspection', methods=['get'])
+def get_introspection():
+    print (" /introspection get ")
+    response_200 = { 'rt': ['oic.wk.introspection'], 'if': ["oic.if.r", "oic.if.baseline"], 
+                      "urlInfo": [ { "content-type": "application/json", "protocol": "http", "url": "/introspectionfile"}] }
+
+    return Response(json.dumps(response_200),  mimetype='application/json')
+
+# method: get
+@app.route('/introspectionfile', methods=['get'])
+def get_introspectionfile():
+    print (" /introspectionfile get ")
+    with open('../out_introspection_merged.swagger.json') as f:
+        data = json.load(f)
+    return Response(json.dumps(data),  mimetype='application/json')
+
+
+# method: get
+@app.route('/oic/res', methods=['get'])
+def get_oic_res():
+
+    response_200 = [{ "href": "/oic/res",  'rt': ['oic.wk.res'], 'if': ['oic.if.a', 'oic.if.baseline'], "rel":  ["self"]},
+    { "href": "/introspection",  'rt': ['oic.wk.introspection'], 'if': ['oic.if.r', 'oic.if.baseline']}
+{% for path, path_data in json_data['paths'].items() -%}
+,{ "href": "{{path}}",  'rt': ["{{query_rt(json_data,path)}}"], 'if': [{{query_if(json_data, path)}}]}
+{% endfor -%}
+    ]
+    return Response(json.dumps(response_200),  mimetype='application/json')
 
 if __name__ == '__main__':
 

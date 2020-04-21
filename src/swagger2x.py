@@ -1150,10 +1150,10 @@ def odm_supported_model(json_data, name):
         unsupported = True 
     if 'anyOf' in str(json_data):
         print("WARNING: anyOf encountered in schema")
-        unsupported = True;
+        unsupported = True
     if 'oneOf' in str(json_data):
         print("WARNING: oneOf encountered in schema")
-        unsupported = True;     
+        unsupported = True     
     
     if unsupported:
         #debug, write filenames that are supported to hardcoded filename
@@ -1747,7 +1747,7 @@ try:
                 #quit()
                 exit()
 
-        print(" rendering ...\n ");
+        print(" rendering ...\n ")
         text = template_environment.render( json_data=json_data,
             version=my_version,
             uuid= str(args.uuid),
@@ -1755,7 +1755,7 @@ try:
             device_type= str(args.devicetype),
             input_file = args.swagger,
             output_file = args.output_file)
-        print(" rendering ...complete.\n ");
+        print(" rendering ...complete.\n ")
 
         if args.out_dir is not None:
             if (args.output_file) is None:

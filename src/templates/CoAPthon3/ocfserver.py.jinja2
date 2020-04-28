@@ -34,6 +34,7 @@ import sys
 import cbor
 #import jsonschema
 import json
+import socket
 
 ocf_piid="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d9"
 global ocf_ip_address
@@ -373,8 +374,9 @@ class CoAPServer(CoAP):
         print("  adding resource: '{{path}}/'")
 {% endfor %} 
         #print("  start on " + host + ":" + str(port))
-        ocf_ip_address = str(host) + ":" + str(port)
-        print("  start on (ip)", ocf_ip_address)
+        ocf_ip_address = "["+ str(host) + "]:" + str(port)
+        print("  start on (ip): coap://"+ocf_ip_address)
+        #print(" python3 coapclient.py -o GET -p "coap://[fe80::b536:6766:9ed9:15a4%13]:55555/oic/d?if=oic.if.baseline -c 10000
         print ("dump:")
         print(self.root.dump())
 
@@ -382,9 +384,15 @@ def usage():  # pragma: no cover
     print("ocfserver.py -i <ip address> -p <port> -m")
     
 def main(argv):  # pragma: no cover
-    ip = "127.0.0.1"
-    port = 5683
+    ip = "127.0.0.1" # local ipv4
+    ip = "::1"       # local ipv6
+    host_name = socket.gethostname() 
+    #ip = socket.gethostbyname(host_name) # local ipv4
+    data = socket.getaddrinfo(host_name, None, socket.AF_INET6)
+    ip = data[0][4][0]
+    port = 55555
     multicast = False
+    
     try:
         opts, args = getopt.getopt(argv, "hi:p:m", ["ip=", "port=", "multicast"])
     except getopt.GetoptError:

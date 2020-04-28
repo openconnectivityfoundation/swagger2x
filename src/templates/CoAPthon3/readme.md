@@ -12,12 +12,22 @@ Note that a modified version of CoAPthon3 will be needed:
 https://github.com/WAvdBeek/CoAPthon3
 
 This version works on:
-- IPV4 (not checked on IPV6)
+- IPV6 (default)
 - using the standard addresses & ports (not OCF addresses & ports)
 
 # Generic concept
 The template generates for each vertical resource a resource class.
 The resource class will have an GET function and possibly a POST function if the resource is updatable.
+
+
+# python client
+
+CoAPthon3 also includes a generic client
+run from the command line (bash) in the CoAPthon3 folder:
+
+python3 coapclient.py -o GET -p  coap://[ ipv6 address]:port/oic/d -c 10000
+
+The address of the server to use is printed on the console
 
 
 # Security

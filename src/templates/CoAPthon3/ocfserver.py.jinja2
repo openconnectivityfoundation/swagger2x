@@ -1,0 +1,419 @@
+#############################
+#
+#    copyright 2020 Open Interconnect Consortium, Inc. All rights reserved.
+#    Redistribution and use in source and binary forms, with or without modification,
+#    are permitted provided that the following conditions are met:
+#    1.  Redistributions of source code must retain the above copyright notice,
+#        this list of conditions and the following disclaimer.
+#    2.  Redistributions in binary form must reproduce the above copyright notice,
+#        this list of conditions and the following disclaimer in the documentation and/or other materials provided
+#        with the distribution.
+#         
+#    THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+#    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
+#    WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+#    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+#    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#############################
+# tool_version          : {{version}}
+# input_file            : {{input_file}}
+# version of input_file : {{json_data['info']['version']}}
+# title of input_file   : {{json_data['info']['title']}}
+
+#!/usr/local/bin/python
+# -*- coding: utf-8 -*-
+from coapthon.resources.resource import Resource
+from coapthon.server.coap import CoAP
+from coapthon import defines
+import getopt
+import sys
+import cbor
+#import jsonschema
+import json
+
+ocf_piid="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d9"
+global ocf_ip_address
+ocf_ip_address="xxx"
+introspectionfile_json="../out_introspection_merged.swagger.json"
+introspectionfile_cbor="../out_introspection_merged.swagger.json.cbor"
+
+def bool2string(input):
+    if input == True:
+        return "true"
+    return "false"
+
+{% for path, path_data in json_data['paths'].items() %}
+
+# class : "{{path}}"
+class c{{path|variablesyntax}}Resource(Resource):
+    def __init__(self, name="c{{path|variablesyntax}}Resource", coap_server=None):
+        super(c{{path|variablesyntax}}Resource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=True)
+        self.payload = ""
+        self.resource_type = "{{query_rt(json_data,path)}}"
+        self.content_type = "text/plain"
+        interfaces_array = {{query_if(json_data, path)}}
+        self.interface_type =  "'" + str(interfaces_array[0]) + "," + str(interfaces_array[1]) + "'"
+{%- for methodName, method_data in path_data.items() %}
+{%- if methodName == "get" %} 
+        {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
+{%- if var_data.type == "boolean" %}
+        self.m{{var|variablesyntax}} = True   # boolean
+{%- elif var_data.type == "integer" %}
+        self.m{{var|variablesyntax}} = 0  # integer
+{%- elif var_data.type == "number" %}
+        self.m{{var|variablesyntax}} = 0.0  # number
+{%- elif var_data.type == "string" %}
+        self.m{{var|variablesyntax}} = "mystring"  # string
+{%- else %}
+         self.m{{var|variablesyntax}} = "unknown"  # something else
+{%- endif -%}
+        {% endfor -%}
+{%- endif %}
+
+
+{%- if methodName == "get" %} 
+    def create_return_json(self):
+        return_json = "{"
+        {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
+        {%- if var_data.type == "boolean" %}
+        return_json = return_json + '"{{var}}" : ' + bool2string(self.m{{var|variablesyntax}}) {{ "+ ','" if not loop.last }}
+        {%- elif var_data.type == "string" %}
+        return_json = return_json + '"{{var}}" : "' + str(self.m{{var|variablesyntax}}) + '"' {{ "+ ','" if not loop.last }}
+        {%- else %}
+        return_json = return_json + '"{{var}}" : ' + str(self.m{{var|variablesyntax}}) {{ "+ ','" if not loop.last }}
+        {%- endif %}
+        {% endfor -%}
+        return_json = return_json + " }"
+        return return_json
+
+    def render_GET(self, request):
+        print ("GET {{path}} :", request.accept)
+        return_json = self.create_return_json()
+        print ("  ",return_json)
+        json_data = json.loads(return_json)
+        self.payload = str(return_json)
+        print ("{{path}} : get query: ", request.uri_query)
+        print ("{{path}} : get returning: ", return_json)
+        if request.accept == defines.Content_types["text/plain"]:
+            print ("  content type text/plain")
+            self.payload = (defines.Content_types["text/plain"], return_json)
+        elif request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            self.payload = (defines.Content_types["application/json"], return_json)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/cbor")
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/vnd.ocf+cbor")
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
+        return self
+{%- endif %}
+
+{%- if methodName == "post" %} 
+    def render_POST(self, request):
+        print ("POST {{path}}:", request.accept)
+        if len(request.payload) > 0:
+            if request.accept == defines.Content_types["application/json"]:
+                print ("  JSON")
+                json_data = json.loads(request.payload)
+                #json_string = json.dumps(json_data, indent=2, sort_keys=True)
+{%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+                print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
+                self.m{{var|variablesyntax}} = json_data["{{var}}"]
+{%- endfor %}               
+                self.edit_resource(request)
+                self.payload = (defines.Content_types["application/json"], self.create_return_json())
+                return self
+            if request.accept == defines.Content_types["application/cbor"]:
+                print ("  CBOR")
+                json_data = cbor.loads(request.payload)
+                print (json_data)
+{%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+                print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
+                self.m{{var|variablesyntax}} = json_data["{{var}}"]
+{%- endfor %}               
+                self.edit_resource(request)
+                ret_json_string = self.create_return_json()
+                json_data = json.loads(ret_json_string)
+                self.payload = (defines.Content_types["application/json"], bytes(cbor.dumps(json_data)))
+                return self
+            if request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
+                print ("  OCF-CBOR")
+                json_data = cbor.loads(request.payload)
+{%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+                print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
+                self.m{{var|variablesyntax}} = json_data["{{var}}"]
+{%- endfor %}               
+                self.edit_resource(request)
+                ret_json_string = self.create_return_json()
+                json_data = json.loads(ret_json_string)
+                self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
+                return self
+        return None
+{%- endif %}
+{%- endfor %} 
+{%- endfor %} 
+
+#
+# the oic.wk.res implementation
+#
+class OICRESResource(Resource):
+    def __init__(self, name="OICRESResource", coap_server=None):
+        super(OICRESResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=True)
+        self.value = 0
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.res"
+        self.content_type = "application/json"  #application/cbor
+        self.interface_type = "oic.if.r"
+
+    def render_GET(self, request):
+        print ("OICRES: get :", request.accept )
+        return_json = '[ { "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/res", "rel": "self",'
+        return_json = return_json + '"rt": ["oic.wk.res"], "if": ["oic.if.ll", "oic.if.baseline"], "p": {"bm": 3},'
+        return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"} ] }'
+        
+        return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/d",'
+        return_json = return_json + ' "rt": ["oic.wk.d"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 3},'
+        return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"} ] }'
+
+{%- for path, path_data in json_data['paths'].items() %}
+        return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "{{path}}",'
+        return_json = return_json + ' "rt": ["{{query_rt(json_data,path)}}"],"if":' + '{{query_if(json_data, path)|replace("'",'"')}},'
+        return_json = return_json + ' "p": {"bm": 3}, "eps": [ {"ep": "coap://'+ocf_ip_address+'"}]}'
+{%- endfor %} 
+        return_json = return_json + " ]"
+        json_data = json.loads(return_json)
+        self.payload = str(return_json)
+        print ("   return :")
+        print (return_json)
+        if request.accept == defines.Content_types["text/plain"]:
+            print ("  content type text/plain")
+            self.payload = (defines.Content_types["text/plain"], return_json)
+        elif request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            self.payload = (defines.Content_types["application/json"], return_json)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/cbor")
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/vnd.ocf+cbor")
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
+        return self
+        
+#
+# the /oic path implementation
+# needs to be there, otherwise the childeren are not hosted
+# code returns not implemented.       
+class OICResource(Resource):
+    def __init__(self, name="OICResource", coap_server=None):
+        super(OICResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=True)
+        self.value = 0
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.d"
+        self.content_type = "application/cbor"  #application/cbor
+        self.interface_type = "oic.if.r" #, "oic.if.baseline"
+
+    def render_GET_advanced(self, request, response):
+        print ("OICRES: get :", request.accept )
+        response.code = defines.Codes.NOT_FOUND.number
+        return self, response
+        
+#
+# the oic.wk.d implementation
+#        
+class OICDResource(Resource):
+    def __init__(self, name="OICDResource", coap_server=None):
+        super(OICDResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=True)
+        self.value = 0
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.d"
+        self.content_type = "application/cbor"  #application/cbor
+        self.interface_type = "oic.if.r" #, "oic.if.baseline"
+
+    def render_GET(self, request):
+        print ("OICDRES: get :", request.accept )
+        return_json = '{ "n": "{{json_data['info']['title']}}",'
+        return_json = return_json + '"rt": ["oic.wk.d"],'
+        return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+        return_json = return_json + '"icv": "ocf.2.0.2", '
+        return_json = return_json + '"dmv": "ocf.res.1.0.0, ocf.sh.1.0.0",'
+        return_json = return_json + '"piid": "'+ocf_piid+'"' 
+        return_json = return_json + " }"
+        
+        json_data = json.loads(return_json)
+        self.payload = str(return_json)
+        if request.accept == defines.Content_types["text/plain"]:
+            print ("  content type text/plain")
+            self.payload = (defines.Content_types["text/plain"], return_json)
+        elif request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            self.payload = (defines.Content_types["application/json"], return_json)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
+            print ("  content type application/vnd.ocf+cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
+        return self
+     
+#
+# the oic.wk.introspection implementation
+#        
+class introspectionResource(Resource):
+    def __init__(self, name="introspectionResource", coap_server=None):
+        super(introspectionResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=False)
+        self.value = { "rt": ["oic.wk.introspection"], 
+                       "if": ["oic.if.r", "oic.if.baseline"], 
+                       "urlInfo": [ { "content-type": "application/json", "protocol": "coap", "url": "/ifile"},
+                       { "content-type": "application/cbor", "protocol": "coap", "url": "/ifile"}] }
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.introspection"
+        self.content_type = "application/cbor"
+        self.interface_type = "oic.if.r"
+
+    def render_GET(self, request):
+        print (" /introspection get ")
+        json_data = self.value
+        self.payload = str(self.value)
+        if request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            return_json = json.dumps(json_data, indent=2, sort_keys=True)
+            self.payload = (defines.Content_types["application/json"], return_json)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
+            print ("  content type application/vnd.ocf+cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
+        return self
+
+#
+# the oic.wk.introspection file read implementation
+# 
+class introspectionFileResource(Resource):
+    def __init__(self, name="introspectionFileResource", coap_server=None):
+        super(introspectionFileResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=False)
+        self.payload = " illegal "
+        self.resource_type = "oic.wk.introspection"
+        self.content_type = "application/cbor"
+        self.interface_type = "oic.if.r"
+
+    def render_GET(self, request):
+        print (" introspection file get ", request.accept)
+        if request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            data = " empty "
+            print ("  reading file:",introspectionfile_json)
+            with open(introspectionfile_json, 'rb') as f:
+                data = f.read()
+            self.payload = (defines.Content_types["application/json"], data)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            cbordata = " empty "
+            print ("  reading file:",introspectionfile_cbor)
+            with open(introspectionfile_cbor, 'rb') as f:
+                cbordata = f.read()
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
+            cbordata = " empty "
+            print ("  reading file:",introspectionfile_cbor)
+            with open(introspectionfile_cbor, 'rb') as f:
+                cbordata = f.read()
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
+        return self
+     
+        
+class wellknownResource(Resource):
+    def __init__(self, name="wellknownResource", coap_server=None):
+        super(wellknownResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=False)
+        self.value = '</oic/res>;ct=60;rt="oic.wk.res";if="oic.if.r";et="{{device_type}}"; base="coap://'+ocf_ip_address+'";rel="hosts"'
+
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.res"
+        self.content_type = "application/link-format"
+        self.interface_type = "oic.if.r"
+
+    def render_GET(self, request):
+        self.payload = str(self.value)
+        return self
+
+class CoAPServer(CoAP):
+    def __init__(self, host, port, multicast=True):
+        global ocf_ip_address
+        CoAP.__init__(self, (host, port), multicast)
+        print(" CoAP Server init:")
+        print("  adding resource: '/oic/'")
+        self.add_resource('/oic/', OICResource())
+        print("  adding resource: '/oic/res/'")
+        self.add_resource('/oic/res/', OICRESResource())
+        print("  adding resource: '/oic/d'")
+        self.add_resource('/oic/d/', OICDResource())
+        self.add_resource('/ifile', introspectionFileResource())
+        self.add_resource('/introspection', introspectionResource())
+{% for path, path_data in json_data['paths'].items() %}
+        self.add_resource('{{path}}/', c{{path|variablesyntax}}Resource())
+        print("  adding resource: '{{path}}/'")
+{% endfor %} 
+        #print("  start on " + host + ":" + str(port))
+        ocf_ip_address = str(host) + ":" + str(port)
+        print("  start on (ip)", ocf_ip_address)
+        print ("dump:")
+        print(self.root.dump())
+
+def usage():  # pragma: no cover
+    print("ocfserver.py -i <ip address> -p <port> -m")
+    
+def main(argv):  # pragma: no cover
+    ip = "127.0.0.1"
+    port = 5683
+    multicast = False
+    try:
+        opts, args = getopt.getopt(argv, "hi:p:m", ["ip=", "port=", "multicast"])
+    except getopt.GetoptError:
+        usage()
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            usage()
+            sys.exit()
+        elif opt in ("-i", "--ip"):
+            ip = arg
+        elif opt in ("-p", "--port"):
+            port = int(arg)
+        elif opt in ("-m", "--multicast"):
+            multicast = True
+
+    print("Used input file : \"{{input_file}}\"")
+    print("OCF Server name : \"{{json_data['info']['title']}}\"")
+    print("OCF Device Type : \"{{device_type}}\"\n")
+
+    server = CoAPServer(ip, port, multicast)
+    print("Waiting on incoming connections.. " )
+    try:
+        server.listen(5)
+    except KeyboardInterrupt:
+        print("Server Shutdown")
+        server.close()
+        print("Exiting...")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main(sys.argv[1:])

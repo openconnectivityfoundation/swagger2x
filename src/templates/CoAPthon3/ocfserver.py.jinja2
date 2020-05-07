@@ -37,6 +37,7 @@ import json
 import socket
 
 ocf_piid="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d9"
+ocf_pi="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d8"
 global ocf_ip_address
 ocf_ip_address="xxx"
 introspectionfile_json="../out_introspection_merged.swagger.json"
@@ -109,7 +110,7 @@ class c{{path|variablesyntax}}Resource(Resource):
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
             self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
-        elif request.accept == defines.Content_types["application/cbor"]:
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
             self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
         return self
@@ -202,7 +203,7 @@ class OICRESResource(Resource):
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
             self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
-        elif request.accept == defines.Content_types["application/cbor"]:
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
             self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
         return self
@@ -247,6 +248,48 @@ class OICDResource(Resource):
         return_json = return_json + '"icv": "ocf.2.0.2", '
         return_json = return_json + '"dmv": "ocf.res.1.0.0, ocf.sh.1.0.0",'
         return_json = return_json + '"piid": "'+ocf_piid+'"' 
+        return_json = return_json + " }"
+        
+        json_data = json.loads(return_json)
+        self.payload = str(return_json)
+        if request.accept == defines.Content_types["text/plain"]:
+            print ("  content type text/plain")
+            self.payload = (defines.Content_types["text/plain"], return_json)
+        elif request.accept == defines.Content_types["application/json"]:
+            print ("  content type application/json")
+            self.payload = (defines.Content_types["application/json"], return_json)
+        elif request.accept == defines.Content_types["application/cbor"]:
+            print ("  content type application/cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+        elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
+            print ("  content type application/vnd.ocf+cbor")
+            cbordata = cbor.dumps(json_data)
+            print ("cbor :",cbordata)
+            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
+        return self
+        
+                
+#
+# the oic.wk.p implementation
+#        
+class OICPResource(Resource):
+    def __init__(self, name="OICPResource", coap_server=None):
+        super(OICPResource, self).__init__(name, coap_server, visible=True,
+                                             observable=True, allow_children=True)
+        self.value = 0
+        self.payload = str(self.value)
+        self.resource_type = "oic.wk.p"
+        self.content_type = "application/cbor"  #application/cbor
+        self.interface_type = "oic.if.r" #, "oic.if.baseline"
+
+    def render_GET(self, request):
+        print ("OICDRES: get :", request.accept )
+        return_json = '{ "rt": ["oic.wk.p"],'
+        return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+        return_json = return_json + '"mnmn": "OCF",'
+        return_json = return_json + '"pi": "'+ocf_pi+'"' 
         return_json = return_json + " }"
         
         json_data = json.loads(return_json)
@@ -367,6 +410,8 @@ class CoAPServer(CoAP):
         self.add_resource('/oic/res/', OICRESResource())
         print("  adding resource: '/oic/d'")
         self.add_resource('/oic/d/', OICDResource())
+        print("  adding resource: '/oic/p'")
+        self.add_resource('/oic/p/', OICPResource())
         self.add_resource('/ifile', introspectionFileResource())
         self.add_resource('/introspection', introspectionResource())
 {% for path, path_data in json_data['paths'].items() %}

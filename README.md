@@ -27,7 +27,7 @@ To run the tool enter this on the command line:
 use -h to see all the options.
 
 
-__note: see/use https://github.com/openconnectivityfoundation/DeviceBuilder for usage in the development chain.__
+__note: see/use [DeviceBuilder](https://openconnectivityfoundation.github.io/DeviceBuilder/) for usage of this tool in the development chain.__
 
 
 # Templates
@@ -80,33 +80,25 @@ the following structure is defined:
 - [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer)
 
 
-### NodeIotivityServer
-- generates an node.js server for the IOTivity stack.
-- OCF specific based on:
-https://github.com/otcshare/iotivity-node
-- Requires iotivity-node v1.3.1 or later
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/NodeIotivityServer)
-
-
 ### PythonFlask
 - generates an python Flask server.
     - this is an HTTP server
 - __NO OCF implemenation__
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask     
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
     
 
 ### one-data-model
 - generates schemas files for One Data Model in Simple Data Format (SDF) language.  
 - __NO OCF implemenation__
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model    
-- One Data Model SDF Format, more details: https://github.com/one-data-model/language  
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model)    
+- more details on [One Data Model SDF Format](https://github.com/one-data-model/language)
 
 
 ### SDF2OAS
 - generates Open API Specification (2.0) files from SDF language (One Data Model).  
 - __NO OCF implemenation__
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS    
-- One Data Model SDF Format, more details: https://github.com/one-data-model/language  
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS)   
+- more details on [One Data Model SDF Format](https://github.com/one-data-model/language)  
 
 
 ## jinja2 template information
@@ -116,11 +108,9 @@ Information on implemented commands can be found [here.](https://github.com/open
 
 Information about jinja2 commands can be found at:
 
-http://jinja.pocoo.org/docs/dev/
-
-http://jinja.pocoo.org/docs/dev/templates/
-
-https://realpython.com/blog/python/primer-on-jinja-templating/
+- [docs-dev](http://jinja.pocoo.org/docs/dev/)
+- [docs-templates](http://jinja.pocoo.org/docs/dev/templates/)
+- [python primer](https://realpython.com/blog/python/primer-on-jinja-templating/)
 
 
 

@@ -72,12 +72,12 @@ the following structure is defined:
 
 ### Iotivity Lite Server
 - generates an C server for the IoTivity Lite stack.
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
 
 
 ### C++IotivityServer
 - generates an C++ server for the v1.3.1 IoTivity stack.
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer)
 
 
 ### NodeIotivityServer
@@ -85,7 +85,7 @@ the following structure is defined:
 - OCF specific based on:
 https://github.com/otcshare/iotivity-node
 - Requires iotivity-node v1.3.1 or later
-- more details: https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/NodeIotivityServer
+- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/NodeIotivityServer)
 
 
 ### PythonFlask
@@ -112,8 +112,7 @@ https://github.com/otcshare/iotivity-node
 ## jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
 
-Information on implemented commands can be found at:
-https://github.com/openconnectivityfoundation/swagger2x/blob/master/constructs.txt
+Information on implemented commands can be found [here.](https://github.com/openconnectivityfoundation/swagger2x/blob/master/constructs.txt)
 
 Information about jinja2 commands can be found at:
 

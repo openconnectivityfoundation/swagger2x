@@ -73,7 +73,7 @@ the following structure is defined:
 
 ### Iotivity Lite Server
 - generates an C server for the IoTivity Lite stack.
-- [more details](/src/templates/IOTivity-lite)
+- [more details](/swagger2x/src/templates/IOTivity-lite)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
 
 
@@ -86,7 +86,7 @@ the following structure is defined:
 - generates an python Flask server.
     - this is an HTTP server
 - __NO OCF implemenation__
-- [more details](/src/templates/PythonFlask)
+- [more details](/swagger2x/src/templates/PythonFlask)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
     
 

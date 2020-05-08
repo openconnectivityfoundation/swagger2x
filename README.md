@@ -38,7 +38,7 @@ For code generation the input JSON file is a [swagger2.0](https://github.com/OAI
 The hierarchy traversed is the swagger2.0 file constructs in JSON 
 e.g. the end points, methods, query param and payload information is available in the jinja2 template.
 
-code that will be generated will be generated towards:
+The code that can be generated should take into account:
 
        --------------------
        |     library      |  <-- functions/class/methods (from libraries) that are allowed to be
@@ -51,8 +51,8 @@ code that will be generated will be generated towards:
        |                  |     by the template
        --------------------
 
-The template is an mix of the library calls, the supported operating system in the used language mixed with the jinja2 template language to generate the code.
-jinja2 takes the json swagger information and make it iteratable by looping over the end points, methods etc. and uses then the info from json to fill in the library/os calls.
+Therefore a template is an mix of the library calls, the supported operating system in the used language mixed with the jinja2 template language to generate the code.
+jinja2 takes the JSON swagger information and make it iteratable by looping over the end points, methods etc. and uses then the info to fill in the library/os calls in the used language.
 
 
 ## Template directory structure
@@ -68,13 +68,13 @@ the following structure is defined:
                             |--- <template file>.jinja2
                             |--- other files (will be copied to output)
 
+
 New templates can be added by:
 - adding a new folder
 - adding file(s) with the jinja2 extension that contains the template.
 
 
 ## Available Templates
-
 
 ### IoTivity Lite Server
 - generates an C server for the IoTivity-Lite stack.

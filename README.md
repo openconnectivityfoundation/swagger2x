@@ -56,7 +56,7 @@ jinja2 takes the json swagger information and make it iteratable by looping over
 
 
 ## Template directory structure
-The templates can be found at /src/templates
+The templates can be found at [/src/templates](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates)
 the following structure is defined:
 
        -src
@@ -68,12 +68,18 @@ the following structure is defined:
                             |--- <template file>.jinja2
                             |--- other files (will be copied to output)
 
+New templates can be added by:
+- adding a new folder
+- adding file(s) with the jinja2 extension that contains the template.
+
+
 ## Available Templates
 
 
-### Iotivity Lite Server
-- generates an C server for the IoTivity Lite stack.
-- [more details](/swagger2x/src/templates/IOTivity-lite)
+### IoTivity Lite Server
+- generates an C server for the IoTivity-Lite stack.
+- [IoTivity](https://iotivity.org/)
+- [more details on the template](/swagger2x/src/templates/IOTivity-lite)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
 
 
@@ -84,27 +90,29 @@ the following structure is defined:
 
 ### PythonFlask
 - generates an python Flask server.
-    - this is an HTTP server
+    - this is an HTTP server based on [FLASK](https://flask.palletsprojects.com/en/1.1.x/)
 - __NO OCF implemenation__
-- [more details](/swagger2x/src/templates/PythonFlask)
+- [more details on the template](/swagger2x/src/templates/PythonFlask)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
     
 
 ### one-data-model
 - generates schemas files for One Data Model in Simple Data Format (SDF) language.  
 - __NO OCF implemenation__
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model)    
+- [more details on the template](/swagger2x/src/templates/one-data-model)
+- [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model)    
 - more details on [One Data Model SDF Format](https://github.com/one-data-model/language)
 
 
 ### SDF2OAS
 - generates Open API Specification (2.0) files from SDF language (One Data Model).  
 - __NO OCF implemenation__
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS)   
+- [more details on the template](/swagger2x/src/templates/SDF2OAS)   
+- [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS)   
 - more details on [One Data Model SDF Format](https://github.com/one-data-model/language)  
 
 
-## jinja2 template information
+## Jinja2 template information
 The template contents is an mix of the target syntax and jinja2 commands.
 
 Information on implemented commands can be found [here.](https://github.com/openconnectivityfoundation/swagger2x/blob/master/constructs.txt)

@@ -1,8 +1,8 @@
 # swagger2x
 
-python tool
-generate implementations based on templates from json swagger2.0 file.
-templates engine: jinja2
+swagger2x is a python tool that generate implementations based on templates from json files.
+It uses the [jinja2](https://jinja.palletsprojects.com/en/2.11.x/) templates engine.
+
 
 ## Installation
 This tool is python3 based.
@@ -10,17 +10,13 @@ This tool is python3 based.
 run ```src\install.py``` to install the dependencies.
 
 
-Installation of the tool is making a clone of the repository.
+Installation of the tool is creating a clone of the repository and
 use the tool relative of where the repository is located on your system.
-
-see the test directory as examples of how to use the tool.
-Note that the test directory is set up for bash.
-These examples can be used on windows with git-bash.
 
 
 ## Usage
 swagger2x is an command line tool.
-To run the tool enter this on the command line:
+To run the tool enter this on the (bash) command line:
 
 ```python3 swagger2x.py <options>```
 
@@ -30,12 +26,17 @@ use -h to see all the options.
 __note: see/use [DeviceBuilder](https://openconnectivityfoundation.github.io/DeviceBuilder/) for usage of this tool in the development chain.__
 
 
+To run the tooling on windows, install [git-bash](https://gitforwindows.org/).
+
+
 # Templates
 
 The code generator is using jinja2 templates.
-Using templates decouples the generated code from looping over the hierarchy.
-The hierarchy traversed is the swagger2.0 file constructs in json
-e.g. the end points, methods, query param and payload information are all available in jinja2.
+Using templates decouples the generated code from looping over the JSON hierarchy.
+
+For code generation the input JSON file is a [swagger2.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md) file.
+The hierarchy traversed is the swagger2.0 file constructs in JSON 
+e.g. the end points, methods, query param and payload information is available in the jinja2 template.
 
 code that will be generated will be generated towards:
 
@@ -72,7 +73,8 @@ the following structure is defined:
 
 ### Iotivity Lite Server
 - generates an C server for the IoTivity Lite stack.
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
+- [more details](/src/templates/IOTivity-lite)
+- [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
 
 
 ### C++IotivityServer
@@ -84,7 +86,8 @@ the following structure is defined:
 - generates an python Flask server.
     - this is an HTTP server
 - __NO OCF implemenation__
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
+- [more details](/src/templates/PythonFlask)
+- [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
     
 
 ### one-data-model

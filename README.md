@@ -65,14 +65,7 @@ jinja2 takes the JSON swagger information and make it iteratable by looping over
 The templates can be found at [/src/templates](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates)
 the following structure is defined:
 
-       -src
-          |
-          |- templates
-                 |
-                 |- <template name>
-                            |
-                            |--- <template file>.jinja2
-                            |--- other files (will be copied to output)
+![DevelopmentProcess](https://openconnectivityfoundation.github.io/swagger2x/data/structure.png)
 
 New templates can be added by:
 

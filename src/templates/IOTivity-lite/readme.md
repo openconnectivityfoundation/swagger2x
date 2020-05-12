@@ -28,15 +28,7 @@ The generated code is a good start to hook up all the hardware that that the pro
 
 The code that can be generated takes into account the following layering.
 
-     --------------------
-     |     Application  |  <-- generated data
-     --------------------
-     |     library      |  <-- IoTivity-Lite
-     --------------------
-     | operating system |  <-- windows/linux (in defines), using porting layer
-     --------------------
-     |    language      | <-- language C
-     --------------------
+![LiteStack](https://openconnectivityfoundation.github.io/swagger2x/data/lite-stack.png)
 
 The generated code is using global variable to store the induced changes by a Client.
 The functions and global variable have a naming convention that allows that multiple resources of the same resource type can co-exist.

@@ -46,7 +46,7 @@ The functions and global variable have a naming convention that allows that mult
 
 ## What is generated
 
-- simpleserver.c implementation code
+- simpleserver.c implementation code (maybe renamed)
   function list:
   - main
     - starts the platform

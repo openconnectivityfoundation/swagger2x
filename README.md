@@ -55,17 +55,7 @@ The hierarchy traversed is the swagger2.0 file constructs in JSON
 e.g. the end points, methods, query param and payload information is available in the jinja2 template.
 
 The code that can be generated should take into account:
-
-       --------------------
-       |     library      |  <-- functions/class/methods (from libraries) that are allowed to be
-       |                  |      used by the template
-       --------------------
-       | operating system |  <-- os constructs (in the used language) that are allowed to be
-       |                  |      used by the template
-       --------------------
-       |    language      | <-- language constructs/syntax that must be used
-       |                  |     by the template
-       --------------------
+![DevelopmentProcess](https://openconnectivityfoundation.github.io/swagger2x/data/generic-stack.png)
 
 Therefore a template is an mix of the library calls, the supported operating system in the used language mixed with the jinja2 template language to generate the code.
 jinja2 takes the JSON swagger information and make it iteratable by looping over the end points, methods etc. and uses then the info to fill in the library/os calls in the used language.

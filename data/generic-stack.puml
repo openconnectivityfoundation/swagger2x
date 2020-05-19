@@ -1,0 +1,15 @@
+@startuml
+ditaa
+
+       +------------------+
+       |     Library      |  <-- Functions/class/methods (from libraries) that are allowed to be
+       |                  |      used by the template
+       +------------------+
+       | Operating System |  <-- OS constructs (in the used language) that are allowed to be
+       |                  |      used by the template
+       +------------------+
+       |    Language      | <-- Language constructs/syntax that must be used
+       |                  |     by the template
+       +------------------+
+
+@enduml

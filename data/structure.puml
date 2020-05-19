@@ -1,0 +1,14 @@
+@startuml
+ditaa
+
+     -src
+       |
+       |- templates
+              |
+              |- (template name)
+                     |
+                     |--- (template file).jinja2
+                     |
+                     |--- other files (will be copied to output)
+
+@enduml

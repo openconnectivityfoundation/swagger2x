@@ -1,0 +1,14 @@
+@startuml
+ditaa
+     +------------------+
+     |     Application  |  <-- Generated Application
+     +------------------+
+     |     Library      |  <-- IoTivity-Lite
+     +------------------+
+     | Operating System |  <-- Windows/Linux 
+     |                  |      using porting layer
+     +------------------+
+     |    Language      |  <-- "C" Language
+     +------------------+
+
+@enduml

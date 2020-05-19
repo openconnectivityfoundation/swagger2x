@@ -93,7 +93,7 @@ class c{{path|variablesyntax}}Resource(Resource):
         return_json = return_json + " }"
         return return_json
 
-    def render_GET(self, request):
+    def render_GET_advanced(self, request, response):
         print ("GET {{path}} :", request.accept)
         return_json = self.create_return_json()
         print ("  ",return_json)
@@ -101,19 +101,22 @@ class c{{path|variablesyntax}}Resource(Resource):
         self.payload = str(return_json)
         print ("{{path}} : get query: ", request.uri_query)
         print ("{{path}} : get returning: ", return_json)
+        response.code = defines.Codes.CONTENT.number
+        response.content_type = request.accept
         if request.accept == defines.Content_types["text/plain"]:
             print ("  content type text/plain")
-            self.payload = (defines.Content_types["text/plain"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/json"]:
             print ("  content type application/json")
-            self.payload = (defines.Content_types["application/json"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
-            self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
+            response.payload = bytes(cbor.dumps(json_data))
         elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
-            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
-        return self
+            response.payload = bytes(cbor.dumps(json_data))
+            response.ocf_content_format_version = int(2048)
+        return self, response
 {%- endif %}
 
 {%- if methodName == "post" %} 
@@ -174,7 +177,7 @@ class OICRESResource(Resource):
         self.content_type = "application/json"  #application/cbor
         self.interface_type = "oic.if.r"
 
-    def render_GET(self, request):
+    def render_GET_advanced(self, request, response):
         print ("OICRES: get :", request.accept )
         return_json = '[ { "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/res", "rel": "self",'
         return_json = return_json + '"rt": ["oic.wk.res"], "if": ["oic.if.ll", "oic.if.baseline"], "p": {"bm": 3},'
@@ -194,19 +197,24 @@ class OICRESResource(Resource):
         self.payload = str(return_json)
         print ("   return :")
         print (return_json)
+        response.code = defines.Codes.CONTENT.number
+        response.content_type = request.accept 
         if request.accept == defines.Content_types["text/plain"]:
             print ("  content type text/plain")
-            self.payload = (defines.Content_types["text/plain"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/json"]:
             print ("  content type application/json")
-            self.payload = (defines.Content_types["application/json"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
-            self.payload = (defines.Content_types["application/cbor"], bytes(cbor.dumps(json_data)))
+            response.payload =  bytes(cbor.dumps(json_data))
         elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
-            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbor.dumps(json_data)))
-        return self
+            response.payload = bytes(cbor.dumps(json_data))
+            response.ocf_content_format_version = int(2048)
+        
+        #print (response)
+        return self, response
         
 #
 # the /oic path implementation
@@ -240,7 +248,7 @@ class OICDResource(Resource):
         self.content_type = "application/cbor"  #application/cbor
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
-    def render_GET(self, request):
+    def render_GET_advanced(self, request, response):
         print ("OICDRES: get :", request.accept )
         return_json = '{ "n": "{{json_data['info']['title']}}",'
         return_json = return_json + '"rt": ["oic.wk.d"],'
@@ -251,24 +259,28 @@ class OICDResource(Resource):
         return_json = return_json + " }"
         
         json_data = json.loads(return_json)
-        self.payload = str(return_json)
+        #self.payload = str(return_json)
+        response.content_type = request.accept 
+        response.code = defines.Codes.CONTENT.number
         if request.accept == defines.Content_types["text/plain"]:
             print ("  content type text/plain")
-            self.payload = (defines.Content_types["text/plain"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/json"]:
             print ("  content type application/json")
-            self.payload = (defines.Content_types["application/json"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+            response.payload = bytes(cbordata)
         elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
-        return self
+            response.payload = bytes(cbordata)
+            response.ocf_content_format_version = int(2048)
+            
+        return self, response
         
                 
 #
@@ -284,7 +296,7 @@ class OICPResource(Resource):
         self.content_type = "application/cbor"  #application/cbor
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
-    def render_GET(self, request):
+    def render_GET_advanced(self, request, response):
         print ("OICDRES: get :", request.accept )
         return_json = '{ "rt": ["oic.wk.p"],'
         return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
@@ -294,23 +306,26 @@ class OICPResource(Resource):
         
         json_data = json.loads(return_json)
         self.payload = str(return_json)
+        response.content_type = request.accept 
+        response.code = defines.Codes.CONTENT.number
         if request.accept == defines.Content_types["text/plain"]:
             print ("  content type text/plain")
-            self.payload = (defines.Content_types["text/plain"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/json"]:
             print ("  content type application/json")
-            self.payload = (defines.Content_types["application/json"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+            response.payload = bytes(cbordata)
         elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
-        return self
+            response.payload = bytes(cbordata)
+            response.ocf_content_format_version = int(2048)
+        return self, response
      
 #
 # the oic.wk.introspection implementation
@@ -328,25 +343,28 @@ class introspectionResource(Resource):
         self.content_type = "application/cbor"
         self.interface_type = "oic.if.r"
 
-    def render_GET(self, request):
+    def render_GET_advanced(self, request, response):
         print (" /introspection get ")
         json_data = self.value
         self.payload = str(self.value)
+        response.content_type = request.accept 
+        response.code = defines.Codes.CONTENT.number
         if request.accept == defines.Content_types["application/json"]:
             print ("  content type application/json")
             return_json = json.dumps(json_data, indent=2, sort_keys=True)
-            self.payload = (defines.Content_types["application/json"], return_json)
+            response.payload = return_json
         elif request.accept == defines.Content_types["application/cbor"]:
             print ("  content type application/cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/cbor"], bytes(cbordata))
+            response.payload = bytes(cbordata)
         elif request.accept == defines.Content_types["application/vnd.ocf+cbor"]:
             print ("  content type application/vnd.ocf+cbor")
             cbordata = cbor.dumps(json_data)
             print ("cbor :",cbordata)
-            self.payload = (defines.Content_types["application/vnd.ocf+cbor"], bytes(cbordata))
-        return self
+            response.payload = bytes(cbordata)
+            response.ocf_content_format_version = int(2048)
+        return self, response
 
 #
 # the oic.wk.introspection file read implementation
@@ -436,7 +454,7 @@ def main(argv):  # pragma: no cover
     data = socket.getaddrinfo(host_name, None, socket.AF_INET6)
     ip = data[0][4][0]
     port = 55555
-    multicast = False
+    multicast = True
     
     try:
         opts, args = getopt.getopt(argv, "hi:p:m", ["ip=", "port=", "multicast"])
@@ -454,9 +472,11 @@ def main(argv):  # pragma: no cover
         elif opt in ("-m", "--multicast"):
             multicast = True
 
+    print("------------------------------------")
     print("Used input file : \"{{input_file}}\"")
     print("OCF Server name : \"{{json_data['info']['title']}}\"")
-    print("OCF Device Type : \"{{device_type}}\"\n")
+    print("OCF Device Type : \"{{device_type}}\"")
+    print("------------------------------------\n")
 
     server = CoAPServer(ip, port, multicast)
     print("Waiting on incoming connections.. " )

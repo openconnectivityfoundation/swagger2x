@@ -2,7 +2,7 @@
 
 ## Description
 
-swagger2x is a python tool that generate implementations based on templates from json files.
+swagger2x is a Python tool that generate implementations based on templates from JSON files.
 It uses the [jinja2](https://jinja.palletsprojects.com/en/2.11.x/) templates engine.
 
 ## Table of Contents
@@ -15,8 +15,7 @@ It uses the [jinja2](https://jinja.palletsprojects.com/en/2.11.x/) templates eng
     - [Templates](#templates)
       - [Template directory structure](#template-directory-structure)
       - [Available Templates](#available-templates)
-        - [IoTivity Lite Server](#iotivity-lite-server)
-        - [C++IotivityServer](#ciotivityserver)
+        - [IoTivity Server](#iotivity-server)
         - [PythonFlask](#pythonflask)
         - [one-data-model](#one-data-model)
         - [SDF2OAS](#sdf2oas)
@@ -24,7 +23,7 @@ It uses the [jinja2](https://jinja.palletsprojects.com/en/2.11.x/) templates eng
   
 ## Installation
 
-This tool is python3 based.
+This tool is Python3 based.
 
 Installation of the tool is makin a clone of the repository and
 use the tool relative of where the repository is located on your system.
@@ -34,7 +33,7 @@ run ```pip3 install -U -r requirements.txt``` to install the dependencies.
 
 ## Usage
 
-swagger2x is an command line tool.
+Swagger2x is an command line tool.
 To run the tool enter this on the (bash) command line:
 
 ```python3 swagger2x.py <options>```
@@ -74,17 +73,12 @@ New templates can be added by:
 
 #### Available Templates
 
-##### IoTivity Lite Server
+##### IoTivity Server
 
-- generates an C server for the IoTivity-Lite stack.
+- generates an C server for the IoTivity stack.
 - [IoTivity](https://iotivity.org/)
 - [more details on the template](/swagger2x/src/templates/IOTivity-lite)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/IOTivity-lite)
-
-##### C++IotivityServer
-
-- generates an C++ server for the v1.3.1 IoTivity stack.
-- [more details](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/C%2B%2BIotivityServer)
 
 ##### PythonFlask
 
@@ -121,7 +115,4 @@ Information about jinja2 commands can be found at:
 - [docs-dev](http://jinja.pocoo.org/docs/dev/)
 - [docs-templates](http://jinja.pocoo.org/docs/dev/templates/)
 - [python primer](https://realpython.com/blog/python/primer-on-jinja-templating/)
-
-
-
 

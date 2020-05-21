@@ -1,8 +1,8 @@
-# Template: IOTivity Lite OCF server
+# Template: IoTivity  OCF server
 
 ## Introduction
 
-The template generates application level code for the IoTivity-Lite stack.
+The template generates application level code for the IoTivity stack.
 The generated code acts as a OCF Server acting as a simulator.
 e.g. the server does not have code to interact with the sensors/actuators.
 However the generated code stores the send information and returns the data on request.
@@ -10,16 +10,16 @@ The generated code is a good start to hook up all the hardware that that the pro
 
 ## Table of Contents
 
-- [Template: IOTivity Lite OCF server](#template-iotivity-lite-ocf-server)
+- [Template: IoTivity  OCF server](#template-iotivity-ocf-server)
   - [Introduction](#introduction)
   - [Table of Contents](#table-of-contents)
   - [Generic concept](#generic-concept)
   - [What is generated](#what-is-generated)
-  - [IoTivity_lite](#iotivitylite)
+  - [IoTivity](#iotivity)
     - [Introspection Device Data (IDD)](#introspection-device-data-idd)
   - [Onboarding on the secure domain](#onboarding-on-the-secure-domain)
   - [What is missing](#what-is-missing)
-  - [Building instructions](#building-instructions)
+  - [Build instructions](#build-instructions)
     - [code repo](#code-repo)
     - [Windows](#windows)
   - [CTT instructions](#ctt-instructions)
@@ -49,7 +49,7 @@ The functions and global variable have a naming convention that allows that mult
 - simpleserver.c implementation code (maybe renamed)
   function list:
   - main
-    - starts the platform
+    - Starts the platform
     - Register the device and platform, e.g. initializes oic/d and oic/p
     - Create all application specific resources
     - Message pump
@@ -57,16 +57,16 @@ The functions and global variable have a naming convention that allows that mult
       – Calls the installed callbacks for each resource.
       - This loop makes sure that all access to the functions/global variables are not concurrent.
   - app_init
-    - function to create the OCF device
-      this function configures IoTivity-Lite with device information:
+    - Function to create the OCF device.
+      This function configures IoTivity stack with device information:
       - Device type
       - Device name
       - Data model versions
        and with platform information:
         - manufactorer (mnmn)
-  - register_resources 
-    - function  to register for each generated resource
-      it will register:
+  - register_resources
+    - Function  to register for each generated resource.
+      It will register:
       - Resource Type (rt)
       - Interface (if), including the default interface
       - Indicates if the resource is discoverable (e.g. listed in oic/res)
@@ -74,13 +74,13 @@ The functions and global variable have a naming convention that allows that mult
       - Sets the call backs to the resource handling functions
   - Resource handling functions:
     - get_&lt;resource path&gt;
-      - function to convert the global variables to the response document.
-        - note: always returns the same document, regardless of the  interface
-        - This works for testcase CT1.2.2
+      - Function to convert the global variables to the response document.
+        - Note: always returns the same document, regardless of the  interface.
+        - This works for testcase CT1.2.2.
         - Handles JSON property types as part of the resource type specification:
-          - boolean,
-          - integer,
-          - number,
+          - boolean
+          - integer
+          - number
           - string
           - object containing:
             - boolean
@@ -88,46 +88,46 @@ The functions and global variable have a naming convention that allows that mult
             - number
             - string
             - array of strings
-            - array of booleans,
-            - array of integers,
-            - array of numbers,
+            - array of booleans
+            - array of integers
+            - array of numbers
             - array of strings
             - array of object
               - see object what an object can contain.
-          - handles query parameters
-            - as type of strings
-            - if there is an enum, the input value is checked against the enum
-            - NOTE the code needs to be changed to add the behaviour of what the enum should do
+          - handles query parameters:
+            - always as type of string.
+            - Ff there is an enum, the input value is checked against the enum.
+            - NOTE the code needs to be changed to add the behaviour of what the enum should do.
       - post_&lt;resource path&gt;
-        - function to convert the input request document to the member variables
-        - checks if input is correct :
-          - no write to readOnly properties of the common and resource properties.
-          - no write to readOnly properties resource dependend
-          - properties of the correct type (using type in the struct)
-          - properties in MIN/MAX range given in by schema
+        - Function to convert the input request document to the member variables.
+        - Checks if input is correct :
+          - No write to readOnly properties of the common and resource properties.
+          - No write to readOnly properties resource dependend.
+          - Properties of the correct type (using type in the struct).
+          - Properties in MIN/MAX range given in by schema.
             - e.g. __no check by property range__
-          - strings are not too long for the allocated size
-          - array (bool, int, double, string) size equal or less than the allocated array size
-          - note that not all possible checks are implemented.
+          - Strings are not too long for the allocated size.
+          - Array (bool, int, double, string) size equal or less than the allocated array size.
+          - Note that not all possible checks are implemented.
                returns error if this is not satisfied.
-          - note that if error occurs, the global variable(s) are not assigned.
-        - handles property types:
-          - boolean,
-          - integer,
-          - number,
-          - string,
-          - array of booleans,
-          - array of integers,
-          - array of numbers,
+          - Note that if error occurs, the global variable(s) are not assigned.
+        - Handles property types:
+          - boolean
+          - integer
+          - number
+          - string
+          - array of booleans
+          - array of integers
+          - array of numbers
           - array of strings
-          - returns the same information as "GET"
-          - handles query parameters
-            - as strings
-            - if there is an enum, the input value is checked against the enum
+          - Returns the same information as "GET"
+          - Handles query parameters
+            - As strings
+            - If there is an enum, the input value is checked against the enum
             - NOTE the code needs to be changed to add the behaviour of what the enum should do
-  - global variables, for each property per resources
-    for each resource a set of global variables are created.
-    global variables exist for:
+  - Global variables.
+    For each resource a set of global variables are created.
+    Global variables exist for:
     - name of the property
     - value of the property
     - resource URL
@@ -139,9 +139,9 @@ The functions and global variable have a naming convention that allows that mult
       - including the # of strings in the array
       naming convention g_&lt;resource path&gt;_RESOURCE_PROPERTY_NAME_&lt;propertyname&gt;
 
-## IoTivity_lite
+## IoTivity
 
-IoTivity Lite already has a set of build-in resources.
+IoTivity already has a set of build-in resources.
 These resources are not generated by the code, the generated code are configuring the build-in resources.
 The build-in resources are:
 
@@ -168,9 +168,9 @@ The header file is at &lt;installation folder&gt;/include/server_introspection.d
 
 The following mechanisms are supported:
 
-- just works (can be compiled out)
-- random pin (can be compiled out)
-- pki (can be compiled out)
+- Just Works (can be compiled out)
+- Random Pin (can be compiled out)
+- PKI (can be compiled out)
 Note that the code stores the credential information under ./devicebuilderserver_creds
 
 ## What is missing
@@ -181,13 +181,13 @@ The following constructs/mechanisms are not supported:
 - Handling in get/post of:
   - recursively arrays of arrays, arrays of objects, object within objects
 
-## Building instructions
+## Build instructions
 
 ### code repo
 
-The code repo of IoTivity-lite is available [here](https://github.com/iotivity/iotivity-lite)
+The code repo of IoTivity is available [here](https://github.com/iotivity/iotivity-lite)
 
-See also the folder IoTivity-Lite/port/&lt;port&gt; for more build instructions.
+See also the folder iotivity-lite/port/&lt;port&gt; for more build instructions.
 
 ### Windows
 
@@ -206,5 +206,5 @@ Note: to reduce the amount of debug information, remove OC_DEBUG from the compil
 
 - When CTT pops up: "reset to on-boarding state" means one needs to:
   - Stop the device
-  - Delete all files in port/windows/devicebuilderserver_creds  
+  - Delete all files in &lt;..&gt;/port/windows/devicebuilderserver_creds  
   - Start the server.

@@ -59,7 +59,7 @@ class c{{path|variablesyntax}}Resource(Resource):
         self.resource_type = "{{query_rt(json_data,path)}}"
         self.content_type = "text/plain"
         interfaces_array = {{query_if(json_data, path)}}
-        self.interface_type =  "'" + str(interfaces_array[0]) + "," + str(interfaces_array[1]) + "'"
+        self.interface_type =  str(interfaces_array[0]) + "," + str(interfaces_array[1]) 
 {%- for methodName, method_data in path_data.items() %}
 {%- if methodName == "get" %} 
         {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
@@ -438,6 +438,7 @@ class CoAPServer(CoAP):
 {% endfor %} 
         #print("  start on " + host + ":" + str(port))
         ocf_ip_address = "["+ str(host) + "]:" + str(port)
+        self.ocf_ip_address = ocf_ip_address
         print("  start on (ip): coap://"+ocf_ip_address)
         #print(" python3 coapclient.py -o GET -p "coap://[fe80::b536:6766:9ed9:15a4%13]:55555/oic/d?if=oic.if.baseline -c 10000
         print ("dump:")

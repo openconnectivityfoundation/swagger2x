@@ -183,7 +183,7 @@ typical usage:
 {% endfor -%}
 ```
 
-#### odm_return_path_info
+#### sdf_return_path_info
     Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
     param json_data: inputted resource type file
     param returnType: "name" or "path" or "description"
@@ -191,61 +191,61 @@ typical usage:
 
 typical usage: 
 ```
-  "odmObject": {
-    "{{ odm_return_path_info(json_data, "name") }}": {
-    "name": "{{ odm_return_path_info(json_data, "name") }}",
-    "description": "{{ odm_return_path_info(json_data, "description") }}",
-      "odmProperty": {
-        {{odm_property_object(json_data, "top")}}
+  "sdfObject": {
+    "{{ sdf_return_path_info(json_data, "name") }}": {
+    "name": "{{ sdf_return_path_info(json_data, "name") }}",
+    "description": "{{ sdf_return_path_info(json_data, "description") }}",
+      "sdfProperty": {
+        {{sdf_property_object(json_data, "top")}}
       } 
     }
   }
 ```
 
-#### odm_property_object
-    Take the property values from a resource type and reformat for odm 
-    param json_data: odmProperty's json_data from resource type
+#### sdf_property_object
+    Take the property values from a resource type and reformat for SDF 
+    param json_data: sdfProperty's json_data from resource type
     param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
     return: json formatted string
 
 typical usage: 
 ```
-  "odmObject": {
-    "{{ odm_return_path_info(json_data, "name") }}": {
-    "name": "{{ odm_return_path_info(json_data, "name") }}",
-    "description": "{{ odm_return_path_info(json_data, "description") }}",
-      "odmProperty": {
-        {{odm_property_object(json_data, "top")}}
+  "sdfObject": {
+    "{{ sdf_return_path_info(json_data, "name") }}": {
+    "name": "{{ sdf_return_path_info(json_data, "name") }}",
+    "description": "{{ sdf_return_path_info(json_data, "description") }}",
+      "sdfProperty": {
+        {{sdf_property_object(json_data, "top")}}
       } 
     }
   }
 ```
 
-#### odm_required_block_check
-    Return True/False if the odmRequired block should be populated
+#### sdf_required_block_check
+    Return True/False if the sdfRequired block should be populated
     :json_data: inputted resource type file
     :return: True/False
 
 typical usage: 
 ```
-      {% if odm_required_block_check(json_data) is sameas True %}
+      {% if sdf_required_block_check(json_data) is sameas True %}
       ,
-      "odmRequired": 
-        {{odm_required_object(json_data)}}
+      "sdfRequired": 
+        {{sdf_required_object(json_data)}}
       {% endif %} 
 ```
 
-#### odm_required_object
-    Return the required object block for one-data-model
+#### sdf_required_object
+    Return the required object block for OAS2SDF
     :param json_value: json object for resource type
-    :return: json formatted string for odm required block
+    :return: json formatted string for SDF required block
 
 typical usage: 
 ```
-      {% if odm_required_block_check(json_data) is sameas True %}
+      {% if sdf_required_block_check(json_data) is sameas True %}
       ,
-      "odmRequired": 
-        {{odm_required_object(json_data)}}
+      "sdfRequired": 
+        {{sdf_required_object(json_data)}}
       {% endif %} 
 ```
 

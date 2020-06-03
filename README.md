@@ -17,7 +17,7 @@ It uses the [jinja2](https://jinja.palletsprojects.com/en/2.11.x/) templates eng
       - [Available Templates](#available-templates)
         - [IoTivity Server](#iotivity-server)
         - [PythonFlask](#pythonflask)
-        - [one-data-model](#one-data-model)
+        - [OAS2SDF](#oas2sdf)
         - [SDF2OAS](#sdf2oas)
     - [Jinja2 template information](#jinja2-template-information)
   
@@ -88,9 +88,9 @@ New templates can be added by:
 - [more details on the template](/swagger2x/src/templates/PythonFlask)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
 
-##### one-data-model
+##### OAS2SDF
 
-- generates schemas files for One Data Model in Simple Data Format (SDF) language.  
+- generates schemas files for One Data Model in Semantic Definition Format (SDF) language.  
 - __NO OCF implemenation__
 - [more details on the template](/swagger2x/src/templates/one-data-model)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/one-data-model)
@@ -98,7 +98,7 @@ New templates can be added by:
 
 ##### SDF2OAS
 
-- generates Open API Specification (2.0) files from SDF language (One Data Model).  
+- generates Open API Specification (2.0) files from Semantic Definition Format (SDF) language (One Data Model).  
 - __NO OCF implemenation__
 - [more details on the template](/swagger2x/src/templates/SDF2OAS)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/SDF2OAS)

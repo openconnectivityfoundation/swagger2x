@@ -45,24 +45,7 @@ from numbers import Number
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
                     (sys.version_info[0], sys.version_info[1]))
-#try:
-#    from swagger_spec_validator.validator20 import validate_spec
-#except:
-#    print("missing swagger_parser:")
-#    print ("Trying to Install required module: swagger_parser ")
-#    os.system('python3 -m pip install swagger_spec_validator.validator20')
-#from swagger_spec_validator.validator20 import validate_spec
 
-#try:
-#    from swagger_parser import SwaggerParser
-#except:
-#    print("missing swagger_parser:")
-#    print ("Trying to Install required module: swagger_parser ")
-#    os.system('python3 -m pip install swagger_parser')
-#from swagger_parser import SwaggerParser
-#
-# jinja2 imports
-#
 try:
     from jinja2 import Environment, FileSystemLoader
 except:
@@ -1130,8 +1113,8 @@ def escape_quotes(my_string):
           
     return new_string3
 
-#JLR New functions for ODM     
-def odm_supported_model(json_data, name):
+#JLR New functions for SDF (one data model)     
+def sdf_supported_model(json_data, name):
     # if there are multiple paths defined, the model is currently not supported (likely a collection or atomic model)
     unsupported = False
     numPaths = 0
@@ -1168,9 +1151,9 @@ def odm_supported_model(json_data, name):
         #f.close()
         return True
 
-def odm_supported_property(property_name):
+def sdf_supported_property(property_name):
     """
-    Check to verify that this property is support natively in ODM (without modification)
+    Check to verify that this property is support natively in SDF (without modification)
     :param property_name name to check
     :return: boolean true/false
     """
@@ -1188,7 +1171,7 @@ def odm_supported_property(property_name):
         return False
 
 
-def odm_make_reference_external(iter_json_data, url):
+def sdf_make_reference_external(iter_json_data, url):
     """
     Checks all $ref and prepend the url to it if it is a local reference (e.g. start with #)
     :param json data
@@ -1196,7 +1179,7 @@ def odm_make_reference_external(iter_json_data, url):
     :return: data
     """
     url_base = url.split("#")[0]
-    #print ( "odm_make_reference_external :", url_base)
+    #print ( "sdf_make_reference_external :", url_base)
     for property_name, property_data in iter_json_data.items():
         #print (property_name)
         if property_name == "$ref":
@@ -1204,12 +1187,12 @@ def odm_make_reference_external(iter_json_data, url):
                 new_url = url_base + property_data
                 iter_json_data[property_name] = new_url
         if isinstance(property_data, dict):
-            odm_make_reference_external(property_data, url)
+            sdf_make_reference_external(property_data, url)
                 
 
-def odm_supported_property_non_string(property_name):
+def sdf_supported_property_non_string(property_name):
     """
-    Check to verify that this property is support natively in ODM (without modification)
+    Check to verify that this property is support natively in SDF (without modification)
     :param property_name name to check
     :return: boolean true/false
     """
@@ -1220,18 +1203,18 @@ def odm_supported_property_non_string(property_name):
     else:
         return False
 
-def odm_property_object(json_data, level):
+def sdf_property_object(json_data, level):
     """
-    Take the property values from a resource type and reformat for odm 
-    :param json_data: odmProperty's json_data from resource type
+    Take the property values from a resource type and reformat for sdf 
+    :param json_data: sdfProperty's json_data from resource type
     :param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
     :return: json formatted string
     
     """
-    print ( "odm_property_object :", level)
+    print ( "sdf_property_object :", level)
     
     if (level == "top"):
-        iter_json_data = swagger_properties_filtered(json_data, odm_return_path_info(json_data, "path")).items()
+        iter_json_data = swagger_properties_filtered(json_data, sdf_return_path_info(json_data, "path")).items()
     else:
         #json_data passed in is what's required for iteration below, embedded property blocks
         iter_json_data = json_data.items()
@@ -1242,15 +1225,15 @@ def odm_property_object(json_data, level):
         output += "\"" + property_name + "\": {"
         #new name field
         #output += "\"name\": \"" + decamel_name(property_name) + "\","
-        output += odm_properties_block(property_data)
+        output += sdf_properties_block(property_data)
         output += "}"
         if i+1 < len(iter_json_data):
             output += ","
-    print ( "odm_property_object : leave", level)
+    print ( "sdf_property_object : leave", level)
     return output
 
-def odm_properties_block(propertyData):
-    #print ( "odm_properties_block : entry", flush=True)
+def sdf_properties_block(propertyData):
+    #print ( "sdf_properties_block : entry", flush=True)
 
     if propertyData == None:
         return ""
@@ -1258,7 +1241,7 @@ def odm_properties_block(propertyData):
     not_outputted = 0
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
         output = ""
-        if odm_supported_property(propertyData_key):
+        if sdf_supported_property(propertyData_key):
             #print ("" ,propertyData_key,propertyData_value, isinstance(propertyData_value, int))
             if isinstance(propertyData_value, bool) and propertyData_value == True:
                 output += "\"" + propertyData_key + "\":  true"
@@ -1273,72 +1256,72 @@ def odm_properties_block(propertyData):
         elif propertyData_key == "description":
             output += ("\"" + propertyData_key + "\": \"" + escape_quotes(propertyData_value) + "\"")
         elif propertyData_key == "enum":
-            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_enum_array(propertyData_value))
         elif propertyData_key == "pattern":
             output += ("\"" + propertyData_key + "\": \"" + escape_escapes(propertyData_value) + "\"")
         elif propertyData_key == "readOnly":
-            output += ("\"writable\": "  + odm_readOnly_object(propertyData_value))
+            output += ("\"writable\": "  + sdf_readOnly_object(propertyData_value))
         elif propertyData_key == "items":
-            output += ("\"" + propertyData_key + "\": " + odm_item_object(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_item_object(propertyData_value))
         elif propertyData_key == "$ref":
-            output += odm_ref_properties(json_data, propertyData_value)
+            output += sdf_ref_properties(json_data, propertyData_value)
         elif propertyData_key == "properties":
-            output += ("\"" + propertyData_key + "\": {" + odm_property_object(propertyData_value, "sub")) + "}"
+            output += ("\"" + propertyData_key + "\": {" + sdf_property_object(propertyData_value, "sub")) + "}"
         elif propertyData_key == "required":
-            output += ("\"" + propertyData_key + "\": " + odm_enum_array(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_enum_array(propertyData_value))
         else:
-            print (" not handled in sdf.json.jinja2:odm_properties_block: ", propertyData_key)
-            #output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:odm_properties_block\"")
+            print (" not handled in sdf.json.jinja2:sdf_properties_block: ", propertyData_key)
+            #output += ("\"x-problem\": \"" + propertyData_key + " not handled in sdf.json.jinja2:sdf_properties_block\"")
             not_outputted += 1
         if j+1 < (len(propertyData.items())-not_outputted):
             output += ","
         output_total += output
-        #print ( "  odm_properties_block", output)
+        #print ( "  sdf_properties_block", output)
         
-    #print ( "odm_properties_block: leave", flush=True)
+    #print ( "sdf_properties_block: leave", flush=True)
     return output_total
 
-def odm_required_block_check(json_data):
+def sdf_required_block_check(json_data):
     """
     Return True/False if a required block should be populated
     :json_data: inputted resource type file
     :return: True/False
     """
-    if swagger_required_items(json_data, odm_return_path_info(json_data, "path")) is None:
+    if swagger_required_items(json_data, sdf_return_path_info(json_data, "path")) is None:
         return False
     else:
         return True
 
-def odm_required_object(json_value):
+def sdf_required_object(json_value):
     """
     Return the required object block for one-data-model
     :param json_value: json object for resource type
-    :return: json formatted string for odm required block
+    :return: json formatted string for sdf required block
     """ 
     output = "["
-    requiredItems = swagger_required_items(json_data, odm_return_path_info(json_data, "path"))
+    requiredItems = swagger_required_items(json_data, sdf_return_path_info(json_data, "path"))
 
     for i, requiredItem in enumerate(requiredItems):
-        output += "\"0/odmProperty/" + requiredItem + "\""
+        output += "\"0/sdfProperty/" + requiredItem + "\""
         if i+1 < len(requiredItems):
             output += ","
     output += "]"
     return output
 
-def odm_item_object(itemObject):
+def sdf_item_object(itemObject):
     """
-    Take the item value and additionally parse for odm 
+    Take the item value and additionally parse for sdf
     :param itemObject: item's value
     :return: json formatted string
     """
-    print ( "odm_item_object : entry", flush=True)
+    print ( "sdf_item_object : entry", flush=True)
     i=0
     output = "{"
     for i, (itemKey, itemValue) in enumerate(itemObject.items()):
         #output = output + "\"" + itemKey + "\": " 
         if itemKey == "enum":
             output = output + "\"" + itemKey + "\": " 
-            output = output + odm_enum_array(itemValue)
+            output = output + sdf_enum_array(itemValue)
         else:
             print ("   item keyvalue",itemKey, itemValue)
             if itemKey == "maximum":
@@ -1354,9 +1337,9 @@ def odm_item_object(itemObject):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "$ref":
-                print('  odm_item_object: $ref!! ', itemKey, itemValue)
-                #odm_ref_properties(
-                output += odm_ref_properties(json_data, itemValue)
+                print('  sdf_item_object: $ref!! ', itemKey, itemValue)
+                #sdf_ref_properties(
+                output += sdf_ref_properties(json_data, itemValue)
                 #output += str(itemValue)
             elif itemValue == True:
                 output = output + "\"" + itemKey + "\": " 
@@ -1366,19 +1349,19 @@ def odm_item_object(itemObject):
                 output += "false"
             elif itemKey == "properties":
                 # recursive !!
-                print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
+                print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output = output + "\"" + itemKey + "\": " 
-                output += "{" + odm_property_object(itemValue, "sub") + "}"
+                output += "{" + sdf_property_object(itemValue, "sub") + "}"
             elif itemKey == "required":
                 # recursive !!
-                print('  odm_item_object: recurse!! itemkey:', itemKey, itemValue)
+                print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output = output + "\"" + itemKey + "\": " 
-                output = output + odm_enum_array(itemValue)
+                output = output + sdf_enum_array(itemValue)
             elif isinstance(itemValue, Number):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             else:
-                print('\n  odm_item_object: default string type:', type(itemValue), '\n')
+                print('\n  sdf_item_object: default string type:', type(itemValue), '\n')
                 output = output + "\"" + itemKey + "\": " 
                 output += "\"" + str(itemValue) + "\""
         if i < len(itemObject)-1:
@@ -1387,46 +1370,46 @@ def odm_item_object(itemObject):
             output += "}"
         i = i+1
     
-    print ( "odm_item_object : leave", flush=True)
+    print ( "sdf_item_object : leave", flush=True)
     return output
 
-def odm_ref_properties(json_data, url):
+def sdf_ref_properties(json_data, url):
     """
-    load referenced json property and return string formatted as odm json schema
+    load referenced json property and return string formatted as sdf json schema
     :param json_data: json_data of the inputted resource type
     :param url: location of schema file and reference property, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
     :           or if local reference, #/definitions/AirFlowControlBatch-Retrieve
     :return: string formatted as json schema
     """
-    print (" odm_ref_properties : ", url, flush=True)
+    print (" sdf_ref_properties : ", url, flush=True)
     if "https" in url:
         ref_json_dict = load_json_schema_fromURL(url)
-        odm_make_reference_external(ref_json_dict,url)
+        sdf_make_reference_external(ref_json_dict,url)
     elif "http" in url:
         ref_json_dict = load_json_schema_fromURL(url)
-        odm_make_reference_external(ref_json_dict,url)
+        sdf_make_reference_external(ref_json_dict,url)
     else:
         ref_json_dict = json_data
 
     keyValue = url.split("/")[-1]
-    print (" odm_ref_properties : keyValue: ", keyValue)
+    print (" sdf_ref_properties : keyValue: ", keyValue)
     
     output = ""
     lookup = None
     try:
         lookup = ref_json_dict['definitions'][keyValue]
     except:
-        print ("!!!!odm_ref_properties : error in finding", keyValue, flush=True)
+        print ("!!!!sdf_ref_properties : error in finding", keyValue, flush=True)
         
 
-    output += odm_properties_block(lookup)
+    output += sdf_properties_block(lookup)
 
-    print (" odm_ref_properties : leave ", flush=True)
+    print (" sdf_ref_properties : leave ", flush=True)
     return output 
 
-def odm_readOnly_object(RO_value):
+def sdf_readOnly_object(RO_value):
     """
-    Take the read only value and convert it for odm writable property
+    Take the read only value and convert it for sdf writable property
     :param RO_value: Read only value string
     :return: json formatted string
     """ 
@@ -1439,9 +1422,9 @@ def odm_readOnly_object(RO_value):
         #"writeable" = true
         return "true"
 
-def odm_enum_array(enumArray):
+def sdf_enum_array(enumArray):
     """
-    Take the enum array value and additionally parse for odm 
+    Take the enum array value and additionally parse for sdf 
     :param enumArray: array of items associated with enum type
     :return: json formatted string
     """
@@ -1464,7 +1447,7 @@ def load_json_schema_fromURL(url):
     json_dict = json.loads(response.text, parse_float=float, object_pairs_hook=OrderedDict)
     return json_dict
 
-def odm_return_path_info(json_data, returnType):
+def sdf_return_path_info(json_data, returnType):
     """
     Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
     :json_data: inputted resource type file
@@ -1487,7 +1470,7 @@ def odm_return_path_info(json_data, returnType):
     else:
         return path
 
-def odm_verify_writeable_properties(json_data):
+def sdf_verify_writeable_properties(json_data):
     """
     (Unused) Return ocf  type name: OCF name, e.g. oic.r.grinder returns grinder
     :json_data: inputted resource type file
@@ -1496,7 +1479,7 @@ def odm_verify_writeable_properties(json_data):
     :return: if returnType = "name, string formatted name: e.g. grinder
     :        else, the path name, e.g. GrinderResURI
     """
-    input_path = odm_return_path_info(json_data, "path")
+    input_path = sdf_return_path_info(json_data, "path")
     postList = swagger_properties_filtered_post(json_data, input_path)
     getList = swagger_properties_filtered(json_data, input_path)
     if postList == getList:
@@ -1513,9 +1496,9 @@ def sdf_is_writeable(json_value):
     #print ( "sdf_is_writeable")
     returnvalue=False
     try:
-        odmObjects = json_data["odmObject"]
-        for objname, obj_param in odmObjects.items():
-            for paramname, paramobj in obj_param["odmProperty"].items():
+        sdfObjects = json_data["sdfObject"]
+        for objname, obj_param in sdfObjects.items():
+            for paramname, paramobj in obj_param["sdfProperty"].items():
                for qualname, qualobj in paramobj.items():
                    if qualname == "writeable":
                        if qualobj == True:
@@ -1528,17 +1511,17 @@ def sdf_is_writeable(json_value):
     return returnvalue
     
     
-def sdf_resolve_odmRef(json_dict):
+def sdf_resolve_sdfRef(json_dict):
     """
     Return the required object block for one-data-model
     :param json_value: json object for resource type
     :return: true if one of the properties is writable
     """ 
     try:
-        #print ( "sdf_resolve_odmRef", json_dict)
+        #print ( "sdf_resolve_sdfRef", json_dict)
         if isinstance(json_dict, dict):
-          if "odmRef" in json_dict:
-            my_path = json_dict["odmRef"]
+          if "sdfRef" in json_dict:
+            my_path = json_dict["sdfRef"]
             #print ("    ", my_path)
             #print ("    ", json_data)
             my_path_segments = my_path.split("/")
@@ -1707,7 +1690,7 @@ try:
     env.filters['convert_value_to_c_value'] = convert_value_to_c_value
     env.filters['init_value_if_empty'] = init_value_if_empty
     env.filters['escape_quotes'] = escape_quotes
-    env.filters['sdf_resolve_odmRef'] = sdf_resolve_odmRef
+    env.filters['sdf_resolve_sdfRef'] = sdf_resolve_sdfRef
 
     for template_file in template_files:
         print ("processing:", template_file)
@@ -1731,17 +1714,17 @@ try:
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict
-        # new functions for ODM
-        template_environment.globals['odm_return_path_info'] = odm_return_path_info
-        template_environment.globals['odm_property_object'] = odm_property_object
-        template_environment.globals['odm_required_block_check'] = odm_required_block_check
-        template_environment.globals['odm_required_object'] = odm_required_object
+        # new functions for SDF
+        template_environment.globals['sdf_return_path_info'] = sdf_return_path_info
+        template_environment.globals['sdf_property_object'] = sdf_property_object
+        template_environment.globals['sdf_required_block_check'] = sdf_required_block_check
+        template_environment.globals['sdf_required_object'] = sdf_required_object
         template_environment.globals['sdf_is_writeable'] = sdf_is_writeable
-        #template_environment.globals['sdf_resolve_odmRef'] = sdf_resolve_odmRef
+        #template_environment.globals['sdf_resolve_sdfRef'] = sdf_resolve_sdfRef
         
         #check for whether this model is supported for one-data-model
-        if args.template == "one-data-model":
-            if not odm_supported_model(json_data, args.swagger):
+        if args.template == "OAS2SDF":
+            if not sdf_supported_model(json_data, args.swagger):
                 #prevent parsing of file
                 print("modelNotSupported :", args.swagger)
                 #quit()
@@ -1764,13 +1747,13 @@ try:
             else:
                 out_file = os.path.join(args.out_dir, args.output_file) 
 
-            if args.template == "one-data-model":
+            if args.template == "OAS2SDF":
                 #clean json structure. remove extra lines from jinja2 template 
                 #(break if invalid json, caught by outer try loop)
                 if args.output_file == "auto":
-                    #Generate name from resource name for ODM, override out_file
+                    #Generate name from resource name for SDF, override out_file
                     #Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
-                    out_file = os.path.join(args.out_dir, ("odmobject-" + odm_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
+                    out_file = os.path.join(args.out_dir, ("sdfobject-" + sdf_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
                 
                 if args.jsonindent is not None:
                     output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)

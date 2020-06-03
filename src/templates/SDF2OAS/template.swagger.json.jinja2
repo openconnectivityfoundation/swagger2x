@@ -22,7 +22,7 @@
   "paths": {
   "/{{json_data['info']['title']|classsyntax}}ResURI": {
       "get": {
-        "description" : "{% for odmObject, odmObject_data in json_data['odmObject'].items() %} {{odmObject_data.description | replace('"','\\"')}}{%- endfor %}",
+        "description" : "{% for sdfObject, sdfObject_data in json_data['sdfObject'].items() %} {{sdfObject_data.description | replace('"','\\"')}}{%- endfor %}",
         "parameters": [
           {
             "$ref": "#/parameters/interface"
@@ -69,14 +69,14 @@
       ]
     }
   },
-  "definitions": { {% for odmObject, odmObject_data in json_data['odmObject'].items() %} 
+  "definitions": { {% for sdfObject, sdfObject_data in json_data['sdfObject'].items() %} 
     "{{json_data['info']['title']|classsyntax}}" : {
       "properties": {
         "rt": {
           "description": "The Resource Type.",
           "items": {
             "enum": [
-{% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{odmObject}}"{% else %}"x.unknown.{{odmObject}}"{% endif %}
+{% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{sdfObject}}"{% else %}"x.unknown.{{sdfObject}}"{% endif %}
             ],
             "type": "string"
           },
@@ -102,12 +102,12 @@
           "readOnly": true,
           "type": "array"
         },
-       {% for odmProp, odmProp_data in odmObject_data['odmProperty'].items() %} 
-        "{{odmProp}}" : {{odmProp_data | sdf_resolve_odmRef |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"name"','"x-name"')| replace('"subtype"','"x-subtype"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
+       {% for sdfProp, sdfProp_data in sdfObject_data['sdfProperty'].items() %} 
+        "{{sdfProp}}" : {{sdfProp_data | sdf_resolve_sdfRef |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"label"','"x-label"')| replace('"subType"','"x-subType"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
       },
-      "type": "object" {% if odmObject_data['odmRequired'] | length > 0  %},
-      "required" : [{% for item in odmObject_data['odmRequired'] %} 
-        "{{item | replace("0/odmProperty/","") | replace("#/odmProperty/","")}}"{{ "," if not loop.last }}{% endfor %}] {% endif %}
+      "type": "object" {% if sdfObject_data['sdfRequired'] | length > 0  %},
+      "required" : [{% for item in sdfObject_data['sdfRequired'] %} 
+        "{{item | replace("0/sdfProperty/","") | replace("#/sdfProperty/","")}}"{{ "," if not loop.last }}{% endfor %}] {% endif %}
       {% endfor %}
     }
   } 

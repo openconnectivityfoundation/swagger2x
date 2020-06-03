@@ -1,0 +1,22 @@
+{
+  "info": {
+    "copyright": "{{json_data['info']['license']['x-copyright']}}",
+    "license": "https://github.com/one-data-model/oneDM/blob/master/LICENSE",
+    "title": "{{json_data['info']['title']}}",
+    "version": "{{json_data['info']['version']}}"
+  },
+  "sdfObject": {
+    "{{ sdf_return_path_info(json_data, "name") }}": {
+    "name": "{{ sdf_return_path_info(json_data, "name") }}",
+    "description": "{{ sdf_return_path_info(json_data, "description") }}",
+      "sdfProperty": {
+        {{sdf_property_object(json_data, "top")}}
+      } 
+      {% if sdf_required_block_check(json_data) is sameas True %}
+      ,
+      "sdfRequired": 
+        {{sdf_required_object(json_data)}}
+      {% endif %} 
+    }
+  }
+}

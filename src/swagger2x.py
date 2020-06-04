@@ -1224,7 +1224,7 @@ def sdf_property_object(json_data, level):
         #print("Pname,Pdata: ", property_name, '\n', property_data)
         output += "\"" + property_name + "\": {"
         #new name field
-        #output += "\"name\": \"" + decamel_name(property_name) + "\","
+        #output += "\"label\": \"" + decamel_name(property_name) + "\","
         output += sdf_properties_block(property_data)
         output += "}"
         if i+1 < len(iter_json_data):

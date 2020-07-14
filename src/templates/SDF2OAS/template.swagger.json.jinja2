@@ -107,7 +107,8 @@
       },
       "type": "object" {% if sdfObject_data['sdfRequired'] | length > 0  %},
       "required" : [{% for item in sdfObject_data['sdfRequired'] %} 
-        "{{item | replace("0/sdfProperty/","") | replace("#/sdfProperty/","")}}"{{ "," if not loop.last }}{% endfor %}] {% endif %}
+        {% set list1 = item.split('/') %}
+        "{{list1[-1] | replace("0/sdfProperty/","") | replace("#/sdfProperty/","")}}"{{ "," if not loop.last }}{% endfor %}] {% endif %}
       {% endfor %}
     }
   } 

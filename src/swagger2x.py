@@ -1300,9 +1300,11 @@ def sdf_required_object(json_value):
     """ 
     output = "["
     requiredItems = swagger_required_items(json_data, sdf_return_path_info(json_data, "path"))
+    object_name = sdf_return_path_info(json_data, "name")
 
     for i, requiredItem in enumerate(requiredItems):
-        output += "\"0/sdfProperty/" + requiredItem + "\""
+        #output += "\"0/sdfProperty/" + requiredItem + "\""
+        output += "\"#/sdfObject/"+ object_name +"/sdfProperty/" + requiredItem + "\""
         if i+1 < len(requiredItems):
             output += ","
     output += "]"

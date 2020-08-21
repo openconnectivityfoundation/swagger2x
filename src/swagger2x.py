@@ -1666,6 +1666,8 @@ parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
 #output file
 parser.add_argument( "-output_file"  , "--output_file"  , default=None,
                      help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
+parser.add_argument( "-prefix_file"  , "--prefix_file"  , default=None,
+                     help="prefix file , e.g. <prefix><filename>.sdf.json",  nargs='?',  required=False)
                      #output file
 parser.add_argument( "-jsonindent"  , "--jsonindent"  , default=None,
                      help="jsonindent , e.g. 2",  nargs='?',  required=False)
@@ -1678,6 +1680,7 @@ args = parser.parse_args()
 print("file          : " + str(args.swagger))
 print("out_dir       : " + str(args.out_dir))
 print("out_file      : " + str(args.output_file))
+print("prefix_file   : " + str(args.prefix_file))
 print("jsonindent    : " + str(args.jsonindent))
 #print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
@@ -1707,8 +1710,6 @@ try:
     # always in the same order..
     json_dict = json.loads(object_string)
     
-    
-
     template_files = get_dir_list(full_path, ".jinja2")
     env = Environment(loader=FileSystemLoader(full_path))
     env.tests['hasbody'] = ishasbody
@@ -1719,7 +1720,6 @@ try:
     env.filters['convert_to_c_type_no_pointer'] = convert_to_c_type_no_pointer
     env.filters['convert_to_c_type_array_size'] = convert_to_c_type_array_size
     env.filters['get_c_data'] = get_c_data
-    
     
     env.filters['convert_to_cplus_type'] = convert_to_cplus_type
     env.filters['convert_to_cplus_array_type'] =convert_to_cplus_array_type
@@ -1778,15 +1778,21 @@ try:
             manufacturer= str(args.manufacturer),
             device_type= str(args.devicetype),
             input_file = args.swagger,
-            output_file = args.output_file)
+            output_file = args.output_file,
+            prefix_file = args.prefix_file)
         print(" rendering ...complete.\n ")
 
         if args.out_dir is not None:
             if (args.output_file) is None:
                 outputfile = template_file.replace(".jinja2", "")
+                if (args.prefix_file) is not None:
+                    outputfile = args.prefix_file + outputfile
                 out_file = os.path.join(args.out_dir, outputfile)
             else:
-                out_file = os.path.join(args.out_dir, args.output_file) 
+                if (args.prefix_file) is not None:
+                    outputfile = args.prefix_file + args.output_file
+                out_file = os.path.join(args.out_dir, outputfile) 
+            print("out_file      : ",out_file) 
 
             if args.template == "OAS2SDF":
                 #clean json structure. remove extra lines from jinja2 template 
@@ -1814,12 +1820,18 @@ try:
                 #print(" \n\n\n ", text);
                 f = open(out_file, 'w')
                 if args.jsonindent is not None:
-                    output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
-                    f.write(json.dumps(output_json_dict,indent=2))
-                    #Add final \n for github
-                    f.write('\n')
+                    print("writing with ident: ", remove_nl_crs(text)) 
+                    try:
+                      output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
+                      f.write(json.dumps(output_json_dict,indent=2))
+                    except:
+                      print (text)
+                      traceback.print_exc()
+                      #print (text)
                 else:
                     f.write(text)
+                #Add final \n for github
+                f.write('\n')
                 f.close()
 
     # copy none jinja2 files from Template dir

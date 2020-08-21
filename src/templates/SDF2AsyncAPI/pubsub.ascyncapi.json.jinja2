@@ -1,0 +1,73 @@
+{
+  "asyncapi": "2.0.0",
+  "info": {
+    "title": "{{json_data['info']['title']}}",
+    "version": "{{json_data['info']['version']}}",
+    "license": {
+      "name": "one Data Model License",
+      "url": "{{json_data['info']['license']}}",
+      "x-copyright": "{{json_data['info']['copyright']}}"
+    },
+    "termsOfService": "{{json_data['info']['license']}}",
+    "description": " Generated from SDF {{json_data['info']['title']}} ",
+    "contact": {
+      "name": "API Support",
+      "url": "http://www.example.com/support",
+      "email": "support@example.com"
+    }
+  },
+  "tags" : [
+      { "name" : "SDF" },
+      { "name" : "Generated" }
+  ],
+  "servers": {
+    "mosquitto" : {
+       "url": "mqtt://test.mosquitto.org",
+       "protocol": "mqtt"
+    }
+  },
+  "channels": {
+    "{{json_data['info']['title']|classsyntax}}": {
+      "publish": {
+{% for sdfObject, sdfObject_data in json_data['sdfObject'].items() %} 
+        "operationId" : "publish-{{sdfObject}}",
+{% if sdfObject_data.description is defined and sdfObject_data.description|length %}
+        "description" : "{{sdfObject_data.description.replace('"',"'")}}",
+{% else %}
+        "description" : "{{json_data['info']['title']}}",
+{% endif %}
+        "message": {
+          "payload" : {
+            "$ref" : "#/components/schemas/{{sdfObject}}"
+          }
+        }  {% endfor %}
+      },
+      "subscribe": {
+{% for sdfObject, sdfObject_data in json_data['sdfObject'].items() %} 
+        "operationId" : "subscribe-{{sdfObject}}",
+{% if sdfObject_data.description is defined and sdfObject_data.description|length %}
+        "description" : "{{sdfObject_data.description.replace('"',"'")}}",
+{% else %}
+        "description" : "{{json_data['info']['title']}}",
+{% endif %}
+        "message": {
+          "payload" : {
+            "$ref" : "#/components/schemas/{{sdfObject}}"
+          }
+        }  {% endfor %}
+      }
+    } 
+  },
+  "components" : {
+    "schemas" : {
+{% for sdfObject, sdfObject_data in json_data['sdfObject'].items() %} 
+        "{{sdfObject}}" : {
+         "type" : "object",
+         "properties": {
+           {% for sdfProp, sdfProp_data in sdfObject_data['sdfProperty'].items() %} 
+            "{{sdfProp}}" : {{sdfProp_data | sdf_resolve_sdfRef_draft07 |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"label"','"x-label"')| replace('"subType"','"x-subType"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %} {% endfor %}
+        }
+      }
+    }
+  }
+}

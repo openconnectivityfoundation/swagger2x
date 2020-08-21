@@ -16,9 +16,21 @@ input options to use:
 
 - channel with the sdfObject name
 
+### templates
+
+- publisher.ascyncapi.json
+  - template to generate a publisher
+  - using component/schema nodes for declaration of the message payloads
+- subscriber.ascyncapi.json
+  - template to generate a subscriber
+  - using inline declaration of the message payloads
+- pubsub.ascyncapi.json
+  - template for a publisher and subscriber
+  - using component/schema nodes for declaration of the message payloads
+
 ### what needs to be changed in the generated output
 
-- stub server information 
+- stub server information
 
 ## AsyncAPI info
 

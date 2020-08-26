@@ -572,7 +572,13 @@ class CoAPServer(CoAP):
         print("  adding resource: '{{path}}/'")
 {% endfor %} 
         #print("  start on " + host + ":" + str(port))
-        ocf_ip_address = "["+ str(host) + "]:" + str(port)
+        #ocf_ip_address = "["+ str(host) + "]:" + str(port)
+        
+        # CTT can't handle zone ID
+        # e.g. remove %13 from {"ep":"coaps://[fe80::b536:6766:9ed9:15a4%13]:55555"}
+        my_host = host.replace("%13","")
+        ocf_ip_address = "["+ str(my_host) + "]:" + str(port)
+        
         self.ocf_ip_address = ocf_ip_address
         print("  start on (ip): coap://"+ocf_ip_address)
         #print(" python3 coapclient.py -o GET -p "coap://[fe80::b536:6766:9ed9:15a4%13]:55555/oic/d?if=oic.if.baseline -c 10000

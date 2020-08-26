@@ -185,7 +185,7 @@ class OICRESResource(Resource):
         return_json = ""
         
         if all_queries == "if=oic.if.baseline":
-            return_json = return_json + '{ "rt": ["oic.wk.res"], '
+            return_json = return_json + '[{ "rt": ["oic.wk.res"], '
             return_json = return_json + '"if": ["oic.if.ll", "oic.if.baseline"],'
             return_json = return_json + '"links":'
         ## oic.if.ll 
@@ -233,7 +233,7 @@ class OICRESResource(Resource):
         return_json = return_json + " ]"
         
         if all_queries == "if=oic.if.baseline":
-            return_json = return_json + '} '
+            return_json = return_json + '}]'
         
         json_data = json.loads(return_json)
         self.payload = str(return_json)

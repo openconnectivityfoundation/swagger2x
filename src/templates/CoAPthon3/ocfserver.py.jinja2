@@ -180,7 +180,16 @@ class OICRESResource(Resource):
     def render_GET_advanced(self, request, response):
         print ("OICRES: get :", request.accept )
         
-        return_json = '[ { "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/res", "rel": "self",'
+        all_queries = request.uri_query
+        print ("OICRES: queries:",all_queries)
+        return_json = ""
+        
+        if all_queries == "if=oic.if.baseline":
+            return_json = return_json + '{ "rt": ["oic.wk.res"], '
+            return_json = return_json + '"if": ["oic.if.ll", "oic.if.baseline"],'
+            return_json = return_json + '"links":'
+        ## oic.if.ll 
+        return_json = return_json + '[ { "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/res", "rel": "self",'
         return_json = return_json + '"rt": ["oic.wk.res"], "if": ["oic.if.ll", "oic.if.baseline"], "p": {"bm": 3},'
         return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
         
@@ -222,6 +231,10 @@ class OICRESResource(Resource):
         return_json = return_json + ' "p": {"bm": 3}, "eps": [ {"ep": "coap://'+ocf_ip_address+'"}, {"ep": "coaps://'+ocf_ip_address+'"}]}'
 {%- endfor %} 
         return_json = return_json + " ]"
+        
+        if all_queries == "if=oic.if.baseline":
+            return_json = return_json + '} '
+        
         json_data = json.loads(return_json)
         self.payload = str(return_json)
         print ("   return :")
@@ -299,9 +312,15 @@ class OICDResource(Resource):
 
     def render_GET_advanced(self, request, response):
         print ("OICDRES: get :", request.accept )
-        return_json = '{ "n": "{{json_data['info']['title']}}",'
-        return_json = return_json + '"rt": ["oic.wk.d"],'
-        return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+        
+        return_json = ""
+        all_queries = request.uri_query
+        print ("OICD: queries:", all_queries)
+        
+        return_json = return_json +  '{ "n": "{{json_data['info']['title']}}",'
+        if all_queries == "if=oic.if.baseline":
+            return_json = return_json + '"rt": ["oic.wk.d"],'
+            return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
         return_json = return_json + '"icv": "ocf.2.0.2", '
         return_json = return_json + '"dmv": "ocf.res.1.0.0, ocf.sh.1.0.0",'
         return_json = return_json + '"piid": "'+ocf_piid+'"' 
@@ -346,9 +365,15 @@ class OICPResource(Resource):
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
-        print ("OICDRES: get :", request.accept )
-        return_json = '{ "rt": ["oic.wk.p"],'
-        return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+        print ("OICP: get :", request.accept )
+
+        all_queries = request.uri_query 
+        print ("OICP: queries:", all_queries)
+        
+        return_json = '{ '
+        if all_queries == "if=oic.if.baseline":
+            return_json = return_json + '"rt": ["oic.wk.p"],'
+            return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
         return_json = return_json + '"mnmn": "OCF",'
         return_json = return_json + '"pi": "'+ocf_pi+'"' 
         return_json = return_json + " }"

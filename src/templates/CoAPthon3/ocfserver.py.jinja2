@@ -59,7 +59,7 @@ class c{{path|variablesyntax}}Resource(Resource):
                                              observable=True, allow_children=True)
         self.payload = ""
         self.resource_type = "{{query_rt(json_data,path)}}"
-        self.content_type = "text/plain"
+        self.content_type = "application/vnd.ocf+cbor"
         interfaces_array = {{query_if(json_data, path)}}
         self.interface_type =  str(interfaces_array[0]) + "," + str(interfaces_array[1]) 
 {%- for methodName, method_data in path_data.items() %}
@@ -176,7 +176,7 @@ class OICRESResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = "oic.wk.res {{device_type}}"
-        self.content_type = "application/json"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.ll oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
@@ -270,7 +270,7 @@ class OICResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = ""
-        self.content_type = "application/cbor"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
@@ -289,7 +289,7 @@ class OICSECResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = ""
-        self.content_type = "application/cbor"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
@@ -309,7 +309,7 @@ class OICDResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = "oic.wk.d {{device_type}}"
-        self.content_type = "application/cbor"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.r oic.if.baseline" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
@@ -365,7 +365,7 @@ class OICPResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = "oic.wk.p"
-        self.content_type = "application/cbor"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.r" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):
@@ -418,7 +418,7 @@ class introspectionResource(Resource):
                        { "content-type": "application/cbor", "protocol": "coap", "url": "/ifile"}] }
         self.payload = str(self.value)
         self.resource_type = "oic.wk.introspection"
-        self.content_type = "application/cbor"
+        self.content_type = "application/vnd.ocf+cbor"
         self.interface_type = "oic.if.r"
 
     def render_GET_advanced(self, request, response):
@@ -453,7 +453,7 @@ class introspectionFileResource(Resource):
                                              observable=True, allow_children=False)
         self.payload = " illegal "
         self.resource_type = "oic.wk.introspection"
-        self.content_type = "application/cbor"
+        self.content_type = "application/vnd.ocf+cbor"
         self.interface_type = "oic.if.r"
 
     def render_GET(self, request):
@@ -490,7 +490,7 @@ class OICDOXMResource(Resource):
         self.value = 0
         self.payload = str(self.value)
         self.resource_type = "oic.r.doxm"
-        self.content_type = "application/cbor"  #application/cbor
+        self.content_type = "application/vnd.ocf+cbor"  #application/cbor
         self.interface_type = "oic.if.rw" #, "oic.if.baseline"
 
     def render_GET_advanced(self, request, response):

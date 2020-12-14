@@ -94,6 +94,141 @@ static CRITICAL_SECTION cs;     /* event loop variable */
 
 volatile int quit = 0;          /* stop variable, used by handle_signal */
 
+
+
+{% macro get_args(my_data, my_path) -%}
+ {% for var, var_data in query_properties_filtered(my_data, my_path).items() -%}
+    {%- if var_data.type == "boolean" %}
+    /* property (boolean) '{{var}}' */
+    oc_rep_set_boolean(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    PRINT("   %s : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
+    {%- elif var_data.type == "integer" %}
+    /* property (integer) '{{var}}' */
+    oc_rep_set_int(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    PRINT("   %s : %d\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    {%- elif var_data.type == "number" %}
+    /* property (number) '{{var}}' */
+    oc_rep_set_double(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    PRINT("   %s : %f\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    {%- elif var_data.type == "string" %}
+    /* property (string) '{{var}}' */
+    oc_rep_set_text_string(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    PRINT("   %s : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+    {%- elif var_data.type == "array" %}
+    {# all types of arrays #}
+    {%- if var_data |convert_to_cplus_array_type == "std::vector<bool>" %}
+    /* property (array of strings) '{{var}}' */
+    oc_rep_set_array(root, {{var}});
+    PRINT("   %s (bool) =[ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
+      oc_rep_add_boolean({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %s ", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]));
+    }
+    PRINT("   ]\n");
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
+    /* property (array of integers) '{{var}}' */
+    oc_rep_set_array(root, {{var}});
+    PRINT("   %s int = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
+      oc_rep_add_int({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %d ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
+    /* property (array of numbers) '{{var}}' */
+    oc_rep_set_array(root, {{var}});
+    PRINT("   %s double = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
+      oc_rep_add_double({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %f ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    PRINT("   ]\n");
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
+    /* property (array of strings) '{{var}}' */
+    oc_rep_open_array(root, {{var}});
+    PRINT("   %s string = [\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
+      oc_rep_add_text_string({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("     %s\n ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
+    /* property (array of objects) '{{var}}' */
+    PRINT("   Array of objects : '%s'\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    oc_rep_set_array(root, {{var}});
+    {%- set my_data = var_data |get_c_data() %}
+    for (int i = 0; i<g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++)
+    {
+      oc_rep_object_array_begin_item({{var}});
+    {%- for k,v in my_data.items() %}
+      /* {{k}} {{v}} */
+{%- if v[0] == "boolean" %}
+      oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+      PRINT("    (boolean) {{k}} : %d %s\n", i, btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}));
+{%- elif v[0] == "integer" %}
+      oc_rep_set_int({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+      PRINT("    int {{k}} : %d %d\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+{%- elif v[0] == "number" %}
+      oc_rep_set_double({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+      PRINT("    (number) {{k}} : %d %f\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+{%- elif v[0] == "string" %}
+      oc_rep_set_text_string({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+      PRINT("    string {{k}} : %d %s\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
+{%- elif v[0] == "string[]" %}
+      oc_rep_open_array({{var}}, {{k}});
+      PRINT("    array {{k}} \n");
+      oc_rep_add_text_string({{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
+      PRINT("     array item string {{k}}[0] : %d %s\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
+      oc_rep_close_array({{var}}, {{k}});
+{% else %}
+    /* {{k}} not handled */
+{% endif %}
+    {%- endfor %}
+      oc_rep_object_array_end_item({{var}});
+    }
+    oc_rep_close_array(root, {{var}});
+    {# array handling #}
+    {%- endif -%}
+    {%- elif var_data.type == "object" %}
+    /* property (object) "{{var}}" */
+    PRINT("   Object : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    oc_rep_set_object(root, {{var}});
+    {%- set my_data = var_data.properties |get_c_data() %}
+    {%- for k,v in my_data.items() %}
+{%- if v[0] == "integer" %}
+    oc_rep_set_int({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+    PRINT("    int {{k}} : %d\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+{%- elif v[0] == "boolean" %}
+    oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+    PRINT("    boolean {{k}} : %s\n", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
+{%- elif v[0] == "number" %}
+    oc_rep_set_double({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+    PRINT("    number {{k}} : %f\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+{%- elif v[0] == "string" %}
+    oc_rep_set_text_string({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+    PRINT("    string {{k}} : %s\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
+{%- elif v[0] == "string[]" %}
+    oc_rep_open_array({{var}}, {{k}});
+    PRINT("    array {{k}} \n"); 
+    for (int i = 0; i< g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}_array_size ; i++) {
+      oc_rep_add_text_string({{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
+      PRINT("     array item string {{k}}[0] : %s\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
+    }
+    oc_rep_close_array({{var}}, {{k}});
+{% else %}
+  /* {{k}} not handled */
+{% endif %}
+    {%- endfor %}
+    oc_rep_close_object(root, {{var}});  
+    {%- endif %}
+    {%- endfor %}
+	
+{%- endmacro %}
+
+
+
 {% for path, path_data in json_data['paths'].items() %}
 /* global property variables for path: "{{path}}" */{% for var, var_data in query_properties_filtered(json_data, path).items() %}
 static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}[] = "{{var}}"; /* the name for the attribute */
@@ -302,7 +437,10 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   oc_rep_start_root_object();
   switch (interfaces) {
   case OC_IF_BASELINE:
-    /* fall through */
+    PRINT("   Adding Baseline info\n" );
+    oc_process_baseline_interface(request->resource);
+	{{ get_args(json_data, path) }}
+	break;
   {%- if query_if_exist(json_data, path, "oic.if.a") %}
   case OC_IF_A:
   {% endif -%}
@@ -315,135 +453,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {%- if query_if_exist(json_data, path, "oic.if.rw") %}
   case OC_IF_RW:
   {% endif -%}
-    PRINT("   Adding Baseline info\n" );
-    oc_process_baseline_interface(request->resource);
-    {% for var, var_data in query_properties_filtered(json_data, path).items() -%}
-    {%- if var_data.type == "boolean" %}
-    /* property (boolean) '{{var}}' */
-    oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(g{{path|variablesyntax}}{{var|variablesyntax}}));
-    {%- elif var_data.type == "integer" %}
-    /* property (integer) '{{var}}' */
-    oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    {%- elif var_data.type == "number" %}
-    /* property (number) '{{var}}' */
-    oc_rep_set_double(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %f\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    {%- elif var_data.type == "string" %}
-    /* property (string) '{{var}}' */
-    oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
-    {%- elif var_data.type == "array" %}
-    {# all types of arrays #}
-    {%- if var_data |convert_to_cplus_array_type == "std::vector<bool>" %}
-    /* property (array of strings) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s (bool) =[ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_boolean({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %s ", btoa(g{{path|variablesyntax}}{{var|variablesyntax}}[i]));
-    }
-    PRINT("   ]\n");
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
-    /* property (array of integers) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s int = [ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_int({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %d ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
-    /* property (array of numbers) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s double = [ ", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_double({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %f ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    PRINT("   ]\n");
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
-    /* property (array of strings) '{{var}}' */
-    oc_rep_open_array(root, {{var}});
-    PRINT("   %s string = [\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_text_string({{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("     %s\n ", g{{path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
-    /* property (array of objects) '{{var}}' */
-    PRINT("   Array of objects : '%s'\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    oc_rep_set_array(root, {{var}});
-    {%- set my_data = var_data |get_c_data() %}
-    for (int i = 0; i<g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; i++)
-    {
-      oc_rep_object_array_begin_item({{var}});
-    {%- for k,v in my_data.items() %}
-      /* {{k}} {{v}} */
-{%- if v[0] == "boolean" %}
-      oc_rep_set_boolean({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    (boolean) {{k}} : %d %s\n", i, btoa(g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}));
-{%- elif v[0] == "integer" %}
-      oc_rep_set_int({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    int {{k}} : %d %d\n", i, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "number" %}
-      oc_rep_set_double({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    (number) {{k}} : %d %f\n", i, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "string" %}
-      oc_rep_set_text_string({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    string {{k}} : %d %s\n", i, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "string[]" %}
-      oc_rep_open_array({{var}}, {{k}});
-      PRINT("    array {{k}} \n");
-      oc_rep_add_text_string({{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
-      PRINT("     array item string {{k}}[0] : %d %s\n", i, g{{path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
-      oc_rep_close_array({{var}}, {{k}});
-{% else %}
-    /* {{k}} not handled */
-{% endif %}
-    {%- endfor %}
-      oc_rep_object_array_end_item({{var}});
-    }
-    oc_rep_close_array(root, {{var}});
-    {# array handling #}
-    {%- endif -%}
-    {%- elif var_data.type == "object" %}
-    /* property (object) "{{var}}" */
-    PRINT("   Object : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    oc_rep_set_object(root, {{var}});
-    {%- set my_data = var_data.properties |get_c_data() %}
-    {%- for k,v in my_data.items() %}
-{%- if v[0] == "integer" %}
-    oc_rep_set_int({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    int {{k}} : %d\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "boolean" %}
-    oc_rep_set_boolean({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    boolean {{k}} : %s\n", btoa(g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
-{%- elif v[0] == "number" %}
-    oc_rep_set_double({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    number {{k}} : %f\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "string" %}
-    oc_rep_set_text_string({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    string {{k}} : %s\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "string[]" %}
-    oc_rep_open_array({{var}}, {{k}});
-    PRINT("    array {{k}} \n"); 
-    for (int i = 0; i< g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}_array_size ; i++) {
-      oc_rep_add_text_string({{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
-      PRINT("     array item string {{k}}[0] : %s\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
-    }
-    oc_rep_close_array({{var}}, {{k}});
-{% else %}
-  /* {{k}} not handled */
-{% endif %}
-    {%- endfor %}
-    oc_rep_close_object(root, {{var}});  
-    {%- endif %}
-    {%- endfor %}
+    {{ get_args(json_data, path) }}
     break;
   default:
     break;

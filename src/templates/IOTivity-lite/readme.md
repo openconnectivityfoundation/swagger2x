@@ -134,10 +134,6 @@ The functions and global variable have a naming convention that allows that mult
     - resource type (rt)
       - array of strings.
       - including the # of strings in the array
-    - supported interfaces (if)
-      - array of strings
-      - including the # of strings in the array
-      naming convention g_&lt;resource path&gt;_RESOURCE_PROPERTY_NAME_&lt;propertyname&gt;
 
 ## IoTivity
 

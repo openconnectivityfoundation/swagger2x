@@ -886,7 +886,7 @@ register_resources(void)
   {% endif -%}
   {% if methodName == "put" %} 
   oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_PUT, put{{path|variablesyntax}}, NULL);
-  {% endif -%}
+  {%- endif %}
 #ifdef OC_CLOUD
   oc_cloud_add_resource(res{{path|variablesyntax}});
 #endif
@@ -1081,7 +1081,6 @@ handle_signal(int signal)
   signal_event_loop();
   quit = 1;
 }
-
 
 #ifdef OC_CLOUD
 /**

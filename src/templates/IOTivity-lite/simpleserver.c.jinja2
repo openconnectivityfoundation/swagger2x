@@ -100,6 +100,8 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
  {%- elif interface == "oic.if.a" %} OC_IF_A
  {%- elif interface == "oic.if.b" %} OC_IF_B
  {%- elif interface == "oic.if.ll" %} OC_IF_LL
+ {%- elif interface == "oic.if.startup" %} OC_IF_STARTUP
+ {%- elif interface == "oic.if.startup.revert" %} OC_IF_STARTUP_REVERT
  {% else %}
     /* {{interface}} not handled */
  {%- endif %}
@@ -246,7 +248,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
 
 {% for path, path_data in json_data['paths'].items() %}
 /* global property variables for path: "{{path}}" */{% for var, var_data in query_properties_filtered(json_data, path).items() %}
-static char g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}[] = "{{var}}"; /* the name for the attribute */
+static char *g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; /* the name for the attribute */
 {%- if var_data.type == "boolean" %}
 {{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */
 {%- elif var_data.type == "integer" %}
@@ -303,8 +305,8 @@ int g{{path|variablesyntax}}{{var|variablesyntax}}_array_size = 0;
 /* registration data variables for the resources */
 {% for path, path_data in json_data['paths'].items() %}
 /* global resource variables for path: {{path}} */
-static char g{{path|variablesyntax}}_RESOURCE_ENDPOINT[] = "{{path}}"; /* used path for this resource */
-static char g{{path|variablesyntax}}_RESOURCE_TYPE[][MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; /* rt value (as an array) */
+static char *g{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}"; /* used path for this resource */
+static char *g{{path|variablesyntax}}_RESOURCE_TYPE[MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; /* rt value (as an array) */
 int g{{path|variablesyntax}}_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
 {%- endfor %}
 
@@ -437,18 +439,34 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 	break;
   {%- if query_if_exist(json_data, path, "oic.if.a") %}
   case OC_IF_A:
-  {% endif -%}
-  {%- if query_if_exist(json_data, path, "oic.if.s") %}
-  case OC_IF_S:
-  {% endif -%}
-  {%- if query_if_exist(json_data, path, "oic.if.r") %}
-  case OC_IF_R:
-  {% endif -%}
-  {%- if query_if_exist(json_data, path, "oic.if.rw") %}
-  case OC_IF_RW:
-  {% endif -%}
     {{ get_args(json_data, path) }}
     break;
+  {%- endif %}
+  {%- if query_if_exist(json_data, path, "oic.if.s") %}
+  case OC_IF_S:
+    {{ get_args(json_data, path) }}
+    break;
+  {%- endif %}
+  {%- if query_if_exist(json_data, path, "oic.if.r") %}
+  case OC_IF_R:
+    {{ get_args(json_data, path) }}
+    break;
+  {%- endif %}
+  {%- if query_if_exist(json_data, path, "oic.if.rw") %}
+  case OC_IF_RW:
+   {{ get_args(json_data, path) }}
+    break;
+  {% endif -%}
+  {%- if query_if_exist(json_data, path, "oic.if.startup") %}
+  case OC_IF_STARTUP:
+   {{ get_args(json_data, path) }}
+    break;
+  {%- endif %}
+  {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
+  case OC_IF_STARTUP_REVERT:
+   {{ get_args(json_data, path) }}
+    break;
+  {%- endif %}
   default:
     break;
   }
@@ -952,7 +970,8 @@ initialize_variables(void)
 {%- for path, path_data in json_data['paths'].items() %}
   /* initialize global variables for resource "{{path}}" */
 {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
-{%- if var_data.type == "boolean" %}  g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */ 
+{%- if var_data.type == "boolean" %}  
+  g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */ 
 {%- elif var_data.type == "number" %}
   g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}"  {{var_data["description"]}} */
 {%- elif var_data.type == "integer" %}

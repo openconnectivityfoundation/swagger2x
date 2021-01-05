@@ -405,12 +405,33 @@ def swagger_if(json_data, input_path):
 
 
 def swagger_if_exist(json_data, input_path, if_value):
+    """
+    checks the if_value from the schema that is referenced by the path in get (or put)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :param if_value: value to be checked if it exist
+    :return: True if found, False not found
+    """
     data = swagger_property_data_schema(json_data, input_path, "if")
     #print ("swagger_if_exist", data)
     if if_value in data:
         return True
-    return False
+    return False  
     
+    
+def swagger_if_exist_all(json_data, if_value):
+    """
+    checks the if_value from the schema that is referenced in any path
+    :param json_data: the swagger file as json struct
+    :param if_value: value to be checked if it exist
+    :return: True if found, False not found
+    """
+    for path, item in json_data["paths"].items():
+      data = swagger_property_data_schema(json_data, path, "if")
+      #print ("swagger_if_exist", data)
+      if if_value in data:
+          return True
+    return False
 
 def swagger_property_data_schema(json_data, input_path, name):
     """swagger_property_data_schema
@@ -1743,6 +1764,7 @@ try:
         template_environment.globals['query_rt'] = retrieve_rt_from_path
         template_environment.globals['query_if'] = swagger_if
         template_environment.globals['query_if_exist'] = swagger_if_exist
+        template_environment.globals['query_if_exist_all'] = swagger_if_exist_all
         template_environment.globals['query_property_names'] = swagger_property_names
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties

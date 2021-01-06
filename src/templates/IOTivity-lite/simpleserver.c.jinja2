@@ -241,7 +241,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
   /* {{k}} not handled */
 {% endif %}
     {%- endfor %}
-    oc_rep_close_object(root, {{var}});  
+    oc_rep_close_object(root, {{var}});
     {%- endif %}
     {%- endfor %}
 {%- endmacro %}
@@ -251,151 +251,88 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
  {%- for var, var_data in query_properties_filtered(my_data, my_path).items() -%}
     {%- if var_data.type == "boolean" %}
     /* property (boolean) '{{var}}' */
-	{
-	  bool temp{{var|variablesyntax}};
-	  long temp_size;
-	  temp_size = oc_storage_read("./g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
+    {
+     bool temp{{var|variablesyntax}};
+     long temp_size;
+     temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
       oc_rep_set_boolean(root, {{var}}, temp{{var|variablesyntax}});
       PRINT("   (startup) %s : %s (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(temp{{var|variablesyntax}}), temp_size);
-	}
+    }
     {%- elif var_data.type == "integer" %}
     /* property (integer) '{{var}}' */
-	{
-	  int temp{{var|variablesyntax}};
-	  long temp_size;
-	  temp_size = oc_storage_read("./g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
+    {
+      int temp{{var|variablesyntax}};
+      long temp_size;
+      temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
       oc_rep_set_int(root, {{var}}, temp{{var|variablesyntax}});
       PRINT("   (starup) %s : %d (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, temp{{var|variablesyntax}}, temp_size);
-	}
+    }
     {%- elif var_data.type == "number" %}
     /* property (number) '{{var}}' */
-	{
+    {
       double temp{{var|variablesyntax}};
-	  long temp_size;
-	  temp_size = oc_storage_read("./g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
+      long temp_size;
+      temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
       oc_rep_set_double(root, {{var}}, temp{{var|variablesyntax}});
       PRINT("   (startup) %s : %f (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, temp{{var|variablesyntax}}, temp_size);
-	}
+    }
     {%- elif var_data.type == "string" %}
     /* property (string) '{{var}}' */
-    oc_rep_set_text_string(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
-    {%- elif var_data.type == "array" %}
-    {#- all types of arrays #}
-    {%- if var_data |convert_to_cplus_array_type == "std::vector<bool>" %}
-    /* property (array of strings) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s (bool) =[ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_boolean({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %s ", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]));
-    }
-    PRINT("   ]\n");
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
-    /* property (array of integers) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s int = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_int({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %d ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
-    /* property (array of numbers) '{{var}}' */
-    oc_rep_set_array(root, {{var}});
-    PRINT("   %s double = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_double({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %f ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    PRINT("   ]\n");
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<std::string>" %}
-    /* property (array of strings) '{{var}}' */
-    oc_rep_open_array(root, {{var}});
-    PRINT("   %s string = [\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
-      oc_rep_add_text_string({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("     %s\n ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-    }
-    oc_rep_close_array(root, {{var}});
-    {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" %}
-    /* property (array of objects) '{{var}}' */
-    PRINT("   Array of objects : '%s'\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    oc_rep_set_array(root, {{var}});
-    {%- set my_data = var_data |get_c_data() %}
-    for (int i = 0; i<g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++)
     {
-      oc_rep_object_array_begin_item({{var}});
-    {%- for k,v in my_data.items() %}
-      /* {{k}} {{v}} */
-{%- if v[0] == "boolean" %}
-      oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    (boolean) {{k}} : %d %s\n", i, btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}));
-{%- elif v[0] == "integer" %}
-      oc_rep_set_int({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    int {{k}} : %d %d\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "number" %}
-      oc_rep_set_double({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    (number) {{k}} : %d %f\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "string" %}
-      oc_rep_set_text_string({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    string {{k}} : %d %s\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-{%- elif v[0] == "string[]" %}
-      oc_rep_open_array({{var}}, {{k}});
-      PRINT("    array {{k}} \n");
-      oc_rep_add_text_string({{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
-      PRINT("     array item string {{k}}[0] : %d %s\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
-      oc_rep_close_array({{var}}, {{k}});
-{% else %}
-    /* {{k}} not handled */
-{% endif %}
-    {%- endfor %}
-      oc_rep_object_array_end_item({{var}});
+      char temp{{var|variablesyntax}}[MAX_STRING];
+      long temp_size;
+      temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, MAX_STRING);
+      oc_rep_set_text_string(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
+      PRINT("   (startup) %s : %s (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}, temp_size);
     }
-    oc_rep_close_array(root, {{var}});
-    {# array handling #}
-    {%- endif -%}
-    {%- elif var_data.type == "object" %}
-    /* property (object) "{{var}}" */
-    PRINT("   Object : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
-    oc_rep_set_object(root, {{var}});
-    {%- set my_data = var_data.properties |get_c_data() %}
-    {%- for k,v in my_data.items() %}
-{%- if v[0] == "integer" %}
-    oc_rep_set_int({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    int {{k}} : %d\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "boolean" %}
-    oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    boolean {{k}} : %s\n", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
-{%- elif v[0] == "number" %}
-    oc_rep_set_double({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    number {{k}} : %f\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "string" %}
-    oc_rep_set_text_string({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    string {{k}} : %s\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-{%- elif v[0] == "string[]" %}
-    oc_rep_open_array({{var}}, {{k}});
-    PRINT("    array {{k}} \n"); 
-    for (int i = 0; i< g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}_array_size ; i++) {
-      oc_rep_add_text_string({{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
-      PRINT("     array item string {{k}}[0] : %s\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}[i]);
-    }
-    oc_rep_close_array({{var}}, {{k}});
-{% else %}
-  /* {{k}} not handled */
-{% endif %}
-    {%- endfor %}
-    oc_rep_close_object(root, {{var}});  
     {%- endif %}
-    {%- endfor %}
+ {%- endfor %}
+{%- endmacro %}
+
+{%- macro write_props_to_storage(my_data, my_path) -%}
+      oc_rep_t *rep = request->request_payload;
+      while (rep != NULL) {
+        PRINT("key: (assign startup) %s \n", oc_string(rep->name));
+        /* no error: assign the variables */
+        {% for var, var_data in query_properties_filtered_post(my_data, my_path).items() -%}
+        {%- if var_data.type == "boolean" %}
+        if (strcmp ( oc_string(rep->name), g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
+          /* write storage "{{var}}" */
+          long temp_size;
+          temp_size = oc_storage_write("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.boolean, sizeof(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
+          PRINT ("  storage (startup.revert)  property '{{var}}' : %s (%ld)\n", btoa(rep->value.boolean), temp_size);
+        }
+        {%- elif var_data.type == "integer" %}
+        if (strcmp ( oc_string(rep->name), g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
+          /* write storage "{{var}}" */
+          PRINT ("  storage (startup.revert) property '{{var}}' : %d\n", (int) rep->value.integer);
+          oc_storage_write("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.integer, sizeof(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
+        }
+        {%- elif var_data.type == "number" %}
+        if (strcmp ( oc_string(rep->name), g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
+          /* write storage "{{var}}" */
+          PRINT ("  storage (startup.revert) property '{{var}}' : %f\n", rep->value.double_p);
+          oc_storage_write("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.double_p, sizeof(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
+        }
+        {%- elif var_data.type == "string" %}
+        if (strcmp ( oc_string(rep->name), g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
+          /* write storage "{{var}}" */
+          PRINT ("  storage (startup.revert) property '{{var}}' : %s\n", oc_string(rep->value.string));
+          oc_storage_write("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)oc_string(rep->value.string), strlen(oc_string(rep->value.string))+1);
+        }
+        {%- endif %}
+        {%- endfor %}
+        rep = rep->next;
+    }
 {%- endmacro %}
 
 
-
 {% for path, path_data in json_data['paths'].items() %}
-/* global property variables for path: "{{path}}" */{% for var, var_data in query_properties_filtered(json_data, path).items() %}
+/* global property variables for path: "{{path}}" */
+{%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist(json_data, path, "oic.if.startup.revert") %}
+int g{{path|variablesyntax}}_storage_status = 0;  /* 0=no storage, 1=startup, 2=startup.revert */ 
+{%- endif %}
+{%- for var, var_data in query_properties_filtered(json_data, path).items() %}
 static char *g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; /* the name for the attribute */
 {%- if var_data.type == "boolean" %}
 {{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */
@@ -468,7 +405,7 @@ app_init(void)
   int ret = oc_init_platform("{{manufacturer}}", NULL, NULL);
   /* the settings determine the appearance of the device on the network
      can be ocf.2.2.0 (or even higher)
-     supplied values are for OCF1.3.1 */
+     supplied values are for ocf.2.2.0 */
   ret |= oc_add_device("/oic/d", "{{device_type}}", "{{json_data['info']['title']}}", 
                        "ocf.2.2.0", /* icv value */
                        "ocf.res.1.3.0, ocf.sh.1.3.0",  /* dmv value */
@@ -583,8 +520,8 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   case OC_IF_BASELINE:
     PRINT("   Adding Baseline info\n" );
     oc_process_baseline_interface(request->resource);
-	{{ get_args(json_data, path) }}
-	break;
+    {{ get_args(json_data, path) }}
+    break;
   {%- if query_if_exist(json_data, path, "oic.if.a") %}
   case OC_IF_A:
     {{ get_args(json_data, path) }}
@@ -834,53 +771,41 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
     switch (interfaces) {
 {%- if query_if_exist(json_data, path, "oic.if.startup") %}
     case OC_IF_STARTUP: {
-     /* loop over all the properties in the input document */
-      oc_rep_t *rep = request->request_payload;
-      while (rep != NULL) {
-        PRINT("key: (assign startup) %s \n", oc_string(rep->name));
-        /* no error: assign the variables */
-        {% for var, var_data in query_properties_filtered_post(json_data, path).items() -%}
-        {%- if var_data.type == "boolean" %}
-        if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
-          /* write "{{var}}" */
-          PRINT ("  property '{{var}}' : %s\n", btoa(rep->value.boolean));
-          /* g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean; */
-		  oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.boolean, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
-        }
-        {%- elif var_data.type == "integer" %}
-        if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
-          /* write "{{var}}" */
-          PRINT ("  property '{{var}}' : %d\n", (int) rep->value.integer);
-          /* g{{path|variablesyntax}}{{var|variablesyntax}} = (int) rep->value.integer; */
-		  oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.integer, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
-        }
-        {%- elif var_data.type == "number" %}
-        if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
-          /* write "{{var}}" */
-          PRINT ("  property '{{var}}' : %f\n", rep->value.double_p);
-          /* g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.double_p; */
-		  oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.double_p, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
-        }
-        {%- elif var_data.type == "string" %}
-        if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
-          /* write "{{var}}" */
-          PRINT ("  property '{{var}}' : %s\n", oc_string(rep->value.string));
-          strncpy(g{{path|variablesyntax}}{{var|variablesyntax}}, oc_string(rep->value.string), {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}-1);
-        }
-		{%- endif %}
-		{%- endfor %}
-		rep = rep->next;
-	  }
-	  /* set the response */
+      g{{path|variablesyntax}}_storage_status = 1;
+      oc_storage_write("g{{path|variablesyntax}}_storage_status", (uint8_t*)&g{{path|variablesyntax}}_storage_status, sizeof(g{{path|variablesyntax}}_storage_status));
+      /* loop over all the properties in the input document */
+      {{write_props_to_storage(json_data, path)}}
+      /* set the response */
       PRINT("Set response (startup) \n");
       oc_rep_start_root_object();
-	  {{ get_start_args(json_data, path) }}
-	  oc_rep_end_root_object();
+      {{ get_start_args(json_data, path) }}
+      oc_rep_end_root_object();
       oc_send_response(request, OC_STATUS_CHANGED);
-	  }
+      }
+      break;
+  {%- endif %}
+  {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
+  case OC_IF_STARTUP_REVERT: {
+      g{{path|variablesyntax}}_storage_status = 2;
+      oc_storage_write("g{{path|variablesyntax}}_storage_status", (uint8_t*)&g{{path|variablesyntax}}_storage_status, sizeof(g{{path|variablesyntax}}_storage_status));
+      /* loop over all the properties in the input document */
+      {{write_props_to_storage(json_data, path)}}
+      /* set the response */
+      PRINT("Set response (startup) \n");
+      oc_rep_start_root_object();
+      {{ get_start_args(json_data, path) }}
+      oc_rep_end_root_object();
+      oc_send_response(request, OC_STATUS_CHANGED);
+      }
       break;
   {%- endif %}
     default: {
+      {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}  
+      if ( g{{path|variablesyntax}}_storage_status == 2 ) { 
+        /* write the properties to the storage */
+      {{write_props_to_storage(json_data, path)}}
+      } /* g{{path|variablesyntax}}_storage_status */
+      {%- endif %}
       /* loop over all the properties in the input document */
       oc_rep_t *rep = request->request_payload;
       while (rep != NULL) {
@@ -977,22 +902,22 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {%- if var_data.type == "boolean" %}
       oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
 	  {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
-      oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}
       {%- elif var_data.type == "number" %}
       oc_rep_set_double(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
-      oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}
       {%- elif var_data.type == "integer" %}
       oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
-      oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}	
       {%- elif var_data.type == "string" %}
       oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
-      oc_storage_write("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}
       {%- elif var_data.type == "array" %}
       {% if var_data |convert_to_cplus_array_type == "std::vector<bool>" %} {# array of booleans #}
@@ -1059,8 +984,8 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
        one can use the global variables as input to those calls
        the global values have been updated already with the data from the request */
       oc_send_response(request, OC_STATUS_CHANGED);
-	  }
-	}
+      }
+    }
   }
   else
   {
@@ -1179,35 +1104,43 @@ factory_presets_cb(size_t device, void *data)
 void
 initialize_variables(void)
 {
-{%- if query_if_exist_all(json_data, "oic.if.startup") %}
+{%- if query_if_exist_all(json_data, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
   int ret_size = 0;
 {%- endif %}
 {%- for path, path_data in json_data['paths'].items() %}
   /* initialize global variables for resource "{{path}}" */
+{%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist(json_data, path, "oic.if.startup.revert") %}
+  oc_storage_read("g{{path|variablesyntax}}_storage_status", (uint8_t*)&g{{path|variablesyntax}}_storage_status, sizeof(g{{path|variablesyntax}}_storage_status));
+{%- endif %}
 {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
 {%- if var_data.type == "boolean" %}  
   g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */ 
-  {%- if query_if_exist(json_data, path, "oic.if.startup") %}
-  ret_size = oc_storage_read("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+  {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
+  ret_size = oc_storage_read("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
   if (ret_size != sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}))
-	PRINT (" could not read ./g{{path|variablesyntax}}{{var|variablesyntax}} : %d", ret_size);
+    PRINT (" could not read store g{{path|variablesyntax}}{{var|variablesyntax}} : %d\n", ret_size);
   {%- endif %}
 {%- elif var_data.type == "number" %}
   g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}"  {{var_data["description"]}} */
-  {%- if query_if_exist(json_data, path, "oic.if.startup") %}
-  ret_size = oc_storage_read("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+  {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
+  ret_size = oc_storage_read("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
   if (ret_size != sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}))
-	PRINT (" could not read ./g{{path|variablesyntax}}{{var|variablesyntax}} : %d", ret_size);
+    PRINT (" could not read store g{{path|variablesyntax}}{{var|variablesyntax}} : %d\n", ret_size);
   {%- endif %}
 {%- elif var_data.type == "integer" %}
   g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */
-  {%- if query_if_exist(json_data, path, "oic.if.startup") %}
-  ret_size = oc_storage_read("./g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
+  {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
+  ret_size = oc_storage_read("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
   if (ret_size != sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}))
-	PRINT (" could not read ./g{{path|variablesyntax}}{{var|variablesyntax}} : %d", ret_size);
+    PRINT (" could not read store g{{path|variablesyntax}}{{var|variablesyntax}} : %d\n", ret_size);
   {%- endif %}
 {%- elif var_data.type == "string" %}
   strcpy(g{{path|variablesyntax}}{{var|variablesyntax}}, "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}");  /* current value of property "{{var}}" {{var_data["description"]}} */
+  {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
+  ret_size = oc_storage_read("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, MAX_STRING);
+  if (ret_size <= 0)
+    PRINT (" could not read store g{{path|variablesyntax}}{{var|variablesyntax}} : %d\n", ret_size);
+  {%- endif %}
 {%- elif var_data.type == "object" -%}
   /* object "{{var}}"initialized on zero & further initialization */
   memset((void*)&g{{path|variablesyntax}}{{var|variablesyntax}},0, sizeof(struct {{path|variablesyntax}}{{var|variablesyntax}}_t));
@@ -1290,22 +1223,6 @@ initialize_variables(void)
   oc_set_con_res_announced(false);
 
 }
-
-{%- if query_if_exist_all(json_data, "oic.if.startup") %}
-void
-initialize_startup_storage(void)
-{
-#ifdef OC_STORAGE
-{%- for path, path_data in json_data['paths'].items() %}
-{%- if query_if_exist(json_data, path, "oic.if.startup") %}
-  {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
-  oc_storage_config("./g{{path|variablesyntax}}{{var|variablesyntax}}");
-  {% endfor -%}
-{% endif -%}
-{%- endfor %}
-#endif /* OC_STORAGE */
-}
-{%- endif %}
 
 #ifndef NO_MAIN
 
@@ -1420,13 +1337,6 @@ int init;
   PRINT("Used input file : \"{{input_file}}\"\n");
   PRINT("OCF Server name : \"{{json_data['info']['title']}}\"\n");
 
-{%- if query_if_exist_all(json_data, "oic.if.startup") %}
-  /* initalize startup storage */
-  initialize_startup_storage();
-{%- endif %}
-  /*intialize the variables */
-  initialize_variables();
-
 /*
  The storage folder depends on the build system
  for Windows the projects simpleserver and cloud_server are overwritten, hence the folders should be the same as those targets.
@@ -1446,11 +1356,11 @@ int init;
   PRINT("\t storage at './device_builder_server_creds' \n");
   oc_storage_config("./device_builder_server_creds");
 #endif
+
+  /*intialize the variables */
+  initialize_variables();
   
 #endif /* OC_SECURITY */
-
-  
-
 
   /* initializes the handlers structure */
   static const oc_handler_t handler = {.init = app_init,
@@ -1461,8 +1371,6 @@ int init;
                                        .requests_entry = 0 
 #endif
                                        };
-
-
 
 #ifdef OC_SECURITY
   /* please comment out if the server:

@@ -102,12 +102,12 @@ def create_c_struct(nested_json):
         to_flatten = nested_json
 
         def my_flatten(my_dict, name=''):
-            print (" my_flatten :")
+            #print (" my_flatten :")
             if isinstance(my_dict, dict):
                 for my_name, my_sdict in my_dict.items():
                     if my_name not in ["properties", "allOf", "anyOf", "items", "description", "type", "enum"]:
                         # this is a property name
-                        print ("  property: ",my_name, " type: ",my_sdict.get("type"))
+                        #print ("  property: ",my_name, " type: ",my_sdict.get("type"))
                         my_type = my_sdict.get("type")
                         description = my_sdict.get("description")
                         if my_type in ["string", "integer", "number", "boolean"]:
@@ -122,7 +122,7 @@ def create_c_struct(nested_json):
                             out[my_name] = [type_array + "[]", description]
                         elif my_type in ["object"]:
                             # handle object
-                            print ( " my_flatten : handle object => go recursive")
+                            #print ( " my_flatten : handle object => go recursive")
                             my_flatten(my_sdict)
             elif isinstance(my_dict, list):
                 # dead code so far... e.g. need to be clean up
@@ -413,7 +413,7 @@ def swagger_if_exist(json_data, input_path, if_value):
     :return: True if found, False not found
     """
     data = swagger_property_data_schema(json_data, input_path, "if")
-    #print ("swagger_if_exist", data)
+    #print (" ==>  swagger_if_exist",input_path, data)
     if if_value in data:
         return True
     return False  
@@ -445,7 +445,7 @@ def swagger_property_data_schema(json_data, input_path, name):
     data_values = []
     schema = None
     example = None
-    print("swagger_property_data_schema: path/name:", input_path, name)
+    #print("swagger_property_data_schema: path/name:", input_path, name)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             # get the schema
@@ -509,7 +509,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                         value = example.get(name)
                         if value is not None:
                             value = example[name]
-                            print("swagger_property_data_schema: getting name, value:", name, value)
+                            #print("swagger_property_data_schema: getting name, value:", name, value)
                             if isinstance(value, list):
                                 for val in value:
                                     data_values.append(val)
@@ -875,7 +875,7 @@ def convert_to_c_type(json_type):
     :param json_type: the json type
     :return: c type.
     """
-    print ("convert_to_c_type: json_type:", json_type)
+    #print ("convert_to_c_type: json_type:", json_type)
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -904,7 +904,7 @@ def convert_to_c_type_no_pointer(json_type):
     :param json_type: the json type
     :return: c type.
     """
-    print ("convert_to_c_type: json_type:", json_type)
+    #print ("convert_to_c_type: json_type:", json_type)
     if json_type == "boolean":
         return "bool"
     if json_type == "number":
@@ -942,7 +942,7 @@ def convert_to_c_type_array_size (json_type):
     :param json_type: the json type
     :return: c type.
     """
-    print ("convert_to_c_type: json_type:", json_type)
+    #print ("convert_to_c_type: json_type:", json_type)
     if json_type == "boolean":
         return 0
     if json_type == "number":
@@ -984,7 +984,7 @@ def get_c_data(json_data, prefix=""):
     ;Returns:
             dict=  {keyname, [0 = type, 1 = description ]}
     """
-    print ("get_c_data ")
+    #print ("get_c_data ")
     prefix2 = prefix
     if len(prefix) > 0:
         prefix2 = "  "+ prefix + "."
@@ -1079,7 +1079,7 @@ def init_value_if_empty(my_value, value_type):
     :param my_value the value from swagger_property_data_schema
     :return: c value.
     """
-    print ("init_value_if_empty: my_value:", my_value, " type:", value_type)
+    #print ("init_value_if_empty: my_value:", my_value, " type:", value_type)
     
     new_value = convert_value_to_c_value(my_value)
     
@@ -1232,7 +1232,7 @@ def sdf_property_object(json_data, level):
     :return: json formatted string
     
     """
-    print ( "sdf_property_object :", level)
+    #print ( "sdf_property_object :", level)
     
     if (level == "top"):
         iter_json_data = swagger_properties_filtered(json_data, sdf_return_path_info(json_data, "path")).items()
@@ -1250,7 +1250,7 @@ def sdf_property_object(json_data, level):
         output += "}"
         if i+1 < len(iter_json_data):
             output += ","
-    print ( "sdf_property_object : leave", level)
+    #print ( "sdf_property_object : leave", level)
     return output
 
 def sdf_properties_block(propertyData):
@@ -1337,7 +1337,7 @@ def sdf_item_object(itemObject):
     :param itemObject: item's value
     :return: json formatted string
     """
-    print ( "sdf_item_object : entry", flush=True)
+    #print ( "sdf_item_object : entry", flush=True)
     i=0
     output = "{"
     for i, (itemKey, itemValue) in enumerate(itemObject.items()):
@@ -1346,7 +1346,7 @@ def sdf_item_object(itemObject):
             output = output + "\"" + itemKey + "\": " 
             output = output + sdf_enum_array(itemValue)
         else:
-            print ("   item keyvalue",itemKey, itemValue)
+            #print ("   item keyvalue",itemKey, itemValue)
             if itemKey == "maximum":
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
@@ -1360,7 +1360,7 @@ def sdf_item_object(itemObject):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "$ref":
-                print('  sdf_item_object: $ref!! ', itemKey, itemValue)
+                #print('  sdf_item_object: $ref!! ', itemKey, itemValue)
                 #sdf_ref_properties(
                 output += sdf_ref_properties(json_data, itemValue)
                 #output += str(itemValue)
@@ -1372,19 +1372,19 @@ def sdf_item_object(itemObject):
                 output += "false"
             elif itemKey == "properties":
                 # recursive !!
-                print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
+                #print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output = output + "\"" + itemKey + "\": " 
                 output += "{" + sdf_property_object(itemValue, "sub") + "}"
             elif itemKey == "required":
                 # recursive !!
-                print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
+                #print('  sdf_item_object: recurse!! itemkey:', itemKey, itemValue)
                 output = output + "\"" + itemKey + "\": " 
                 output = output + sdf_enum_array(itemValue)
             elif isinstance(itemValue, Number):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             else:
-                print('\n  sdf_item_object: default string type:', type(itemValue), '\n')
+                #print('\n  sdf_item_object: default string type:', type(itemValue), '\n')
                 output = output + "\"" + itemKey + "\": " 
                 output += "\"" + str(itemValue) + "\""
         if i < len(itemObject)-1:
@@ -1393,7 +1393,7 @@ def sdf_item_object(itemObject):
             output += "}"
         i = i+1
     
-    print ( "sdf_item_object : leave", flush=True)
+    #print ( "sdf_item_object : leave", flush=True)
     return output
 
 def sdf_ref_properties(json_data, url):
@@ -1404,7 +1404,7 @@ def sdf_ref_properties(json_data, url):
     :           or if local reference, #/definitions/AirFlowControlBatch-Retrieve
     :return: string formatted as json schema
     """
-    print (" sdf_ref_properties : ", url, flush=True)
+    #print (" sdf_ref_properties : ", url, flush=True)
     if "https" in url:
         ref_json_dict = load_json_schema_fromURL(url)
         sdf_make_reference_external(ref_json_dict,url)
@@ -1415,7 +1415,7 @@ def sdf_ref_properties(json_data, url):
         ref_json_dict = json_data
 
     keyValue = url.split("/")[-1]
-    print (" sdf_ref_properties : keyValue: ", keyValue)
+    #print (" sdf_ref_properties : keyValue: ", keyValue)
     
     output = ""
     lookup = None
@@ -1427,7 +1427,7 @@ def sdf_ref_properties(json_data, url):
 
     output += sdf_properties_block(lookup)
 
-    print (" sdf_ref_properties : leave ", flush=True)
+    #print (" sdf_ref_properties : leave ", flush=True)
     return output 
 
 def sdf_readOnly_object(RO_value):
@@ -1550,7 +1550,7 @@ def sdf_resolve_sdfRef(json_dict):
             my_path_segments = my_path.split("/")
             my_data = json_data
             for path_seg in my_path_segments:
-                print (path_seg)
+                #print (path_seg)
                 if path_seg != "#":
                     my_data = my_data[path_seg]
             #print (my_data)

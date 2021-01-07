@@ -544,11 +544,19 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {% endif -%}
   {%- if query_if_exist(json_data, path, "oic.if.startup") %}
   case OC_IF_STARTUP:
+   if ( g{{path|variablesyntax}}_storage_status !=  1)
+   {
+     oc_send_response(request, OC_STATUS_BAD_OPTION);
+   } 
    {{ get_start_args(json_data, path) }}
     break;
   {%- endif %}
   {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
   case OC_IF_STARTUP_REVERT:
+   if ( g{{path|variablesyntax}}_storage_status !=  2)
+   {
+     oc_send_response(request, OC_STATUS_BAD_OPTION);
+   } 
    {{ get_start_args(json_data, path) }}
     break;
   {%- endif %}

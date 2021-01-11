@@ -1058,6 +1058,7 @@ register_resources(void)
 }
 
 #ifdef OC_SECURITY
+#ifdef OC_SECURITY_PIN
 void
 random_pin_cb(const unsigned char *pin, size_t pin_len, void *data)
 {
@@ -1066,6 +1067,7 @@ random_pin_cb(const unsigned char *pin, size_t pin_len, void *data)
   PRINT("Random PIN: %.*s\n", (int)pin_len, pin);
   PRINT("====================\n");
 }
+#endif /* OC_SECURITY_PIN */
 #endif /* OC_SECURITY */
 
 void
@@ -1379,17 +1381,17 @@ int init;
                                        .requests_entry = 0 
 #endif
                                        };
-
 #ifdef OC_SECURITY
-  /* please comment out if the server:
-    - have no display capabilities to display the PIN value
-    - server does not require to implement RANDOM PIN (oic.sec.doxm.rdp) onboarding mechanism
+#ifdef OC_SECURITY_PIN
+  /* please enable OC_SECURITY_PIN
+    - have display capabilities to display the PIN value
+    - server require to implement RANDOM PIN (oic.sec.doxm.rdp) onboarding mechanism
   */
   oc_set_random_pin_callback(random_pin_cb, NULL);
+#endif /* OC_SECURITY_PIN */
 #endif /* OC_SECURITY */
 
   oc_set_factory_presets_cb(factory_presets_cb, NULL);
-  
   
   /* start the stack */
   init = oc_main_init(&handler);

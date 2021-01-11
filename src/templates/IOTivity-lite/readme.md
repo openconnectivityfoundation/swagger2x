@@ -164,9 +164,11 @@ The header file is at &lt;installation folder&gt;/include/server_introspection.d
 
 The following mechanisms are supported:
 
-- Just Works (can be compiled out)
+- Just Works
 - Random Pin (can be compiled out)
+  - with compile flage: OC_SECURITY_PIN
 - PKI (can be compiled out)
+  - with compile flag: OC_PKI
 Note that the code stores the credential information under ./devicebuilderserver_creds
 
 ## What is missing

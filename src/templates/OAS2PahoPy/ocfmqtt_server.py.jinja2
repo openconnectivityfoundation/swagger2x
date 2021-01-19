@@ -1,0 +1,514 @@
+#!/usr/bin/env python
+#############################
+#
+#    copyright 2021 Open Interconnect Consortium, Inc. All rights reserved.
+#    Redistribution and use in source and binary forms, with or without modification,
+#    are permitted provided that the following conditions are met:
+#    1.  Redistributions of source code must retain the above copyright notice,
+#        this list of conditions and the following disclaimer.
+#    2.  Redistributions in binary form must reproduce the above copyright notice,
+#        this list of conditions and the following disclaimer in the documentation and/or other materials provided
+#        with the distribution.
+#
+#    THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+#    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
+#    WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+#    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+#    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#############################
+
+import paho.mqtt.client as mqtt
+from paho.mqtt.packettypes import PacketTypes
+
+import threading
+import datetime
+import queue
+import signal
+import time
+import logging
+import ssl
+from random import randrange
+import uuid
+
+import json
+from json.decoder import JSONDecodeError
+import cbor
+
+import argparse
+
+import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
+from tkinter import ttk, VERTICAL, HORIZONTAL, N, S, E, W
+
+logger = logging.getLogger(__name__)
+
+
+ocf_piid="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d9"
+ocf_pi="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d8"
+ocf_di="e61c3e6b-9c54-4b81-8ce5-f9039c1d04d8"
+global ocf_ip_address
+ocf_ip_address=""
+#ocf_device_type="oic.d.light"
+introspectionfile_json="../out_introspection_merged.swagger.json"
+introspectionfile_cbor="../out_introspection_merged.swagger.json.cbor"
+
+def topic_contains_interface(request_topic, if_string):
+
+    topic_split  = request_topic.split("/")   
+    url_encoded = topic_split[2].split("?")
+    if len(url_encoded) > 1:
+        if url_encoded[1] == if_string:
+            return True
+    return False
+    
+
+def bool2string(input):
+    if input == True:
+        return "true"
+    return "false"
+    
+    
+def get_json_from_cbor_data_from_message(message):
+    """retrieves the data as json, when the input is cbor
+    Args:
+        message mqtt: message
+    Returns:
+        json : data as json
+    """
+    json_data = []
+    try:
+        json_data = cbor.loads(message.payload)
+    except:
+        pass
+    return json_data
+    
+def send_ocf_response(client, return_json, topic, corrolationData):
+    my_qos_int = 1
+    props = None
+    if corrolationData is not None:
+        props = mqtt.Properties(PacketTypes.PUBLISH)
+        props.CorrelationData = corrolationData
+    retain_flag = False
+    
+    json_data = json.loads(return_json)
+    cbordata = cbor.dumps(json_data)
+    print ("send_ocf_response topic: "+topic+" cbor :", cbordata)
+    
+    result = client.publish(topic, cbordata,
+        my_qos_int, retain_flag, properties=props)
+    status = result[0]
+    if status == 0:
+       print(f"Send  to topic `{topic}`")
+    else:
+       print(f"Failed to send message to topic {topic}")
+    print (result)
+
+
+def send_oic_d_get_response(client, userdata, message, ResponseTopic, corrolationData):
+    return_json = ""
+    all_queries = "if=oic.if.baseline"
+    print ("send_oic_d_response: queries:", all_queries)
+
+    return_json = return_json +  '{ "n": "{{json_data['info']['title']}}",'
+    #if all_queries == "if=oic.if.baseline":
+    return_json = return_json + '"rt": ["oic.wk.d","{{device_type}}"],'
+    return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+    return_json = return_json + '"icv": "ocf.2.0.2", '
+    return_json = return_json + '"dmv": "ocf.res.1.0.0, ocf.sh.1.0.0",'
+    return_json = return_json + '"piid": "'+ocf_piid+'",'
+    return_json = return_json + '"di": "'+ocf_di+'"' 
+    return_json = return_json + " }"
+
+    send_ocf_response(client, return_json, ResponseTopic, corrolationData)
+
+
+def send_oic_p_get_response(client, userdata, message, ResponseTopic, corrolationData):
+    return_json = ""
+    
+    return_json = '{ '
+    #if topic_contains_interface(message.topic,"if=oic.if.baseline"):
+    return_json = return_json + '"rt": ["oic.wk.p"],'
+    return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+    return_json = return_json + '"mnmn": "OCF",'
+    return_json = return_json + '"pi": "'+ocf_pi+'"' 
+    return_json = return_json + " }"
+
+    send_ocf_response(client, return_json, ResponseTopic, corrolationData)
+
+
+def send_oic_res_get_response(client, userdata, message, ResponseTopic, corrolationData):
+    return_json = ""
+    
+    if topic_contains_interface(message.topic,"if=oic.if.baseline"):
+        return_json = return_json + '[{ "rt": ["oic.wk.res"], '
+        return_json = return_json + '"if": ["oic.if.ll", "oic.if.baseline"],'
+        return_json = return_json + '"links":'
+    ## oic.if.ll 
+    return_json = return_json + '[ { "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/res", "rel": "self",'
+    return_json = return_json + '"rt": ["oic.wk.res"], "if": ["oic.if.ll", "oic.if.baseline"], "p": {"bm": 3},'
+    return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
+    
+    return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/d",'
+    return_json = return_json + ' "rt": ["oic.wk.d"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 3},'
+    return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
+
+    return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "/oic/p",'
+    return_json = return_json + ' "rt": ["oic.wk.p"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 3},'
+    return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
+    
+    ## introspection
+    return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "/introspection",'
+    return_json = return_json + ' "rt": ["oic.wk.introspection"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 1},'
+    return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
+    
+{%- for path, path_data in json_data['paths'].items() %}
+    return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "{{path}}",'
+    return_json = return_json + ' "rt": ["{{query_rt(json_data,path)}}"],"if":' + '{{query_if(json_data, path)|replace("'",'"')}},'
+    return_json = return_json + ' "p": {"bm": 3}, "eps": [ {"ep": "coap://'+ocf_ip_address+'"}, {"ep": "coaps://'+ocf_ip_address+'"}]}'
+{%- endfor %} 
+    return_json = return_json + " ]"
+    
+    if topic_contains_interface(message.topic,"if=oic.if.baseline"):
+        return_json = return_json + '}]'
+
+    send_ocf_response(client, return_json, ResponseTopic, corrolationData)
+
+def send_oic_introspection_get_response(client, userdata, message, ResponseTopic, corrolationData):
+    
+    return_json = "{"
+    
+    if topic_contains_interface(message.topic,"if=oic.if.baseline"):
+        return_json = return_json + 'rt": ["oic.wk.res"], '
+        return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
+      
+    return_json = return_json + '"urlInfo": [ { "content-type": "application/json", "protocol": "coap", "url": "/ifile"}, '
+    return_json = return_json + '{ "content-type": "application/cbor", "protocol": "coap", "url": "/ifile"}] }'
+
+    send_ocf_response(client, return_json, ResponseTopic, corrolationData)
+
+def send_oic_introspection_get_file_response(client, userdata, message, ResponseTopic, corrolationData):
+    return_json = ""
+    all_queries = "if=oic.if.baseline"
+    print ("send_oic_introspection_file_response: queries:", all_queries)
+      
+    with open(introspectionfile_json, 'rb') as f:
+    #with open(introspectionfile_cbor, 'rb') as f:
+       json_data = f.read()
+              
+    send_ocf_response(client, json_data, ResponseTopic, corrolationData)
+
+{% for path, path_data in json_data['paths'].items() %}
+# class : "{{path}}"
+class c{{path|variablesyntax}}Resource():
+
+    def __init__(self, name="c{{path|variablesyntax}}Resource"):
+        self.resource_type = "{{query_rt(json_data,path)}}"
+        self.path = "{{path}}"[1:]
+        interfaces_array = {{query_if(json_data, path)}}
+        self.interface_type =  str(interfaces_array[0]) + "," + str(interfaces_array[1]) 
+        print (" path:", self.path)
+{%- for methodName, method_data in path_data.items() %}
+{%- if methodName == "get" %} 
+        {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
+{%- if var_data.type == "boolean" %}
+        self.m{{var|variablesyntax}} = True   # boolean
+{%- elif var_data.type == "integer" %}
+        self.m{{var|variablesyntax}} = 0  # integer
+{%- elif var_data.type == "number" %}
+        self.m{{var|variablesyntax}} = 0.0  # number
+{%- elif var_data.type == "string" %}
+        self.m{{var|variablesyntax}} = "mystring"  # string
+{%- else %}
+        self.m{{var|variablesyntax}} = "unknown"  # something else
+{%- endif -%}
+        {% endfor -%}
+{%- endif %}
+
+        
+{%- if methodName == "get" %} 
+
+    def render_GET(self, client, userdata, message, ResponseTopic, corrolationData):
+        json_data = self.create_return_json()
+        print ("  ",json_data)
+        send_ocf_response(client, json_data, ResponseTopic, corrolationData)
+{%- endif %}
+
+{%- if methodName == "post" %} 
+
+    def render_POST(self, client, userdata, message, ResponseTopic, corrolationData):
+        print ("POST {{path}}:", message)
+
+        print ("  CBOR")
+        json_data = get_json_from_cbor_data_from_message(message)
+        print (json_data)
+               
+{%- for var, var_data in query_properties_filtered(json_data, path).items() %}
+        print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
+        self.m{{var|variablesyntax}} = json_data["{{var}}"]
+{%- endfor %}               
+        ret_json_string = self.create_return_json()
+        send_ocf_response(client, ret_json_string, ResponseTopic, corrolationData)
+{%- endif %}
+{%- endfor %} 
+
+    def handle_call(self, url, client, userdata, message, ResponseTopic, corrolationData):
+        print ("{{path}} handling: ", url, self.path)
+        if url == self.path:
+           #logger.log(logging.INFO, "{{path}} handling: " +str(message.topic))
+           topic_split  = message.topic.split("/")
+           cmd = topic_split[-1]
+           if cmd == "R":
+                self.render_GET(client, userdata, message, ResponseTopic, corrolationData)
+{%- for methodName, method_data in path_data.items() %}
+{%- if methodName == "post" %} 
+           elif cmd == "U":
+                self.render_POST(client, userdata, message, ResponseTopic, corrolationData)
+{%- endif %}
+{%- endfor %} 
+           else:
+              print (" {{path}} command not handled:", message)
+
+    def create_return_json(self):
+        """ returned json.
+            
+        """
+        return_json = "{"
+        {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
+        {%- if var_data.type == "boolean" %}
+        return_json = return_json + '"{{var}}" : ' + bool2string(self.m{{var|variablesyntax}}) {{ "+ ','" if not loop.last }}
+        {%- elif var_data.type == "string" %}
+        return_json = return_json + '"{{var}}" : "' + str(self.m{{var|variablesyntax}}) + '"' {{ "+ ','" if not loop.last }}
+        {%- else %}
+        return_json = return_json + '"{{var}}" : ' + str(self.m{{var|variablesyntax}}) {{ "+ ','" if not loop.last }}
+        {%- endif %}
+        {%- endfor %}
+        return_json = return_json + " }"
+        return return_json
+        
+{%- endfor %} 
+
+
+# The MQTTv5 callback takes the additional 'props' parameter.
+def on_connect(client, userdata, flags, rc, props):
+    my_string = "Connected with result code "+str(rc)
+    print("===============")
+    print(my_string)
+    print("flags:", str(flags))
+    #logger.log(logging.INFO, my_string)
+    client.subscribe("$SYS/broker/clients/connected")
+    print(client)
+    print(str(client._client_id))
+    if hasattr(props, 'AssignedClientIdentifier'):
+        client_id = props.AssignedClientIdentifier
+        print("client_id:", client_id)
+
+
+def on_disconnect(mqttc, obj, rc):
+    #mqttc.user_data_set(obj + 1)
+    if obj == 0:
+        mqttc.reconnect()
+
+
+def on_message(client, userdata, message):
+    data = message.payload
+    data_str = "ERROR! not decoded"
+    try:
+        data_str = str(message.payload.decode("utf-8"))
+    except:
+        try:
+            json_data = cbor.loads(data)
+            data_str = json.dumps(json_data, indent=2, sort_keys=True)
+            data_str = "\n" + data_str
+        except:
+            pass
+    print("---------- ")
+    print("message received ", data_str)
+    print("message topic=", message.topic)
+    print("message qos=", message.qos)
+    print("message retain flag=", message.retain)
+    additional_data = " "
+    try:
+        props = message.properties
+        if hasattr(props, 'CorrelationData'):
+            print("correlation ID", props.CorrelationData)
+            additional_data += "correlation ID :" + \
+                str(props.CorrelationData) + " "
+        else:
+            logger.log(logging.ERROR, "no correlation data:"+message.topic)
+            return
+        if hasattr(props, 'ResponseTopic'):
+            print("ResponseTopic ", props.ResponseTopic)
+            additional_data += "Response Topic:" + str(props.ResponseTopic)
+        else:
+            logger.log(logging.ERROR, "no response topic:"+message.topic)
+            return
+    except NameError:
+        pass
+
+    my_string = "received: " + str(message.topic) + " QOS: " + str(
+        message.qos) + " Retain: " + str(message.retain) + " " + additional_data + data_str
+    logger.log(logging.INFO, my_string)
+    topic_split  = message.topic.split("/")
+    cmd = topic_split[-1]
+    if cmd not in ["C","R","U","D","N"]:
+        logger.log(logging.ERROR, "CMD not part of CRUDN:"+cmd)
+        return
+    # create the url, decode and strip the arguments.    
+    url_encoded = topic_split[2].split("?")
+    url = url_encoded[0].replace("%2F","/")
+    if url[0] == "/":
+        url = url[1:]
+    if topic_split[1] == "*":
+        # handle the discovery message
+        logger.log(logging.INFO, "DISCOVERY :"+str(message.topic))
+        if url == "oic/d":
+            send_oic_d_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        elif url == "oic/p":
+            send_oic_p_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        elif url == "oic/res":
+            send_oic_res_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        else:
+            logger.log(logging.ERROR, "URL not handled:")
+    elif topic_split[1] == ocf_di:
+        # handle the directed topic for this device
+        logger.log(logging.INFO, "URL :"+str(url) + " " +str(message.topic))
+        if url == "oic/d":
+            send_oic_d_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        if url == "oic/p":
+            send_oic_p_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        if url == "oic/res":
+            send_oic_res_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        if url == "introspection":
+            send_oic_introspection_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+        if url == "ifile":
+            send_oic_introspection_get_file_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+{%- for path, path_data in json_data['paths'].items() %}
+# class : "{{path}}"
+        client.i{{path|variablesyntax}}Resource.handle_call(url, client, userdata, message, props.ResponseTopic, props.CorrelationData)
+{%- endfor %}            
+
+def on_unsubscribe(client, userdata, mid):
+    print("---------- ")
+    print("unsubscribing ", mid)
+
+
+def random_string():
+    x = uuid.uuid1()
+    return str(x)
+
+
+def main():
+    # commandline arguments to the application, so that the app is quite generic to use.
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-H', '--host', required=False,
+                        default="192.168.178.89")
+    parser.add_argument('-c', '--clientid', required=False, default=None)
+    parser.add_argument('-u', '--username', required=False, default=None)
+    #parser.add_argument('-d', '--disable-clean-session', action='store_true', help="disable 'clean session' (sub + msgs not cleared when client disconnects)")
+    parser.add_argument('-p', '--password', required=False, default=None)
+    parser.add_argument('-P', '--port', required=False, type=int,
+                        default=None, help='Defaults to 8883 for TLS or 1883 for non-TLS')
+    parser.add_argument('-k', '--keepalive',
+                        required=False, type=int, default=60)
+    parser.add_argument('-s', '--use-tls', action='store_true')
+    parser.add_argument('--insecure', action='store_true')
+    parser.add_argument('-F', '--cacerts', required=False, default=None)
+    parser.add_argument('--tls-version', required=False, default=None,
+                        help='TLS protocol version, can be one of tlsv1.2 tlsv1.1 or tlsv1\n')
+    #parser.add_argument('-D', '--debug', action='store_true')
+
+    #args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    #
+    # default values
+    broker = "192.168.178.89"
+    client_id = None
+    usetls = args.use_tls
+
+    #
+    #  handle arguments
+    #
+    broker = args.host
+    if args.clientid == None:
+        client_id = random_string()
+    else:
+        client_id = args.clientid
+    port = args.port    
+    if port is None:
+      if usetls:
+        port = 8883
+      else:
+        port = 1883
+    keep_alive = args.keepalive
+
+    # create the client
+    client = mqtt.Client(client_id, protocol=mqtt.MQTTv5) #, clean_session = not args.disable_clean_session)
+
+    if usetls:
+        if args.tls_version == "tlsv1.2":
+          tlsVersion = ssl.PROTOCOL_TLSv1_2
+        elif args.tls_version == "tlsv1.1":
+          tlsVersion = ssl.PROTOCOL_TLSv1_1
+        elif args.tls_version == "tlsv1":
+          tlsVersion = ssl.PROTOCOL_TLSv1
+        elif args.tls_version is None:
+          tlsVersion = None
+        else:
+          print ("Unknown TLS version - ignoring")
+          tlsVersion = None
+
+        if not args.insecure:
+            cert_required = ssl.CERT_REQUIRED
+        else:
+            cert_required = ssl.CERT_NONE
+            
+        client.tls_set(ca_certs=args.cacerts, certfile=None, keyfile=None, cert_reqs=cert_required, tls_version=tlsVersion)
+
+        if args.insecure:
+            client.tls_insecure_set(True)
+
+    if args.username or args.password:
+       client.username_pw_set(args.username, args.password)
+
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.on_unsubscribe = on_unsubscribe
+    client.on_disconnect = on_disconnect
+    # connect the client, with supplied info
+    client.connect(broker, port, keep_alive)
+    
+    print (" client_ID   : ",client_id)
+    print (" Device type : {{device_type}}")
+    {% for path, path_data in json_data['paths'].items() %}
+    # class : "{{path}}"
+    client.i{{path|variablesyntax}}Resource = c{{path|variablesyntax}}Resource()
+{%- endfor %}   
+    
+    subscribe_topic_udn = "OCF/"+str(client_id)+"/#"
+    print("Subscribing to topic: ", subscribe_topic_udn)
+    my_val = client.subscribe(subscribe_topic_udn, 2)
+    print("subscription succeeded:", my_val)
+ 
+    subscribe_topic_disc = "OCF/*/#"
+    print("Subscribing to topic: ", subscribe_topic_disc)
+    my_val = client.subscribe(subscribe_topic_disc, 2)
+    print("subscription succeeded:", my_val)
+
+    global ocf_piid
+    global ocf_pi
+    global ocf_di
+    ocf_piid = str(client_id)
+    ocf_pi = str(client_id)
+    ocf_di = str(client_id)
+    
+    client.loop_forever()
+
+if __name__ == '__main__':
+    main()

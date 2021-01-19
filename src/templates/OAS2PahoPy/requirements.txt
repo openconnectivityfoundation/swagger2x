@@ -1,0 +1,6 @@
+
+cbor==1.0.0
+jsonschema>=2.5.1
+paho-mqtt
+
+

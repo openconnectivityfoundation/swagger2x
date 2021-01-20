@@ -204,6 +204,13 @@ def send_oic_introspection_get_file_response(client, userdata, message, Response
 {% for path, path_data in json_data['paths'].items() %}
 # class : "{{path}}"
 class c{{path|variablesyntax}}Resource():
+    """
+       class to handle {{path}}
+       - function for GET
+       - function for POST (if exist)
+       - function to detect if GET/POST needs to be handled
+       - function to create the response
+    """
 
     def __init__(self, name="c{{path|variablesyntax}}Resource"):
         self.resource_type = "{{query_rt(json_data,path)}}"
@@ -232,6 +239,10 @@ class c{{path|variablesyntax}}Resource():
 {%- if methodName == "get" %} 
 
     def render_GET(self, client, userdata, message, ResponseTopic, corrolationData):
+        """
+        function to handle the Retrieve (GET) 
+        """
+        print ("GET {{path}}")
         json_data = self.create_return_json()
         print ("  ",json_data)
         send_ocf_response(client, json_data, ResponseTopic, corrolationData)
@@ -240,25 +251,31 @@ class c{{path|variablesyntax}}Resource():
 {%- if methodName == "post" %} 
 
     def render_POST(self, client, userdata, message, ResponseTopic, corrolationData):
-        print ("POST {{path}}:", message)
-
-        print ("  CBOR")
+        """
+        function to handle the Retrieve (GET) 
+        """
+        print ("POST {{path}}")
         json_data = get_json_from_cbor_data_from_message(message)
-        print (json_data)
+        error = False
                
 {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
-        print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
-        self.m{{var|variablesyntax}} = json_data["{{var}}"]
-{%- endfor %}               
-        ret_json_string = self.create_return_json()
-        send_ocf_response(client, ret_json_string, ResponseTopic, corrolationData)
+        if json_data.get("{{var}}") :
+            print ("  assigning self.m{{var|variablesyntax}} :", json_data["{{var}}"])
+            self.m{{var|variablesyntax}} = json_data["{{var}}"]
+        else:
+            print ("  variable does not exist {{var}} in ", json_data)
+            error = True
+{%- endfor %}   
+        if error == False:            
+            # only send something back when there is no error in the input
+            ret_json_string = self.create_return_json()
+            send_ocf_response(client, ret_json_string, ResponseTopic, corrolationData)
 {%- endif %}
 {%- endfor %} 
 
     def handle_call(self, url, client, userdata, message, ResponseTopic, corrolationData):
-        print ("{{path}} handling: ", url, self.path)
         if url == self.path:
-           #logger.log(logging.INFO, "{{path}} handling: " +str(message.topic))
+           # it is our path, so do someting with it
            topic_split  = message.topic.split("/")
            cmd = topic_split[-1]
            if cmd == "R":
@@ -379,7 +396,7 @@ def on_message(client, userdata, message):
         if url == "oic/d":
             send_oic_d_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
         if url == "oic/p":
-            send_oic_p_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
+            send_oic_p_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
         if url == "oic/res":
             send_oic_res_get_response(client, userdata, message, props.ResponseTopic, props.CorrelationData)
         if url == "introspection":

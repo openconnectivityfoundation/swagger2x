@@ -1,4 +1,4 @@
-# Template: IoTivity  OCF server
+# Template: IoTivity OCF server
 
 ## Introduction
 
@@ -10,7 +10,7 @@ The generated code is a good start to hook up all the hardware that that the pro
 
 ## Table of Contents
 
-- [Template: IoTivity  OCF server](#template-iotivity-ocf-server)
+- [Template: IoTivity OCF server](#template-iotivity-ocf-server)
   - [Introduction](#introduction)
   - [Table of Contents](#table-of-contents)
   - [Generic concept](#generic-concept)
@@ -40,7 +40,7 @@ The functions and global variable have a naming convention that allows that mult
   - RETRIEVE (GET)
     - creates the response by using the global variables intialized at start up.
   - UPDATE (POST)
-    - checks if the incoming request is valid 
+    - checks if the incoming request is valid
     - updates the global variables by using the values of the incoming request
     - creates the response by using the global variables
 

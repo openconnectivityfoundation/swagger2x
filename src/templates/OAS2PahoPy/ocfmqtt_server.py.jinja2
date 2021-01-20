@@ -243,7 +243,7 @@ class c{{path|variablesyntax}}Resource():
         function to handle the Retrieve (GET) 
         """
         print ("GET {{path}}")
-        json_data = self.create_return_json()
+        json_data = self.create_return_json(message)
         print ("  ",json_data)
         send_ocf_response(client, json_data, ResponseTopic, corrolationData)
 {%- endif %}
@@ -268,7 +268,7 @@ class c{{path|variablesyntax}}Resource():
 {%- endfor %}   
         if error == False:            
             # only send something back when there is no error in the input
-            ret_json_string = self.create_return_json()
+            ret_json_string = self.create_return_json(message)
             send_ocf_response(client, ret_json_string, ResponseTopic, corrolationData)
 {%- endif %}
 {%- endfor %} 
@@ -289,11 +289,14 @@ class c{{path|variablesyntax}}Resource():
            else:
               print (" {{path}} command not handled:", message)
 
-    def create_return_json(self):
+    def create_return_json(self, message):
         """ returned json.
             
         """
         return_json = "{"
+        if topic_contains_interface(message.topic,"if=oic.if.baseline"):
+          return_json = return_json + '"rt": ["{{query_rt(json_data,path)}}"]'+","
+          return_json = return_json + '"if": {{query_if(json_data, path)|replace("'",'"')}}'+","
         {%- for var, var_data in query_properties_filtered(json_data, path).items() -%}
         {%- if var_data.type == "boolean" %}
         return_json = return_json + '"{{var}}" : ' + bool2string(self.m{{var|variablesyntax}}) {{ "+ ','" if not loop.last }}

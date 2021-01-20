@@ -75,8 +75,7 @@ The functions and global variable have a naming convention that allows that mult
   - Resource handling functions:
     - get_&lt;resource path&gt;
       - Function to convert the global variables to the response document.
-        - Note: always returns the same document, regardless of the  interface.
-        - This works for testcase CT1.2.2.
+        - uses "if" to generate the appropriate set of return values
         - Handles JSON property types as part of the resource type specification:
           - boolean
           - integer

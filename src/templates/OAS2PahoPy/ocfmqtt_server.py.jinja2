@@ -110,11 +110,8 @@ def send_ocf_response(client, return_json, topic, corrolationData):
 
 def send_oic_d_get_response(client, userdata, message, ResponseTopic, corrolationData):
     return_json = ""
-    all_queries = "if=oic.if.baseline"
-    print ("send_oic_d_response: queries:", all_queries)
-
+    print ("send_oic_d_response")
     return_json = return_json +  '{ "n": "{{json_data['info']['title']}}",'
-    #if all_queries == "if=oic.if.baseline":
     return_json = return_json + '"rt": ["oic.wk.d","{{device_type}}"],'
     return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
     return_json = return_json + '"icv": "ocf.2.0.2", '
@@ -127,10 +124,7 @@ def send_oic_d_get_response(client, userdata, message, ResponseTopic, corrolatio
 
 
 def send_oic_p_get_response(client, userdata, message, ResponseTopic, corrolationData):
-    return_json = ""
-    
     return_json = '{ '
-    #if topic_contains_interface(message.topic,"if=oic.if.baseline"):
     return_json = return_json + '"rt": ["oic.wk.p"],'
     return_json = return_json + '"if": ["oic.if.r", "oic.if.baseline"],'
     return_json = return_json + '"mnmn": "OCF",'
@@ -160,7 +154,7 @@ def send_oic_res_get_response(client, userdata, message, ResponseTopic, corrolat
     return_json = return_json + ' "rt": ["oic.wk.p"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 3},'
     return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'
     
-    ## introspection
+    # introspection
     return_json = return_json + ',{ "anchor": "ocf://'+ocf_piid+ '", "href": "/introspection",'
     return_json = return_json + ' "rt": ["oic.wk.introspection"], "if": ["oic.if.r", "oic.if.baseline"], "p": {"bm": 1},'
     return_json = return_json + ' "eps": [ {"ep": "coap://'+ocf_ip_address+'"},{"ep": "coaps://'+ocf_ip_address+'"} ] }'

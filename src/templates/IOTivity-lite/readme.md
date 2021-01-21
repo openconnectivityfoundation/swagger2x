@@ -95,8 +95,9 @@ The functions and global variable have a naming convention that allows that mult
               - see object what an object can contain.
           - handles query parameters:
             - always as type of string.
-            - Ff there is an enum, the input value is checked against the enum.
-            - NOTE the code needs to be changed to add the behaviour of what the enum should do.
+            - If there is an enum, the input value is checked against the enum.
+            - list the pattern if exists
+            - NOTE the code needs to be changed to add the behaviour of what the query parameter should do.
       - post_&lt;resource path&gt;
         - Function to convert the input request document to the member variables.
         - Checks if input is correct :
@@ -124,6 +125,12 @@ The functions and global variable have a naming convention that allows that mult
             - As strings
             - If there is an enum, the input value is checked against the enum
             - NOTE the code needs to be changed to add the behaviour of what the enum should do
+      - delete_&lt;resource path&gt;
+        - Function callback for DELETE
+        - generates code for arguments checking.
+          - checks if an enum exists
+          - list the pattern if exists
+        - Note: all semantics of this function needs to be implemented.
   - Global variables.
     For each resource a set of global variables are created.
     Global variables exist for:
@@ -174,7 +181,7 @@ Note that the code stores the credential information under ./devicebuilderserver
 
 The following constructs/mechanisms are not supported:
 
-- Creation/deletion of resources (PUT/DELETE functions)
+- Creation of resources (PUT)
 - Handling in get/post of:
   - recursively arrays of arrays, arrays of objects, object within objects
 

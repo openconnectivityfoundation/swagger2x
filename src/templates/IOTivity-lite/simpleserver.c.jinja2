@@ -116,8 +116,21 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
   PRINT("     Default OCF Interface: '{{interfaces[0]}}'\n");
 {%- endmacro %}
 
+
 {%- macro get_args(my_data, my_path) -%}
- {%- for var, var_data in query_properties_filtered(my_data, my_path).items() -%}
+ {%- for var, var_data in query_properties_filtered_get(my_data, my_path).items() -%}
+    {{ args(my_data, my_path, var, var_data) }}
+ {%- endfor %}
+{%- endmacro %}
+
+
+{%- macro post_args(my_data, my_path) -%}
+ {%- for var, var_data in query_properties_filtered_post(my_data, my_path).items() -%}
+   {{ args(my_data, my_path, var, var_data) }}
+ {%- endfor %}
+{%- endmacro %}
+
+{%- macro args(my_data, my_path, var, var_data) -%}
     {%- if var_data.type == "boolean" %}
     /* property (boolean) '{{var}}' */
     oc_rep_set_boolean(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
@@ -243,7 +256,6 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
     {%- endfor %}
     oc_rep_close_object(root, {{var}});
     {%- endif %}
-    {%- endfor %}
 {%- endmacro %}
 
 
@@ -505,6 +517,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   if ({{item.name|variablesyntax}}_len != -1) {
     PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
     bool query_ok = false;
+	/* input check {{item.enum}} {{item.pattern}} */
   {% for enum_value in item.enum %}
     if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
   {%- endfor %}
@@ -1008,6 +1021,53 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
 {% endfor -%}
 {%- endfor %}  
 
+{% for path, path_data in json_data['paths'].items() -%}
+{% for methodName, method_data in path_data.items() -%}
+{% if methodName == "delete" %} 
+/**
+* delete method for "{{path}}" resource.
+* Resource Description:
+{{method_data.description | code_indent("* ")}}
+*
+* @param request the request representation.
+* @param interfaces the used interfaces during the request.
+* @param user_data the supplied user data.
+*/
+static void
+delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
+{
+  (void)request;
+  (void)interfaces;
+  (void)user_data;
+  bool error_state = false;
+   {% set query_list = list_query_params_delete(json_data, path)  %}
+  {%- for item in query_list %}
+  /* query name '{{item.name}}' type: '{{item.type}}'*/
+  char *{{item.name|variablesyntax}} = NULL; /* not null terminated {{item.description}} */
+  int {{item.name|variablesyntax}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name|variablesyntax}});
+  if ({{item.name|variablesyntax}}_len != -1) {
+    bool query_ok = false;
+	/* input check {{item.enum}} {{item.pattern}} */
+  {% for enum_value in item.enum %}
+    if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
+  {%- endfor %}
+    if (query_ok == false) error_state = true;
+    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
+    /* TODO: use the query value to tailer the response*/
+  }
+  {%- endfor %}
+  if (error_state == false) {
+    oc_send_response(request, OC_STATUS_OK);
+  }
+  else {
+    oc_send_response(request, OC_STATUS_BAD_OPTION);
+  }
+  PRINT("-- End delete{{path|variablesyntax}}\n");
+}
+{% endif -%}
+{% endfor -%}
+{%- endfor %}  
+
 /**
 * register all the resources to the stack
 * this function registers all application level resources:
@@ -1049,6 +1109,9 @@ register_resources(void)
   {% endif -%}
   {% if methodName == "put" %} 
   oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_PUT, put{{path|variablesyntax}}, NULL);
+  {%- endif %}
+  {% if methodName == "delete" %} 
+  oc_resource_set_request_handler(res{{path|variablesyntax}}, OC_DELETE, delete{{path|variablesyntax}}, NULL);
   {%- endif %}
 #ifdef OC_CLOUD
   oc_cloud_add_resource(res{{path|variablesyntax}});

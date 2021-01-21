@@ -532,7 +532,6 @@ def swagger_property_names(json_data, input_path):
     """
     prop_values = []
     schema = None
-    #print("swagger_property_names: path:", input_path)
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             try:
@@ -543,20 +542,18 @@ def swagger_property_names(json_data, input_path):
                 except:
                     pass
             if schema is not None:
-                #print("swagger_property_names: schema", schema)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name == schema["$ref"]:
-                        #print("swagger_property_names: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
-                        #print("swagger_property_names: found", prop_block)
                         if prop_block is not None:
                             for prop_name, prop in prop_block.items():
                                 prop_values.append(prop_name)
             else:
                 print("swagger_property_names: schema not found:", input_path)
     return prop_values
+
 
 def swagger_properties(json_data, input_path):
     """
@@ -567,6 +564,41 @@ def swagger_properties(json_data, input_path):
     """
     prop_block = []
     #print("swagger_properties: path:", input_path)
+    schema = None
+    for path, path_item in json_data["paths"].items():
+        if input_path == path:
+            try:
+                schema = path_item["get"]["responses"]["200"]["schema"]
+            except:
+                try:
+                    schema = path_item["post"]["responses"]["200"]["schema"]
+                except:
+                    pass
+            if schema is not None:
+                schema_ref = schema["$ref"]
+                #print("swagger_properties: schema", schema, schema_ref)
+                def_data = json_data["definitions"]
+                for def_name, def_item in def_data.items():
+                    full_def_name = "#/definitions/" + def_name
+                    if full_def_name in [schema_ref]:
+                        #print("swagger_properties: found", def_item)
+                        prop_block = find_key_link(def_item, "properties")
+                        #for var, var_data in prop_block.items():
+                        #    print ("  swagger_properties var:", var)
+                        return prop_block
+            else:
+                print("swagger_properties: schema not found:", input_path)
+    return prop_block
+
+def swagger_properties_get(json_data, input_path):
+    """
+    get the properties  from the schema that is referenced by the path in get (or post)
+    :param json_data: the swagger file as json struct
+    :param input_path: the path to which the if should be queried
+    :return: list of if values
+    """
+    prop_block = []
+    #print("swagger_properties_get: path:", input_path)
     schema = None
     for path, path_item in json_data["paths"].items():
         if input_path == path:
@@ -607,7 +639,6 @@ def swagger_properties_post(json_data, input_path):
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             try:
-                #schema = path_item["post"]["responses"]["200"]["schema"]
                 schema_param = path_item["post"]["parameters"]
                 for item in schema_param:
                     schema_found = item.get("schema")
@@ -620,15 +651,11 @@ def swagger_properties_post(json_data, input_path):
                     pass
             if schema is not None:
                 schema_ref = schema["$ref"]
-                #print("swagger_properties_post: schema", schema, schema_ref)
                 def_data = json_data["definitions"]
                 for def_name, def_item in def_data.items():
                     full_def_name = "#/definitions/" + def_name
                     if full_def_name in [schema_ref]:
-                        #print("swagger_properties_post: found", def_item)
                         prop_block = find_key_link(def_item, "properties")
-                        #for var, var_data in prop_block.items():
-                        #    print ("  swagger_properties_post
             else:
                 print("swagger_properties_post: schema not found:", input_path)
     return prop_block
@@ -674,37 +701,47 @@ def swagger_required_items(json_data, input_path):
     
 def swagger_properties_filtered(json_data, input_path):
     """
+      returns the properties of "GET & POST 200".
+      remove common properties & resource properties from the list of properties in the resource
+      see Resource spec
+    """
+    properties_list_get =  swagger_properties_get(json_data, input_path)
+    properties_list_post =  swagger_properties_post(json_data, input_path)
+    my_dict = OrderedDict()
+    for item, item_val in properties_list_get.items():
+        if item not in ["n", "if", "rt", "id"]:
+            my_dict[item] = item_val
+    for item, item_val in properties_list_post.items():
+        if item not in ["n", "if", "rt", "id"]:
+            my_dict[item] = item_val
+            
+    return my_dict
+    
+
+def swagger_properties_filtered_get(json_data, input_path):
+    """
       returns the properties of "GET 200".
       remove common properties & resource properties from the list of properties in the resource
       see Resource spec
     """
-    properties_list =  swagger_properties(json_data, input_path)
+    properties_list =  swagger_properties_get(json_data, input_path)
     my_dict = OrderedDict()
     for item, item_val in properties_list.items():
-        #if item not in ["n", "if", "rt", "id", "range", "step", "precision"]:
-        if item not in ["n", "if", "rt", "id"]:
-            #type = item_val.get("type")
-            #if type != None:
+        if item not in ["n", "if", "rt", "id" ]:
             my_dict[item] = item_val
-            #print ("swagger_properties_filtered: ", item, item_val)
-
-    return my_dict
-    
+    return my_dict    
     
 def swagger_properties_filtered_post(json_data, input_path):
     """
+      returns the properties of "POST 200".
       remove common properties & resource properties from the list of properties in the resource
       see Resource spec
     """
     properties_list =  swagger_properties_post(json_data, input_path)
     my_dict = OrderedDict()
     for item, item_val in properties_list.items():
-        #if item not in ["n", "if", "rt", "id", "range", "step", "precision" ]:
         if item not in ["n", "if", "rt", "id" ]:
-            #type = item_val.get("type")
-            #if type != None:
             my_dict[item] = item_val
-            #print ("swagger_properties_filtered_post: ", item, item_val)
     return my_dict
     
 
@@ -741,7 +778,7 @@ def query_path(parse_tree, my_path, value):
     except:
         return ""
 
-def list_query_params(json_data, input_path):
+def list_query_params(json_data, input_path, operation="get"):
     """
     list all query param blocks
     """
@@ -749,7 +786,7 @@ def list_query_params(json_data, input_path):
     for path, path_item in json_data["paths"].items():
         if input_path == path:
             try:
-                params = path_item["get"]["parameters"]
+                params = path_item[operation]["parameters"]
                 for item in params:
                     if item.get("in") == "query":
                         #print (  " param in of", item_name, item.get("in"))
@@ -774,6 +811,12 @@ def list_query_params(json_data, input_path):
     #print (query_params)
     return query_params
     
+def list_query_params_post(json_data, input_path):
+    return list_query_params(json_data, input_path, operation="post")
+    
+
+def list_query_params_delete(json_data, input_path):
+    return list_query_params(json_data, input_path, operation="delete")
 
 
 #
@@ -1504,7 +1547,7 @@ def sdf_verify_writeable_properties(json_data):
     """
     input_path = sdf_return_path_info(json_data, "path")
     postList = swagger_properties_filtered_post(json_data, input_path)
-    getList = swagger_properties_filtered(json_data, input_path)
+    getList = swagger_properties_filtered_get(json_data, input_path)
     if postList == getList:
         print("Lists are the same")
     else:
@@ -1769,11 +1812,18 @@ try:
         template_environment.globals['swagger_property_data_schema'] = swagger_property_data_schema
         template_environment.globals['query_properties'] = swagger_properties
         template_environment.globals['query_properties_post'] = swagger_properties_post
-        template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
+        template_environment.globals['query_properties_get'] = swagger_properties_get
+        
+        template_environment.globals['query_properties_filtered'] = swagger_properties_filtered # old function for backwards compatibiltiy
         template_environment.globals['query_properties_filtered_post'] = swagger_properties_filtered_post
+        template_environment.globals['query_properties_filtered_get'] = swagger_properties_filtered_get
+        
         template_environment.globals['query_required_items'] = swagger_required_items
         
-        template_environment.globals['list_query_params'] = list_query_params
+        template_environment.globals['list_query_params'] = list_query_params  # old function for backwards compatibiltiy
+        template_environment.globals['list_query_params_get'] = list_query_params
+        template_environment.globals['list_query_params_post'] = list_query_params_post
+        template_environment.globals['list_query_params_delete'] = list_query_params_delete
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict

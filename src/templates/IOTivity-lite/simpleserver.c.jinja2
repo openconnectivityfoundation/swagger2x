@@ -411,7 +411,7 @@ int g{{path|variablesyntax}}_nr_resource_types = {{query_rt(json_data, path)|con
 * function to set up the device.
 *
 */
-static int
+int
 app_init(void)
 {
   int ret = oc_init_platform("{{manufacturer}}", NULL, NULL);
@@ -1079,7 +1079,7 @@ delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfa
 *   - used interfaces, including the default interface.
 *     default interface is the first of the list of interfaces as specified in the input file
 */
-static void
+void
 register_resources(void)
 {
 {% for path, path_data in json_data['paths'].items() %}

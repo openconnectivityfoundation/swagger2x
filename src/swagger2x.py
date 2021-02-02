@@ -853,7 +853,7 @@ def variablesyntax(input_string):
     :param input_string: string to be adjusted
     :return: adjusted string
     """
-    chars_to_replace = "/\  +-*^|%$=~@()[].,"
+    chars_to_replace = "/\  +-*^|%$=~@()[].,?"
     return "_"+replace_chars(input_string, chars_to_replace )
 
 #

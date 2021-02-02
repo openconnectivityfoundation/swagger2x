@@ -338,30 +338,8 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
     }
 {%- endmacro %}
 
-{%- macro handle_query(my_data, my_path) -%}
- {% set query_list = list_query_params(my_data, my_path)  %}
-  {%- for item in query_list %}
-  /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
-  char *{{item.name|variablesyntax}} = NULL; /* not null terminated {{item.description}} */
-  int {{item.name|variablesyntax}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name|variablesyntax}});
-  if ({{item.name|variablesyntax}}_len != -1) {
-    PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
-    bool query_ok = false;
-	/* input check {{item.enum}} {{item.pattern}} */
-  {% for enum_value in item.enum %}
-    if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
-  {%- endfor %}
-    if (query_ok == false) error_state = true;
-    
-    /* TODO: use the query value to tailer the response*/
-  }
-  {%- endfor %}
-{%- endmacro %}
 
-
-
-
-{% for path, path_data in json_data['paths'].items() %}
+{% for path, path_data in json_data['paths'].items() if "?" not in path %}
 /* global property variables for path: "{{path}}" */
 {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist(json_data, path, "oic.if.startup.revert") %}
 int g{{path|variablesyntax}}_storage_status = 0;  /* 0=no storage, 1=startup, 2=startup.revert */ 
@@ -778,7 +756,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       bool *temp_array = 0;  
       oc_rep_get_bool_array(rep, "{{var}}", &temp_array, &array_size);
       {% elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
-      int *temp_array = 0;  
+      int64_t *temp_array = 0;  
       oc_rep_get_int_array(rep, "{{var}}", &temp_array, &array_size);
       {% elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
       double *temp_array = 0;  
@@ -897,7 +875,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
           if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
               /* retrieve the array pointer to the int array of of property "{{var}}"
                  note that the variable g{{path|variablesyntax}}{{var|variablesyntax}}_array_size will contain the array size in the payload. */
-              integer *temp_integer = 0;
+              int64_t *temp_integer = 0;
               oc_rep_get_int_array(rep, "{{var}}", &temp_integer, &g{{path|variablesyntax}}{{var|variablesyntax}}_array_size);
               /* copy over the data of the retrieved array to the global variable */
               for (int j = 0; j < (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; j++) {
@@ -1202,7 +1180,7 @@ initialize_variables(void)
 {%- if query_if_exist_all(json_data, "oic.if.startup") or query_if_exist_all(json_data, "oic.if.startup.revert") %}
   int ret_size = 0;
 {%- endif %}
-{%- for path, path_data in json_data['paths'].items() %}
+{%- for path, path_data in json_data['paths'].items() if "?" not in path %}
   /* initialize global variables for resource "{{path}}" */
 {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist(json_data, path, "oic.if.startup.revert") %}
   oc_storage_read("g{{path|variablesyntax}}_storage_status", (uint8_t*)&g{{path|variablesyntax}}_storage_status, sizeof(g{{path|variablesyntax}}_storage_status));

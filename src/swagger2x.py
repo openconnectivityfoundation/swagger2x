@@ -372,7 +372,7 @@ def swagger_rt(json_data):
 
 def swagger_if(json_data, input_path):
     """
-    get the if value from the schema that is referenced by the path in get (or put)
+    get the if value from the schema that is referenced by the path in get (or post)
     :param json_data: the swagger file as json struct
     :param input_path: the path to which the if should be queried
     :return: list of if values
@@ -382,7 +382,7 @@ def swagger_if(json_data, input_path):
 
 def swagger_if_exist(json_data, input_path, if_value):
     """
-    checks the if_value from the schema that is referenced by the path in get (or put)
+    checks the if_value from the schema that is referenced by the path in get (or post)
     :param json_data: the swagger file as json struct
     :param input_path: the path to which the if should be queried
     :param if_value: value to be checked if it exist
@@ -409,7 +409,7 @@ def swagger_if_exist_all(json_data, if_value):
 
 def swagger_property_data_schema(json_data, input_path, name):
     """swagger_property_data_schema
-    get the value of the property name from the schema that is referenced by the path in get (or put)
+    get the value of the property name from the schema that is referenced by the path in get (or post)
     it tries to get first the enum values or the default value.
     if this is not found then it will try to get the value from the example
     :param json_data: the swagger file as json struct
@@ -562,7 +562,7 @@ def swagger_properties_get(json_data, input_path):
     :param input_path: the path to which the if should be queried
     :return: list of if values
     """
-    prop_block = []
+    prop_block = {}
     schema = None
     for path, path_item in json_data["paths"].items():
         if input_path == path:
@@ -593,7 +593,7 @@ def swagger_properties_post(json_data, input_path):
     :param input_path: the path to which the if should be queried
     :return: list of if values
     """
-    prop_block = []
+    prop_block = {}
     schema = None
     for path, path_item in json_data["paths"].items():
         if input_path == path:
@@ -684,9 +684,10 @@ def swagger_properties_filtered_get(json_data, input_path):
     """
     properties_list =  swagger_properties_get(json_data, input_path)
     my_dict = OrderedDict()
-    for item, item_val in properties_list.items():
-        if item not in ["n", "if", "rt", "id" ]:
-            my_dict[item] = item_val
+    if properties_list is not None:
+        for item, item_val in properties_list.items():
+            if item not in ["n", "if", "rt", "id" ]:
+                my_dict[item] = item_val
     return my_dict    
     
 def swagger_properties_filtered_post(json_data, input_path):
@@ -697,13 +698,12 @@ def swagger_properties_filtered_post(json_data, input_path):
     """
     properties_list =  swagger_properties_post(json_data, input_path)
     my_dict = OrderedDict()
-    for item, item_val in properties_list.items():
-        if item not in ["n", "if", "rt", "id" ]:
-            my_dict[item] = item_val
+    if properties_list is not None:
+        for item, item_val in properties_list.items():
+            if item not in ["n", "if", "rt", "id" ]:
+                my_dict[item] = item_val
     return my_dict
     
-
-
 def retrieve_rt_from_path(parse_tree, path):
     """
     find the rt from path level

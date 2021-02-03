@@ -517,12 +517,11 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   if ({{item.name|variablesyntax}}_len != -1) {
     PRINT (" query value '{{item.name}}': %.*s\n", {{item.name|variablesyntax}}_len, {{item.name|variablesyntax}});
     bool query_ok = false;
-	/* input check {{item.enum}} {{item.pattern}} */
+    /* input check {{item.enum}} {{item.pattern}} */
   {% for enum_value in item.enum %}
     if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
   {%- endfor %}
     if (query_ok == false) error_state = true;
-    
     /* TODO: use the query value to tailer the response*/
   }
   {%- endfor %}
@@ -921,25 +920,25 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       /*oc_process_baseline_interface(request->resource); */
       {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
       {%- if var_data.type == "boolean" %}
-	  PRINT("   %s : %s", g{{path|variablesyntax}}{{var|variablesyntax}}, btoa(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      PRINT("   %s : %s", g{{path|variablesyntax}}{{var|variablesyntax}}, btoa(g{{path|variablesyntax}}{{var|variablesyntax}}));
       oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
-	  {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
+      {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}
       {%- elif var_data.type == "number" %}
-	  PRINT("   %s : %f\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
+      PRINT("   %s : %f\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
       oc_rep_set_double(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} ); 
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}
       {%- elif var_data.type == "integer" %}
-	  PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
+      PRINT("   %s : %d\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
       oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
       {%- endif %}	
       {%- elif var_data.type == "string" %}
-	  PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
+      PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
       oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
@@ -1423,14 +1422,14 @@ int init;
   PRINT("Intialize Secure Resources\n");
 #ifdef WIN32
 #ifdef OC_CLOUD
-  PRINT("\t storage at './cloudserver_creds' \n");
+  PRINT("\tstorage at './cloudserver_creds' \n");
   oc_storage_config("./cloudserver_creds");
 #else
-  PRINT("\t storage at './simpleserver_creds' \n");
+  PRINT("\tstorage at './simpleserver_creds' \n");
   oc_storage_config("./simpleserver_creds/");
 #endif
 #else
-  PRINT("\t storage at './device_builder_server_creds' \n");
+  PRINT("\tstorage at './device_builder_server_creds' \n");
   oc_storage_config("./device_builder_server_creds");
 #endif
 

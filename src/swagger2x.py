@@ -664,12 +664,14 @@ def swagger_properties_filtered(json_data, input_path):
     properties_list_get =  swagger_properties_get(json_data, input_path)
     properties_list_post =  swagger_properties_post(json_data, input_path)
     my_dict = OrderedDict()
-    for item, item_val in properties_list_get.items():
-        if item not in ["n", "if", "rt", "id"]:
-            my_dict[item] = item_val
-    for item, item_val in properties_list_post.items():
-        if item not in ["n", "if", "rt", "id"]:
-            my_dict[item] = item_val
+    if properties_list_get is not None:
+        for item, item_val in properties_list_get.items():
+            if item not in ["n", "if", "rt", "id"]:
+                my_dict[item] = item_val
+    if properties_list_post is not None:
+        for item, item_val in properties_list_post.items():
+            if item not in ["n", "if", "rt", "id"]:
+                my_dict[item] = item_val
             
     return my_dict
     

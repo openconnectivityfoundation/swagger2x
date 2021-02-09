@@ -38,6 +38,8 @@ import json
 from json.decoder import JSONDecodeError
 import cbor
 
+import configparser
+import os.path
 import argparse
 
 import tkinter as tk
@@ -55,6 +57,9 @@ ocf_ip_address=""
 #ocf_device_type="oic.d.light"
 introspectionfile_json="../out_introspection_merged.swagger.json"
 introspectionfile_cbor="../out_introspection_merged.swagger.json.cbor"
+
+same_introspectionfile_json="out_introspection_merged.swagger.json"
+same_introspectionfile_cbor="out_introspection_merged.swagger.json.cbor"
 
 def topic_contains_interface(request_topic, if_string):
 
@@ -188,10 +193,16 @@ def send_oic_introspection_get_file_response(client, userdata, message, Response
     return_json = ""
     all_queries = "if=oic.if.baseline"
     print ("send_oic_introspection_file_response: queries:", all_queries)
-      
-    with open(introspectionfile_json, 'rb') as f:
-    #with open(introspectionfile_cbor, 'rb') as f:
-       json_data = f.read()
+    
+    if  os.path.exists(introspectionfile_json):
+        with open(introspectionfile_json, 'rb') as f:
+          #with open(introspectionfile_cbor, 'rb') as f:
+          json_data = f.read()
+    else:
+        with open(same_introspectionfile_json, 'rb') as f:
+          #with open(introspectionfile_cbor, 'rb') as f:
+          json_data = f.read()
+    
               
     send_ocf_response(client, json_data, ResponseTopic, corrolationData)
 
@@ -419,25 +430,35 @@ def main():
     # commandline arguments to the application, so that the app is quite generic to use.
     parser = argparse.ArgumentParser()
     parser.add_argument('-H', '--host', required=False,
-                        default="192.168.178.89")
-    parser.add_argument('-c', '--clientid', required=False, default=None)
+                        default="192.168.178.89", help="The host name or ip address of the MQTT server")
+    parser.add_argument('-c', '--clientid', required=False, default=None, help="The MQTT client id")
     parser.add_argument('-u', '--username', required=False, default=None)
     #parser.add_argument('-d', '--disable-clean-session', action='store_true', help="disable 'clean session' (sub + msgs not cleared when client disconnects)")
     parser.add_argument('-p', '--password', required=False, default=None)
+    parser.add_argument('-rc', '--readconfig', required=False, default=None, help="Reads the configuration file with a specific filename")
     parser.add_argument('-P', '--port', required=False, type=int,
                         default=None, help='Defaults to 8883 for TLS or 1883 for non-TLS')
     parser.add_argument('-k', '--keepalive',
-                        required=False, type=int, default=60)
+                        required=False, type=int, default=60, help="The keep alive interval in seconds.")
     parser.add_argument('-s', '--use-tls', action='store_true')
     parser.add_argument('--insecure', action='store_true')
-    parser.add_argument('-F', '--cacerts', required=False, default=None)
+    parser.add_argument('-F', '--cacerts', required=False, default=None, help="the certificate file name")
     parser.add_argument('--tls-version', required=False, default=None,
                         help='TLS protocol version, can be one of tlsv1.2 tlsv1.1 or tlsv1\n')
-    #parser.add_argument('-D', '--debug', action='store_true')
 
-    #args = parser.parse_args()
+    print("===============")
     args, unknown = parser.parse_known_args()
 
+    config = configparser.RawConfigParser()
+    if  os.path.exists('mqtt.config'):
+        config.read('mqtt.config')
+    elif args.readconfig is not None:
+       if  os.path.exists(args.readconfig ):
+         config.read(args.readconfig )
+         print("Reading config file ", args.readconfig)
+    else:
+       config = None
+       
     logging.basicConfig(level=logging.DEBUG)
 
     #
@@ -449,23 +470,47 @@ def main():
     #
     #  handle arguments
     #
+ #
+    #  handle arguments, do this as default
+    #
     broker = args.host
     if args.clientid == None:
         client_id = random_string()
+        if config is None:
+          print("RANDOM Client_id :", client_id)
     else:
         client_id = args.clientid
-    port = args.port    
+    port = args.port 
+    usetls = args.use_tls   
+    cacerts = None
     if port is None:
-      if usetls:
-        port = 8883
-      else:
-        port = 1883
+        if usetls:
+            port = 8883
+        else:
+            port = 1883
     keep_alive = args.keepalive
+    if config is not None:
+        print ("  Reading Config file:")
+        broker = config['MQTT']['host']
+        if config.has_option('MQTT','port'):
+            port = int(config['MQTT']['port'])
+        if config.has_option('MQTT','client_id'):
+            client_id = config['MQTT']['client_id']
+        if config.has_option('MQTT','keepalive'):
+            keep_alive = int( config['MQTT']['keepalive'])
+        if config.has_option('Security','cacerts'):
+            cacerts = config['Security']['cacerts']
+            usetls = 1
+
+    print("  Broker/Host :", broker)
+    print("  Client_id   :", client_id)
+    print("  port        :", port)
+    print("  keep_alive  :", keep_alive)
 
     # create the client
     client = mqtt.Client(client_id, protocol=mqtt.MQTTv5) #, clean_session = not args.disable_clean_session)
 
-    if usetls:
+    if usetls and config is None:
         if args.tls_version == "tlsv1.2":
           tlsVersion = ssl.PROTOCOL_TLSv1_2
         elif args.tls_version == "tlsv1.1":
@@ -487,6 +532,14 @@ def main():
 
         if args.insecure:
             client.tls_insecure_set(True)
+    elif usetls and config:
+        tlsVersion = None
+        cert_required = ssl.CERT_REQUIRED
+        if cacerts is not None:
+            # setting tls connection
+            print (" Setting TLS connection with certificate:", cacerts)
+            err_code = client.tls_set(ca_certs=cacerts, certfile=None, keyfile=None, cert_reqs=cert_required, tls_version=tlsVersion)
+            print (" Err",err_code)
 
     if args.username or args.password:
        client.username_pw_set(args.username, args.password)
@@ -496,7 +549,9 @@ def main():
     client.on_unsubscribe = on_unsubscribe
     client.on_disconnect = on_disconnect
     # connect the client, with supplied info
-    client.connect(broker, port, keep_alive)
+    print (" Connecting..")
+    err_code = client.connect(broker, port, keep_alive)
+    print (" Err",err_code)
     
     print (" client_ID   : ",client_id)
     print (" Device type : {{device_type}}")

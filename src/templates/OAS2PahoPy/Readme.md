@@ -17,6 +17,7 @@ The generated code is a good start to hook up all the hardware that that the pro
   - [Generic concept](#generic-concept)
   - [What is generated](#what-is-generated)
     - [Introspection Device Data (IDD)](#introspection-device-data-idd)
+  - [Config file](#config-file)
   - [security](#security)
 
 ## Generic concept
@@ -97,10 +98,29 @@ The functions and global variable have a naming convention that allows that mult
 
 The IDD is generated, and can be imported in the code via:
 
-- reading a file from disk
-- The idd file is located 1 folder up in the hierarchy
+- reading a file from disk in JSON format with name out_introspection_merged.swagger.json
+- can be located in the same folder as the python file
+- can be located 1 folder up in the hierarchy
   
 The default setup is reading the IDD file from disk.
+
+## Config file
+
+The default config file is "mqtt.config". A specific config file can be loaded with option -rc.
+
+Config file will read the configuration data for:
+MQTT:
+
+- Host the host name or ip address of the MQTT server
+- port, server port to be used
+- client_id, the client id, not set then a random uuid will be generated
+- keepalive, the keep alive for the TCP/TLS connection
+
+Security:
+
+- cacerts, the file name of the certificate file.
+
+The config file is read from the same location as the python script.
 
 ## security
 

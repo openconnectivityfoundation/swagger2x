@@ -102,6 +102,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
  {%- elif interface == "oic.if.ll" %} OC_IF_LL
  {%- elif interface == "oic.if.startup" %} OC_IF_STARTUP
  {%- elif interface == "oic.if.startup.revert" %} OC_IF_STARTUP_REVERT
+ {%- elif interface == "oic.if.w" %} OC_IF_W
  {% else %}
     /* {{interface}} not handled */
  {%- endif %}

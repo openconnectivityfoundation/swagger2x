@@ -135,7 +135,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
     {%- if var_data.type == "boolean" %}
     /* property (boolean) '{{var}}' */
     oc_rep_set_boolean(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
-    PRINT("   %s : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
+    PRINT("   %s : %s\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, (char *)btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
     {%- elif var_data.type == "integer" %}
     /* property (integer) '{{var}}' */
     oc_rep_set_int(root, {{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}});
@@ -156,11 +156,22 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
     PRINT("   %s (bool) =[ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
     for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
       oc_rep_add_boolean({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
-      PRINT("   %s ", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]));
+      PRINT("   %s ", (char *)btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]));
     }
     PRINT("   ]\n");
     oc_rep_close_array(root, {{var}});
     {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
+    {%- if is_boolean_array(var_data) == true %}
+    /* property (array of bytes) '{{var}}' */
+    oc_rep_set_array(root, {{var}});
+    PRINT("   %s byte = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
+    //oc_rep_add_byte_string({{var}},g{{my_path|variablesyntax}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size);
+    for (int i=0; i< (int)g{{my_path|variablesyntax}}{{var|variablesyntax}}_array_size; i++) {
+      oc_rep_add_byte_string({{var}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+      PRINT("   %d ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
+    }
+    oc_rep_close_array(root, {{var}});
+    {%- else %} 
     /* property (array of integers) '{{var}}' */
     oc_rep_set_array(root, {{var}});
     PRINT("   %s int = [ ", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}});
@@ -169,6 +180,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
       PRINT("   %d ", g{{my_path|variablesyntax}}{{var|variablesyntax}}[i]);
     }
     oc_rep_close_array(root, {{var}});
+    {%- endif %} 
     {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
     /* property (array of numbers) '{{var}}' */
     oc_rep_set_array(root, {{var}});
@@ -200,7 +212,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
       /* {{k}} {{v}} */
 {%- if v[0] == "boolean" %}
       oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
-      PRINT("    (boolean) {{k}} : %d %s\n", i, btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}));
+      PRINT("    (boolean) {{k}} : %d %s\n", i, (char *)btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}));
 {%- elif v[0] == "integer" %}
       oc_rep_set_int({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
       PRINT("    int {{k}} : %d %d\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}});
@@ -236,7 +248,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
     PRINT("    int {{k}} : %d\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
 {%- elif v[0] == "boolean" %}
     oc_rep_set_boolean({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-    PRINT("    boolean {{k}} : %s\n", btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
+    PRINT("    boolean {{k}} : %s\n", (char *)btoa(g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
 {%- elif v[0] == "number" %}
     oc_rep_set_double({{var}}, {{k}}, g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
     PRINT("    number {{k}} : %f\n", g{{my_path|variablesyntax}}{{var|variablesyntax}}.{{k}});
@@ -269,7 +281,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
      long temp_size;
      temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
       oc_rep_set_boolean(root, {{var}}, temp{{var|variablesyntax}});
-      PRINT("   (startup) %s : %s (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}},  btoa(temp{{var|variablesyntax}}), temp_size);
+      PRINT("   (startup) %s : %s (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, (char *)btoa(temp{{var|variablesyntax}}), temp_size);
     }
     {%- elif var_data.type == "integer" %}
     /* property (integer) '{{var}}' */
@@ -313,7 +325,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
           /* write storage "{{var}}" */
           long temp_size;
           temp_size = oc_storage_write("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&rep->value.boolean, sizeof(g{{my_path|variablesyntax}}{{var|variablesyntax}}));
-          PRINT ("  storage (startup.revert)  property '{{var}}' : %s (%ld)\n", btoa(rep->value.boolean), temp_size);
+          PRINT ("  storage (startup.revert)  property '{{var}}' : %s (%ld)\n", (char *)btoa(rep->value.boolean), temp_size);
         }
         {%- elif var_data.type == "integer" %}
         if (strcmp ( oc_string(rep->name), g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
@@ -373,8 +385,13 @@ struct {{path|variablesyntax}}{{var|variablesyntax}}_t g{{path|variablesyntax}}{
 bool g{{path|variablesyntax}}{{var|variablesyntax}}[{{var_data.maxItems|default("MAX_ARRAY")}}]; 
 size_t g{{path|variablesyntax}}{{var|variablesyntax}}_array_size;
 {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
+ {%- if is_boolean_array(var_data) == true %}
+uint8_t g{{path|variablesyntax}}{{var|variablesyntax}}[{{var_data.maxItems|default("MAX_ARRAY")}}]; 
+ {%- else %}
 int g{{path|variablesyntax}}{{var|variablesyntax}}[{{var_data.maxItems|default("MAX_ARRAY")}}]; 
+ {%- endif %}
 size_t g{{path|variablesyntax}}{{var|variablesyntax}}_array_size;
+
   {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
 double g{{path|variablesyntax}}{{var|variablesyntax}}[{{var_data.maxItems|default("MAX_ARRAY")}}]; 
 size_t g{{path|variablesyntax}}{{var|variablesyntax}}_array_size;
@@ -755,10 +772,17 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       {% if var_data |convert_to_cplus_array_type == "std::vector<bool>" %}
       bool *temp_array = 0;  
       oc_rep_get_bool_array(rep, "{{var}}", &temp_array, &array_size);
-      {% elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
-      int64_t *temp_array = 0;  
-      oc_rep_get_int_array(rep, "{{var}}", &temp_array, &array_size);
-      {% elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
+      {%- elif var_data |convert_to_cplus_array_type == "std::vector<int>" %}
+      if (rep->type == OC_REP_BYTE_STRING)
+      {
+        char *temp_byte_array = 0;  
+        oc_rep_get_byte_string(rep, "{{var}}", &temp_byte_array, &array_size);
+      }
+      else {
+        int64_t *temp_array = 0;  
+        oc_rep_get_int_array(rep, "{{var}}", &temp_array, &array_size);
+      }  
+      {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %}
       double *temp_array = 0;  
       oc_rep_get_double_array(rep, "{{var}}", &temp_array, &array_size);
       {% elif var_data |convert_to_cplus_array_type == "std::vector<string>" %}
@@ -836,7 +860,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
         {%- if var_data.type == "boolean" %}
         if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}})== 0) {
           /* assign "{{var}}" */
-          PRINT ("  property '{{var}}' : %s\n", btoa(rep->value.boolean));
+          PRINT ("  property '{{var}}' : %s\n", (char *)btoa(rep->value.boolean));
           g{{path|variablesyntax}}{{var|variablesyntax}} = rep->value.boolean;
         }
         {%- elif var_data.type == "integer" %}
@@ -875,13 +899,28 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
           if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
               /* retrieve the array pointer to the int array of of property "{{var}}"
                  note that the variable g{{path|variablesyntax}}{{var|variablesyntax}}_array_size will contain the array size in the payload. */
-              int64_t *temp_integer = 0;
-              oc_rep_get_int_array(rep, "{{var}}", &temp_integer, &g{{path|variablesyntax}}{{var|variablesyntax}}_array_size);
-              /* copy over the data of the retrieved array to the global variable */
-              for (int j = 0; j < (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; j++) {
-                PRINT(" integer %d ", temp_integer[j]);
-                g{{path|variablesyntax}}{{var|variablesyntax}}[j] = temp_integer[j];
-              }
+             if (rep->type == OC_REP_BYTE_STRING) {
+               char *temp_array = 0;  
+               oc_rep_get_byte_string(rep, "{{var}}", &temp_array, &g{{path|variablesyntax}}{{var|variablesyntax}}_array_size);
+               /* copy over the data of the retrieved (byte) array to the global variable */
+               for (int j = 0; j < (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; j++) {
+                 PRINT(" byte %d ", temp_array[j]);
+                 g{{path|variablesyntax}}{{var|variablesyntax}}[j] = temp_array[j];
+               }
+             }
+             else {
+               int64_t *temp_integer = 0;
+               oc_rep_get_int_array(rep, "{{var}}", &temp_integer, &g{{path|variablesyntax}}{{var|variablesyntax}}_array_size);
+               /* copy over the data of the retrieved (integer) array to the global variable */
+               for (int j = 0; j < (int)g{{path|variablesyntax}}{{var|variablesyntax}}_array_size; j++) {
+                 PRINT(" integer %lld ", temp_integer[j]);
+                 {%- if is_boolean_array(var_data) == true %}
+                 g{{path|variablesyntax}}{{var|variablesyntax}}[j] = (uint8_t)temp_integer[j];
+                 {%- else %}
+                 g{{path|variablesyntax}}{{var|variablesyntax}}[j] = temp_integer[j];
+                 {%- endif %}
+               }
+             }
           }
           {%- elif var_data |convert_to_cplus_array_type == "std::vector<double>" %} {# array of numbers #}
           if (strcmp ( oc_string(rep->name), g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}) == 0) {
@@ -921,7 +960,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       /*oc_process_baseline_interface(request->resource); */
       {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
       {%- if var_data.type == "boolean" %}
-      PRINT("   %s : %s", g{{path|variablesyntax}}{{var|variablesyntax}}, btoa(g{{path|variablesyntax}}{{var|variablesyntax}}));
+      PRINT("   %s : %s", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, (char *)btoa(g{{path|variablesyntax}}{{var|variablesyntax}}));
       oc_rep_set_boolean(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
@@ -981,7 +1020,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       PRINT("    int {{k}} : %d\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
   {%- elif v[0] == "boolean" %}
       oc_rep_set_boolean({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
-      PRINT("    boolean {{k}} : %s\n", btoa(g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
+      PRINT("    boolean {{k}} : %s\n", (char *)btoa(g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}}));
   {%- elif v[0] == "number" %}
       oc_rep_set_double({{var}}, {{k}}, g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});
       PRINT("    number {{k}} : %f\n", g{{path|variablesyntax}}{{var|variablesyntax}}.{{k}});

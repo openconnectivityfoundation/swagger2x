@@ -1059,7 +1059,34 @@ def convert_value_to_c_value(my_value):
         
     return my_value
     
-    
+def is_boolean_array(my_value):
+    """
+    checks if the minimum = 0 and maximum = 255
+    my_value =
+    OrderedDict([('description', 'Each DALI byte is conveyed as an byte'), 
+    ('items', OrderedDict([('description', 'A integer that can be represented as a Byte. an array of uint8 can be represented in CBOR as  Major type 2'), 
+    ('maximum', 255), ('minimum', 0), ('type', 'integer')])), ('type', 'array')])
+    :param my_value the value from swagger_property_data_schema
+    :return: c value.
+    """
+    if my_value.get("items") is None:
+      try:
+        # no items in the hierarchy
+        if my_value["minimum"] == 0:
+          if my_value["maximum"] == 255:
+              return True
+      except:
+        pass
+
+    try:
+      if my_value["items"]["minimum"] == 0:
+        if my_value["items"]["maximum"] == 255:
+            return True
+    except:
+      pass
+    return False
+
+
     
 def init_value_if_empty(my_value, value_type):
     """
@@ -1730,6 +1757,9 @@ try:
         template_environment.globals['list_query_params_get'] = list_query_params
         template_environment.globals['list_query_params_post'] = list_query_params_post
         template_environment.globals['list_query_params_delete'] = list_query_params_delete
+        
+        
+        template_environment.globals['is_boolean_array'] = is_boolean_array
 
         template_environment.globals['retrieve_path_value'] = retrieve_path_value
         template_environment.globals['retrieve_path_dict'] = retrieve_path_dict

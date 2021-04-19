@@ -103,7 +103,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
  {%- elif interface == "oic.if.startup" %} OC_IF_STARTUP
  {%- elif interface == "oic.if.startup.revert" %} OC_IF_STARTUP_REVERT
  {%- elif interface == "oic.if.w" %} OC_IF_W
- {% else %}
+ {%- else %}
     /* {{interface}} not handled */
  {%- endif %}
 {%- endmacro %}
@@ -550,7 +550,9 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   case OC_IF_BASELINE:
     PRINT("   Adding Baseline info\n" );
     oc_process_baseline_interface(request->resource);
+    {%- if query_if_exist(json_data, path, "oic.if.w") == false %}
     {{ get_args(json_data, path) }}
+    {%- endif %}
     break;
   {%- if query_if_exist(json_data, path, "oic.if.a") %}
   case OC_IF_A:
@@ -570,6 +572,11 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   {%- if query_if_exist(json_data, path, "oic.if.rw") %}
   case OC_IF_RW:
    {{ get_args(json_data, path) }}
+    break;
+  {% endif -%}
+  {%- if query_if_exist(json_data, path, "oic.if.w") %}
+  case OC_IF_W:
+    error_state = true;
     break;
   {% endif -%}
   {%- if query_if_exist(json_data, path, "oic.if.startup") %}
@@ -657,8 +664,8 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
   }
   if ( var_in_request == false) 
   { 
-      error_state = true;
-      PRINT (" required property: '{{required_var}}' not in request\n");
+    error_state = true;
+    PRINT (" required property: '{{required_var}}' not in request\n");
   }
   {%- endfor %}
   {%- endif %}

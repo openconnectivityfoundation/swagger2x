@@ -56,6 +56,7 @@
 */
 
 #include "oc_api.h"
+#include "oc_core_res.h"
 #include "port/oc_clock.h"
 #include <signal.h>
 
@@ -91,6 +92,7 @@ static CRITICAL_SECTION cs;     /* event loop variable */
 /* Note: Magic numbers are derived from the resource definition, either from the example or the definition.*/
 
 volatile int quit = 0;          /* stop variable, used by handle_signal */
+static const size_t DEVICE = 0; /* default device index */
 
 {%- macro trans_interfaces(interface) -%}
  {%- if interface == "oic.if.baseline" %} OC_IF_BASELINE
@@ -1166,8 +1168,15 @@ register_resources(void)
 #ifdef OC_CLOUD
   oc_cloud_add_resource(res{{path|variablesyntax}});
 #endif
-{% endfor -%}    oc_add_resource(res{{path|variablesyntax}});
-{% endfor -%}
+{%- endfor %}
+  oc_add_resource(res{{path|variablesyntax}});
+{%- endfor %}
+  /* disable observe for oic/d */
+  oc_resource_t* device_resource = oc_core_get_resource_by_index(OCF_D, DEVICE);
+  oc_resource_set_observable(device_resource, false);
+  /* disable observe for oic/p */
+  oc_resource_t* platform_resource = oc_core_get_resource_by_index(OCF_P, DEVICE);
+  oc_resource_set_observable(platform_resource, false);
 }
 
 #ifdef OC_SECURITY

@@ -290,7 +290,7 @@ volatile int quit = 0;          /* stop variable, used by handle_signal */
       long temp_size;
       temp_size = oc_storage_read("g{{my_path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&temp{{var|variablesyntax}}, sizeof(temp{{var|variablesyntax}}));
       oc_rep_set_int(root, {{var}}, temp{{var|variablesyntax}});
-      PRINT("   (starup) %s : %d (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, temp{{var|variablesyntax}}, temp_size);
+      PRINT("   (startup) %s : %d (%ld)\n", g{{my_path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, temp{{var|variablesyntax}}, temp_size);
     }
     {%- elif var_data.type == "number" %}
     /* property (number) '{{var}}' */
@@ -435,9 +435,9 @@ app_init(void)
   int ret = oc_init_platform("{{manufacturer}}", NULL, NULL);
   /* the settings determine the appearance of the device on the network
      can be ocf.2.2.0 (or even higher)
-     supplied values are for ocf.2.2.0 */
+     supplied values are for ocf.2.2.2 */
   ret |= oc_add_device("/oic/d", "{{device_type}}", "{{json_data['info']['title']}}", 
-                       "ocf.2.2.0", /* icv value */
+                       "ocf.2.2.2", /* icv value */
                        "ocf.res.1.3.0, ocf.sh.1.3.0",  /* dmv value */
                        NULL, NULL);
                        

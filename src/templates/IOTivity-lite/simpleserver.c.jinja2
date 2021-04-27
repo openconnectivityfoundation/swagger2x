@@ -529,6 +529,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
      The implementation always return everything that belongs to the resource.
      this implementation is not optimal, but is functionally correct and will pass CTT1.2.2 */
   bool error_state = false;
+  int oc_status_code = OC_STATUS_OK;
   {% set query_list = list_query_params(json_data, path)  %}
   {%- for item in query_list %}
   /* query name '{{item.name}}' type: '{{item.type}}', enum: {{item.enum}}*/
@@ -585,7 +586,8 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   case OC_IF_STARTUP:
    if ( g{{path|variablesyntax}}_storage_status !=  1)
    {
-     oc_send_response(request, OC_STATUS_BAD_OPTION);
+     error_state = true;
+     break;
    } 
    {{ get_start_args(json_data, path) }}
     break;
@@ -594,8 +596,10 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   case OC_IF_STARTUP_REVERT:
    if ( g{{path|variablesyntax}}_storage_status !=  2)
    {
-     oc_send_response(request, OC_STATUS_BAD_OPTION);
+     error_state = true;
+     break;
    } 
+   oc_status_code = OC_STATUS_NOT_MODIFIED;
    {{ get_start_args(json_data, path) }}
     break;
   {%- endif %}
@@ -604,7 +608,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
   }
   oc_rep_end_root_object();
   if (error_state == false) {
-    oc_send_response(request, OC_STATUS_OK);
+    oc_send_response(request, oc_status_code);
   }
   else {
     oc_send_response(request, OC_STATUS_BAD_OPTION);

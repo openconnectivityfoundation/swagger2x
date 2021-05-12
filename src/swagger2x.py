@@ -37,17 +37,6 @@ from collections import OrderedDict
 import requests
 import re
 from numbers import Number
-
-if sys.version_info < (3, 5):
-    raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
-                    (sys.version_info[0], sys.version_info[1]))
-
-try:
-    from jinja2 import Environment, FileSystemLoader
-except:
-    print("missing jinja2:")
-    print("Trying to Install required module: jinja2")
-    os.system('python3 -m pip install jinja2')
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -1777,11 +1766,11 @@ try:
         text = template_environment.render( json_data=json_data,
                                             version=my_version,
                                             uuid= str(args.uuid),
-                                            manufacturer= str(args.manufacturer),
-                                            device_type= str(args.devicetype),
-                                            input_file = args.swagger,
-                                            output_file = args.output_file,
-                                            prefix_file = args.prefix_file)
+                                            manufacturer=str(args.manufacturer),
+                                            device_type=str(args.devicetype),
+                                            input_file=args.swagger,
+                                            output_file=args.output_file,
+                                            prefix_file=args.prefix_file)
         print(" rendering ...complete.\n ")
 
         if args.out_dir is not None:

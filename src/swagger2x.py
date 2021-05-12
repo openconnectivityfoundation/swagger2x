@@ -40,7 +40,6 @@ import requests
 import re
 from numbers import Number
 
-
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
                     (sys.version_info[0], sys.version_info[1]))

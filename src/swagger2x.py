@@ -1,22 +1,22 @@
 #############################
 #
-#    copyright 2016, 2020 Open Interconnect Consortium, Inc. All rights reserved.
-#    Redistribution and use in source and binary forms, with or without modification,
-#    are permitted provided that the following conditions are met:
-#    1.  Redistributions of source code must retain the above copyright notice,
-#        this list of conditions and the following disclaimer.
-#    2.  Redistributions in binary form must reproduce the above copyright notice,
-#        this list of conditions and the following disclaimer in the documentation and/or other materials provided
-#        with the distribution.
+# copyright 2016, 2020 Open Interconnect Consortium, Inc. All rights reserved.
+# Redistribution and use in source and binary forms, with or without modification,
+# are permitted provided that the following conditions are met:
+# 1.  Redistributions of source code must retain the above copyright notice,
+#     this list of conditions and the following disclaimer.
+# 2.  Redistributions in binary form must reproduce the above copyright notice,
+#     this list of conditions and the following disclaimer in the documentation and/or other materials provided
+#     with the distribution.
 #
-#    THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-#    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
-#    WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
-#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-#    (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-#    OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-#    OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-#    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE OR
+# WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL THE OPEN INTERCONNECT CONSORTIUM, INC. OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #############################
 import time
@@ -51,7 +51,7 @@ def load_json_schema(filename, my_dir=None):
     if my_dir is not None:
         full_path = os.path.join(my_dir, filename)
     if os.path.isfile(full_path) is False:
-        print ("json file does not exist:", full_path)
+        print("json file does not exist:", full_path)
 
     linestring = open(full_path, 'r').read()
     json_dict = json.loads(linestring, object_pairs_hook=OrderedDict)
@@ -73,6 +73,7 @@ def get_dir_list(dir, ext=None):
         cur_list = new_list
         new_list = [x for x in cur_list if x.endswith(ext)]
     return new_list
+
 
 def create_c_struct(nested_json):
     """
@@ -99,7 +100,7 @@ def create_c_struct(nested_json):
                             # handle array
                             type_array = my_sdict["items"].get("type")
                             n_description = my_sdict["items"].get("description")
-                            if n_description is not None: 
+                            if n_description is not None:
                                 # only use this one if it exists
                                 description = n_description
                             out[my_name] = [type_array + "[]", description]
@@ -119,9 +120,7 @@ def create_c_struct(nested_json):
         cur_type = nested_json.get("type")
         if cur_type in ["array"]:
             to_flatten = nested_json["items"]["properties"]
-        
         my_flatten(to_flatten)
-        
     except:
         traceback.print_exc()
     return out
@@ -224,7 +223,7 @@ def replace_chars(a, chars):
     """
     string = a
     for char in chars:
-        copy_string =  string.replace(char, '')
+        copy_string = string.replace(char, '')
         string = copy_string
     return string
 
@@ -248,7 +247,7 @@ def add_justification_smart(depth, input_string, no_dot_split=False):
         else:
             string1 = depth + x_line
             ret_string = ret_string + string1
-            if not x_line is all_lines[-1]:
+            if x_line is not all_lines[-1]:
                 ret_string = ret_string + "\n"
     return ret_string
     
@@ -297,7 +296,7 @@ def parameter_names(parse_tree, path, value):
     :param value: value to find
     :return:
     """
-    parameters  = get_value_by_path_name(parse_tree, path, "parameters")
+    parameters = get_value_by_path_name(parse_tree, path, "parameters")
     path_names = ""
     # this is an list
     for parameter_data in parameters:
@@ -342,7 +341,7 @@ def swagger_rt(json_data):
             x_example = item["get"]["responses"]["200"]["x-example"]
             rt = x_example.get("rt")
             for rt_value in rt:
-                rt_values.append([ path, rt_value])
+                rt_values.append([path, rt_value])
         except:
             try:
                 rt = item["post"]["responses"]["200"]["x-example"]["rt"]
@@ -385,9 +384,9 @@ def swagger_if_exist_all(json_data, if_value):
     :return: True if found, False not found
     """
     for path, item in json_data["paths"].items():
-      data = swagger_property_data_schema(json_data, path, "if")
-      if if_value in data:
-          return True
+        data = swagger_property_data_schema(json_data, path, "if")
+        if if_value in data:
+            return True
     return False
 
 def swagger_property_data_schema(json_data, input_path, name):
@@ -423,7 +422,6 @@ def swagger_property_data_schema(json_data, input_path, name):
                     print ("swagger_property_data_schema: could not find x-example")
                     pass
 
-
             value_found = False        
             if schema is not None:
                 def_data = json_data["definitions"]
@@ -451,7 +449,6 @@ def swagger_property_data_schema(json_data, input_path, name):
                                     value_found = False
                         else:
                             pass
-                            #print ("swagger_property_data: " ,def_item)
                             
             else:
                 print("swagger_property_data: schema not found:", input_path)
@@ -669,7 +666,7 @@ def swagger_properties_filtered_get(json_data, input_path):
     my_dict = OrderedDict()
     if properties_list is not None:
         for item, item_val in properties_list.items():
-            if item not in ["n", "if", "rt", "id" ]:
+            if item not in ["n", "if", "rt", "id"]:
                 my_dict[item] = item_val
     return my_dict    
     
@@ -683,7 +680,7 @@ def swagger_properties_filtered_post(json_data, input_path):
     my_dict = OrderedDict()
     if properties_list is not None:
         for item, item_val in properties_list.items():
-            if item not in ["n", "if", "rt", "id" ]:
+            if item not in ["n", "if", "rt", "id"]:
                 my_dict[item] = item_val
     return my_dict
     
@@ -732,7 +729,7 @@ def list_query_params(json_data, input_path, operation="get"):
                     if item.get("in") == "query":
                         if item.get("name") != "if": 
                           query_params.append(item)
-                    elif item.get("$ref") != None:
+                    elif item.get("$ref") is not None:
                         #resolve reference
                         reference_name = item.get("$ref")
                         ref = reference_name.split("/")[2]
@@ -960,7 +957,7 @@ def get_c_data(json_data, prefix=""):
     """
     prefix2 = prefix
     if len(prefix) > 0:
-        prefix2 = "  "+ prefix + "."
+        prefix2 = "  " + prefix + "."
     blah = create_c_struct(json_data)
    
     return blah
@@ -1023,20 +1020,20 @@ def convert_value_to_c_value(my_value):
     :return: c value.
     """
     
-    if isinstance(my_value, list) :
+    if isinstance(my_value, list):
         if len (my_value) > 0:
             my_value = my_value[0]
         else:
             my_value = ""  # default is empty string
     
-    if isinstance(my_value, bool) :
+    if isinstance(my_value, bool):
         if my_value is True:
             my_value = "true"
         else:
             my_value = "false"
         return my_value
     
-    if isinstance(my_value, str) :
+    if isinstance(my_value, str):
         new = escape_quotes(my_value)
         my_value = new
         
@@ -1229,13 +1226,13 @@ def sdf_property_object(json_data, level):
     if (level == "top"):
         iter_json_data = swagger_properties_filtered(json_data, sdf_return_path_info(json_data, "path")).items()
     else:
-        #json_data passed in is what's required for iteration below, embedded property blocks
+        # json_data passed in is what's required for iteration below, embedded property blocks
         iter_json_data = json_data.items()
 
     output = ""
     for i, (property_name, property_data) in enumerate(iter_json_data):
         output += "\"" + property_name + "\": {"
-        #new name field
+        # new name field
         output += sdf_properties_block(property_data)
         output += "}"
         if i+1 < len(iter_json_data):
@@ -1251,7 +1248,7 @@ def sdf_properties_block(propertyData):
     for j, (propertyData_key, propertyData_value) in enumerate(propertyData.items()):
         output = ""
         if sdf_supported_property(propertyData_key):
-            if isinstance(propertyData_value, bool) and propertyData_value == True:
+            if isinstance(propertyData_value, bool) and propertyData_value is True:
                 output += "\"" + propertyData_key + "\":  true"
             elif isinstance(propertyData_value, bool) and propertyData_value == False:
                 output += "\"" + propertyData_key + "\":  false"
@@ -1340,10 +1337,8 @@ def sdf_item_object(itemObject):
                 output = output + "\"" + itemKey + "\": " 
                 output += str(itemValue)
             elif itemKey == "$ref":
-                #print('  sdf_item_object: $ref!! ', itemKey, itemValue)
-                #sdf_ref_properties(
+                # print('  sdf_item_object: $ref!! ', itemKey, itemValue)
                 output += sdf_ref_properties(json_data, itemValue)
-                #output += str(itemValue)
             elif itemValue == True:
                 output = output + "\"" + itemKey + "\": " 
                 output = output + "true"
@@ -1370,7 +1365,7 @@ def sdf_item_object(itemObject):
             output += "}"
         i = i+1
     
-    #print ( "sdf_item_object : leave", flush=True)
+    # print ( "sdf_item_object : leave", flush=True)
     return output
 
 def sdf_ref_properties(json_data, url):
@@ -1383,10 +1378,10 @@ def sdf_ref_properties(json_data, url):
     """
     if "https" in url:
         ref_json_dict = load_json_schema_fromURL(url)
-        sdf_make_reference_external(ref_json_dict,url)
+        sdf_make_reference_external(ref_json_dict, url)
     elif "http" in url:
         ref_json_dict = load_json_schema_fromURL(url)
-        sdf_make_reference_external(ref_json_dict,url)
+        sdf_make_reference_external(ref_json_dict, url)
     else:
         ref_json_dict = json_data
 
@@ -1626,36 +1621,36 @@ print ("swagger2x ", my_version)
 print ("************************")
 parser = argparse.ArgumentParser()
 
-parser.add_argument( "-ver"        , "--verbose"    , help="Execute in verbose mode", action='store_true')
+parser.add_argument("-ver"        , "--verbose"    , help="Execute in verbose mode", action='store_true')
 
-parser.add_argument( "-swagger"    , "--swagger"    , default=None,
-                     help="swagger file name",  nargs='?', const="", required=True)
-#parser.add_argument( "-schema"     , "--schema"     , default=None,
+parser.add_argument("-swagger"    , "--swagger"    , default=None,
+                    help="swagger file name",  nargs='?', const="", required=True)
+# parser.add_argument( "-schema"     , "--schema"     , default=None,
 #                     help="schema to be added to word document",  nargs='?', const="", required=False)
-parser.add_argument( "-template"     , "--template"     , default=None,
-                     help="template to be used",  nargs='?', const="", required=True)
-parser.add_argument( "-template_dir"     , "--template_dir"     , default=None,
-                     help="template directory",  nargs='?', const="", required=True)
+parser.add_argument("-template"     , "--template"     , default=None,
+                    help="template to be used",  nargs='?', const="", required=True)
+parser.add_argument("-template_dir"     , "--template_dir"     , default=None,
+                    help="template directory",  nargs='?', const="", required=True)
 
-parser.add_argument( "-schemadir"  , "--schemadir"  , default=".",
-                     help="path to dir with additional referenced schemas",  nargs='?', const="", required=False)
-parser.add_argument( "-out_dir"  , "--out_dir"  , default=".",
-                     help="output dir",  nargs='?', const="", required=True)
+parser.add_argument("-schemadir"  , "--schemadir"  , default=".",
+                    help="path to dir with additional referenced schemas",  nargs='?', const="", required=False)
+parser.add_argument("-out_dir"  , "--out_dir"  , default=".",
+                    help="output dir",  nargs='?', const="", required=True)
 # generation values
-parser.add_argument( "-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
-                     help="uuid",  nargs='?', const="", required=False)
-parser.add_argument( "-manufacturer"  , "--manufacturer"  , default="ocf",
-                     help="manufacturer name",  nargs='?', const="", required=False)
-parser.add_argument( "-devicetype"  , "--devicetype"  , default="oic.d.light",
-                     help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
-#output file
-parser.add_argument( "-output_file"  , "--output_file"  , default=None,
-                     help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
-parser.add_argument( "-prefix_file"  , "--prefix_file"  , default=None,
-                     help="prefix file , e.g. <prefix><filename>.sdf.json",  nargs='?',  required=False)
-                     #output file
-parser.add_argument( "-jsonindent"  , "--jsonindent"  , default=None,
-                     help="jsonindent , e.g. 2",  nargs='?',  required=False)
+parser.add_argument("-uuid"  , "--uuid"  , default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
+                    help="uuid",  nargs='?', const="", required=False)
+parser.add_argument("-manufacturer"  , "--manufacturer"  , default="ocf",
+                    help="manufacturer name",  nargs='?', const="", required=False)
+parser.add_argument("-devicetype"  , "--devicetype"  , default="oic.d.light",
+                    help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
+# output file
+parser.add_argument("-output_file"  , "--output_file"  , default=None,
+                    help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
+parser.add_argument("-prefix_file"  , "--prefix_file"  , default=None,
+                    help="prefix file , e.g. <prefix><filename>.sdf.json",  nargs='?',  required=False)
+# indentation options
+parser.add_argument("-jsonindent"  , "--jsonindent"  , default=None,
+                    help="jsonindent , e.g. 2",  nargs='?',  required=False)
 
 # (args) supports batch scripts providing arguments
 print (sys.argv)
@@ -1728,13 +1723,14 @@ try:
         template_environment.globals['query_properties_post'] = swagger_properties_post
         template_environment.globals['query_properties_get'] = swagger_properties_get
         
-        template_environment.globals['query_properties_filtered'] = swagger_properties_filtered # old function for backwards compatibiltiy
+        # old function for backwards compatibiltiy
+        template_environment.globals['query_properties_filtered'] = swagger_properties_filtered
         template_environment.globals['query_properties_filtered_post'] = swagger_properties_filtered_post
         template_environment.globals['query_properties_filtered_get'] = swagger_properties_filtered_get
         
         template_environment.globals['query_required_items'] = swagger_required_items
-        
-        template_environment.globals['list_query_params'] = list_query_params  # old function for backwards compatibiltiy
+        # old function for backwards compatibiltiy
+        template_environment.globals['list_query_params'] = list_query_params
         template_environment.globals['list_query_params_get'] = list_query_params
         template_environment.globals['list_query_params_post'] = list_query_params_post
         template_environment.globals['list_query_params_delete'] = list_query_params_delete

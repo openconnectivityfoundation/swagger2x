@@ -1579,7 +1579,7 @@ def remove_nl_crs(my_string, replaceWithSpaces=False):
     data= my_string.split('\n')
     for item in data:
         # remove spaces, then add a single space (catches newlines without spaces)
-        new_string = new_string.rstrip() + " " + item.lstrip() 
+        new_string = new_string.rstrip() + " " + item.lstrip()
     
     # remove carrage return
     new_string2=""
@@ -1668,7 +1668,6 @@ print("out_dir       : " + str(args.out_dir))
 print("out_file      : " + str(args.output_file))
 print("prefix_file   : " + str(args.prefix_file))
 print("jsonindent    : " + str(args.jsonindent))
-#print("schema        : " + str(args.schema))
 print("schemadir     : " + str(args.schemadir))
 print("template      : " + str(args.template))
 print("template_dir  : " + str(args.template_dir))
@@ -1765,7 +1764,7 @@ try:
         print(" rendering ...\n ")
         text = template_environment.render( json_data=json_data,
                                             version=my_version,
-                                            uuid= str(args.uuid),
+                                            uuid=str(args.uuid),
                                             manufacturer=str(args.manufacturer),
                                             device_type=str(args.devicetype),
                                             input_file=args.swagger,
@@ -1786,28 +1785,28 @@ try:
             print("out_file      : ",out_file) 
 
             if args.template == "OAS2SDF":
-                #clean json structure. remove extra lines from jinja2 template 
-                #(break if invalid json, caught by outer try loop)
+                # clean json structure. remove extra lines from jinja2 template 
+                # (break if invalid json, caught by outer try loop)
                 if args.output_file == "auto":
-                    #Generate name from resource name for SDF, override out_file
-                    #Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
+                    # Generate name from resource name for SDF, override out_file
+                    # Replace '.' with '_' in oic.r.* names, e.g. oic.r.speech.tts = speech_tts
                     out_file = os.path.join(args.out_dir, ("sdfobject-" + sdf_return_path_info(json_data, "name").replace('.','_') + ".sdf.json"))
                 
                 if args.jsonindent is not None:
                     output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
                     f = open(out_file, 'w')
                     f.write(json.dumps(output_json_dict,indent=2))
-                    #Add final \n for github
+                    # Add final \n for github
                     f.write('\n')
                     f.close()
                 else:
                     f = open(out_file, 'w')
                     f.write(text)
-                    #Add final \n for github
+                    # Add final \n for github
                     f.write('\n')
                     f.close()
             else:
-                #standard file output
+                # standard file output
                 f = open(out_file, 'w')
                 if args.jsonindent is not None:
                     print("writing with ident: ", remove_nl_crs(text)) 
@@ -1815,11 +1814,10 @@ try:
                       output_json_dict = json.loads(remove_nl_crs(text), object_pairs_hook=OrderedDict)
                       f.write(json.dumps(output_json_dict,indent=2))
                     except:
-                      #print (text)
                       traceback.print_exc()
                 else:
                     f.write(text)
-                #Add final \n for github
+                # Add final \n for github
                 f.write('\n')
                 f.close()
 

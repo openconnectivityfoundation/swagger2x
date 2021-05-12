@@ -19,8 +19,6 @@
 #    EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #############################
-
-
 import time
 import os
 import json
@@ -31,16 +29,14 @@ import traceback
 from datetime import datetime
 from time import gmtime, strftime
 from sys import exit
-#import jsonref
 import os.path
 from os import listdir
 from os.path import isfile, join
 from shutil import copyfile
-from  collections import OrderedDict
+from collections import OrderedDict
 import requests
 import re
 from numbers import Number
-
 
 if sys.version_info < (3, 5):
     raise Exception("ERROR: Python 3.5 or more is required, you are currently running Python %d.%d!" %
@@ -50,7 +46,7 @@ try:
     from jinja2 import Environment, FileSystemLoader
 except:
     print("missing jinja2:")
-    print ("Trying to Install required module: jinja2")
+    print("Trying to Install required module: jinja2")
     os.system('python3 -m pip install jinja2')
 from jinja2 import Environment, FileSystemLoader
 
@@ -1593,14 +1589,14 @@ def remove_nl_crs(my_string, replaceWithSpaces=False):
     new_string=""
     data= my_string.split('\n')
     for item in data:
-      #remove spaces, then add a single space (catches newlines without spaces)
-      new_string = new_string.rstrip() + " " + item.lstrip() 
+        # remove spaces, then add a single space (catches newlines without spaces)
+        new_string = new_string.rstrip() + " " + item.lstrip() 
     
     # remove carrage return
     new_string2=""
     data= new_string.split('\r')
     for item in data:
-        #remove spaces, then add a single space (catches CRs without spaces)
+        # remove spaces, then add a single space (catches CRs without spaces)
         new_string2 = new_string2.rstrip() + " " + item.lstrip() 
     if replaceWithSpaces:
         new_string2 = re.sub(r'\.(?! )', '. ', new_string2)
@@ -1674,10 +1670,9 @@ parser.add_argument( "-prefix_file"  , "--prefix_file"  , default=None,
 parser.add_argument( "-jsonindent"  , "--jsonindent"  , default=None,
                      help="jsonindent , e.g. 2",  nargs='?',  required=False)
 
-#(args) supports batch scripts providing arguments
+# (args) supports batch scripts providing arguments
 print (sys.argv)
 args = parser.parse_args()
-
 
 print("file          : " + str(args.swagger))
 print("out_dir       : " + str(args.out_dir))
@@ -1780,13 +1775,13 @@ try:
 
         print(" rendering ...\n ")
         text = template_environment.render( json_data=json_data,
-            version=my_version,
-            uuid= str(args.uuid),
-            manufacturer= str(args.manufacturer),
-            device_type= str(args.devicetype),
-            input_file = args.swagger,
-            output_file = args.output_file,
-            prefix_file = args.prefix_file)
+                                            version=my_version,
+                                            uuid= str(args.uuid),
+                                            manufacturer= str(args.manufacturer),
+                                            device_type= str(args.devicetype),
+                                            input_file = args.swagger,
+                                            output_file = args.output_file,
+                                            prefix_file = args.prefix_file)
         print(" rendering ...complete.\n ")
 
         if args.out_dir is not None:

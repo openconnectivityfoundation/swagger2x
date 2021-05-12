@@ -115,7 +115,7 @@ def create_c_struct(nested_json):
             else:
                 if name not in ["properties", "allOf", "anyOf", "items", "description", "type"]:
                     out[name] = my_dict
-        
+
         cur_type = nested_json.get("type")
         if cur_type in ["array"]:
             to_flatten = nested_json["items"]["properties"]
@@ -182,10 +182,10 @@ def find_key_link(rec_dict, target, depth=0):
         for key, value in rec_dict.items():
             r = find_key_link(value, target, depth+1)
             if r is not None:
-                return r #[list(r.items())]
+                return r
 
 
-def get_value_by_path_name( parse_tree, path_name, target):
+def get_value_by_path_name(parse_tree, path_name, target):
     """
     retrieve the target key below the path_name
     :param parse_tree: tree to search from
@@ -199,7 +199,7 @@ def get_value_by_path_name( parse_tree, path_name, target):
     return value
 
 
-def get_dict_by_path_name( parse_tree, path_name):
+def get_dict_by_path_name(parse_tree, path_name):
     """
     retrieve the target key below the path_name
     :param parse_tree: tree to search from
@@ -209,7 +209,7 @@ def get_dict_by_path_name( parse_tree, path_name):
     """
     full_path_name = path_name
     json_path_dict = find_key_link(parse_tree, full_path_name)
-    #value = find_key_link(json_path_dict, target)
+    # value = find_key_link(json_path_dict, target)
     return json_path_dict
 
 #
@@ -224,37 +224,35 @@ def replace_chars(a, chars):
     """
     string = a
     for char in chars:
-       copy_string =  string.replace(char, '')
-       string = copy_string
+        copy_string =  string.replace(char, '')
+        string = copy_string
     return string
 
-def add_justification_smart( depth, input_string, no_dot_split=False):
-
-        """
-        add the spaces for an correct indentation of the generated RAML code section
-        for descriptions in the RAML definitions
-        :param depth: character depth, e.g. an string prefix
-        :param input_string: string to be adjusted
-        :return:  adjusted string
-        """
-        ret_string = ""
-        all_lines = input_string.splitlines()
-        for x_line in all_lines:
-            if no_dot_split is False:
-                lines = x_line.split(". ")
-                for line in lines:
-                    string1 = depth + line + "\n"
-                    if len(line) > 0:
-                        ret_string = ret_string + string1
-            else:
-                string1 = depth + x_line
-                ret_string = ret_string + string1
-                if not x_line is all_lines[-1]:
-                    ret_string = ret_string + "\n"
-        return ret_string
+def add_justification_smart(depth, input_string, no_dot_split=False):
+    """
+    add the spaces for an correct indentation of the generated RAML code section
+    for descriptions in the RAML definitions
+    :param depth: character depth, e.g. an string prefix
+    :param input_string: string to be adjusted
+    :return:  adjusted string
+    """
+    ret_string = ""
+    all_lines = input_string.splitlines()
+    for x_line in all_lines:
+        if no_dot_split is False:
+            lines = x_line.split(". ")
+            for line in lines:
+                string1 = depth + line + "\n"
+                if len(line) > 0:
+                    ret_string = ret_string + string1
+        else:
+            string1 = depth + x_line
+            ret_string = ret_string + string1
+            if not x_line is all_lines[-1]:
+                ret_string = ret_string + "\n"
+    return ret_string
     
     
-
 def retrieve_path_value(parse_tree, path, value):
     """
     retrieves the parameter values of an path instance

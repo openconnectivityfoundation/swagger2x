@@ -186,7 +186,7 @@ def find_key_link(rec_dict, target, depth=0):
             return rvalues
         # key is an dict
         for key, value in rec_dict.items():
-            r = find_key_link(value, target, depth+1)
+            r = find_key_link(value, target, depth + 1)
             if r is not None:
                 return r
 
@@ -1066,9 +1066,9 @@ def convert_value_to_c_value(my_value):
 def is_boolean_array(my_value):
     """
     checks if the minimum = 0 and maximum = 255
-    my_value =
-    OrderedDict([('description', 'Each DALI byte is conveyed as an byte'), 
-    ('items', OrderedDict([('description', 'A integer that can be represented as a Byte. an array of uint8 can be represented in CBOR as  Major type 2'), 
+    my_value = OrderedDict([('description', 'Each DALI byte is conveyed as an byte'),
+    ('items', OrderedDict([('description', 'A integer that can be represented as a Byte.
+    an array of uint8 can be represented in CBOR as  Major type 2'),
     ('maximum', 255), ('minimum', 0), ('type', 'integer')])), ('type', 'array')])
     :param my_value the value from swagger_property_data_schema
     :return: c value.
@@ -1695,10 +1695,10 @@ parser.add_argument("-uuid", "--uuid", default="9b8fadc6-1e57-4651-bab2-e268f89f
 parser.add_argument("-manufacturer", "--manufacturer", default="ocf",
                     help="manufacturer name", nargs='?', const="", required=False)
 parser.add_argument("-devicetype", "--devicetype", default="oic.d.light",
-                    help="device type, e.g. oic.d.xxx", nargs='?',  required=False)
+                    help="device type, e.g. oic.d.xxx", nargs='?', required=False)
 # output file
 parser.add_argument("-output_file", "--output_file", default=None,
-                    help="output file , e.g. <filename>.sdf.json", nargs='?',  required=False)
+                    help="output file , e.g. <filename>.sdf.json", nargs='?', required=False)
 parser.add_argument("-prefix_file", "--prefix_file", default=None,
                     help="prefix file, e.g. <prefix><filename>.sdf.json", nargs='?', required=False)
 # indentation options

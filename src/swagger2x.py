@@ -250,7 +250,7 @@ def add_justification_smart(depth, input_string, no_dot_split=False):
             if x_line is not all_lines[-1]:
                 ret_string = ret_string + "\n"
     return ret_string
-    
+
     
 def retrieve_path_value(parse_tree, path, value):
     """
@@ -468,7 +468,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                         print("swagger_property_data_schema: example could not find:", name)
                         pass   
                 else:
-                     print("swagger_property_data_schema: example is none")
+                    print("swagger_property_data_schema: example is none")
     return data_values
 
 
@@ -512,7 +512,7 @@ def swagger_properties(json_data, input_path):
     :return: list of if values
     """
     prop_block = []
-    #print("swagger_properties: path:", input_path)
+    # print("swagger_properties: path:", input_path)
     schema = None
     for path, path_item in json_data["paths"].items():
         if input_path == path:
@@ -600,7 +600,6 @@ def swagger_properties_post(json_data, input_path):
     return prop_block
     
     
-    
 def swagger_required_items(json_data, input_path):
     """
     get the required properties list from the schema that is referenced by the path in post (or get)
@@ -641,8 +640,8 @@ def swagger_properties_filtered(json_data, input_path):
       remove common properties & resource properties from the list of properties in the resource
       see Resource spec
     """
-    properties_list_get =  swagger_properties_get(json_data, input_path)
-    properties_list_post =  swagger_properties_post(json_data, input_path)
+    properties_list_get = swagger_properties_get(json_data, input_path)
+    properties_list_post = swagger_properties_post(json_data, input_path)
     my_dict = OrderedDict()
     if properties_list_get is not None:
         for item, item_val in properties_list_get.items():
@@ -785,7 +784,7 @@ def variablesyntax(input_string):
     :return: adjusted string
     """
     chars_to_replace = "/\  +-*^|%$=~@()[].,?"
-    return "_"+replace_chars(input_string, chars_to_replace )
+    return "_"+replace_chars(input_string, chars_to_replace)
 
 #
 #  jinga custom functions: filter
@@ -973,10 +972,10 @@ def convert_to_cplus_string_array(my_array):
         my_ret += '"'+str(my_array)+'"'
     elif isinstance(my_array, list):
         for item in my_array:
-            if counter  > 0:
+            if counter > 0:
                my_ret += ','
-            my_ret += '"'+str(item)+'"'
-            counter +=1
+            my_ret += '"' + str(item) + '"'
+            counter + =1
     else:
         pass
 
@@ -1005,10 +1004,9 @@ def code_indent(input_string, indent_str):
     :param input_string: string to be adjusted
     :return: adjusted string
     """    
-    return_string = add_justification_smart(indent_str, input_string, no_dot_split = True )
+    return_string = add_justification_smart(indent_str, input_string, no_dot_split=True)
     return return_string
-    
-    
+
 
 def convert_value_to_c_value(my_value):
     """
@@ -1016,7 +1014,6 @@ def convert_value_to_c_value(my_value):
     :param my_value the value from swagger_property_data_schema
     :return: c value.
     """
-    
     if isinstance(my_value, list):
         if len(my_value) > 0:
             my_value = my_value[0]
@@ -1087,7 +1084,7 @@ def init_value_if_empty(my_value, value_type):
         if value_type in ["string"]:
             return ""
             
-    if isinstance(my_value, list) :
+    if isinstance(my_value, list):
         if value_type in ["string"]:
             return '""'
         if value_type in ["number"]:

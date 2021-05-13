@@ -13,7 +13,7 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 # PURPOSEOR WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL
 # THE OPEN INTERCONNECT CONSORTIUM, INC. OR CONTRIBUTORS BE LIABLE FOR ANY
 # DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
@@ -96,8 +96,7 @@ def create_c_struct(nested_json):
         def my_flatten(my_dict, name=''):
             if isinstance(my_dict, dict):
                 for my_name, my_sdict in my_dict.items():
-                    if my_name not in ["properties", "allOf", "anyOf", 
-                        "items", "description", "type", "enum"]:
+                    if my_name not in ["properties", "allOf", "anyOf", "items", "description", "type", "enum"]:
                         # this is a property name
                         my_type = my_sdict.get("type")
                         description = my_sdict.get("description")
@@ -149,7 +148,7 @@ def find_key(rec_dict, target, depth=0):
                 if key == target:
                     return rec_dict[key]
             for key, value in rec_dict.items():
-                r = find_key(value, target, depth+1)
+                r = find_key(value, target, depth + 1)
                 if r is not None:
                     return r
     except:
@@ -1680,23 +1679,20 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-ver", "--verbose",
                     help="Execute in verbose mode", action='store_true')
-
+# input (files etc.)
 parser.add_argument("-swagger", "--swagger", default=None,
-                    help="swagger file name",  nargs='?', const="", required=True)
-# parser.add_argument( "-schema"     , "--schema"     , default=None,
-#                     help="schema to be added to word document",  nargs='?', const="", required=False)
+                    help="swagger file name", nargs='?', const="", required=True)
 parser.add_argument("-template", "--template", default=None,
                     help="template to be used",  nargs='?', const="", required=True)
 parser.add_argument("-template_dir", "--template_dir", default=None,
                     help="template directory",  nargs='?', const="", required=True)
-
 parser.add_argument("-schemadir", "--schemadir", default=".",
                     help="path to dir with additional referenced schemas",  nargs='?', const="", required=False)
 parser.add_argument("-out_dir", "--out_dir", default=".",
-                    help="output dir",  nargs='?', const="", required=True)
+                    help="output dir", nargs='?', const="", required=True)
 # generation values
 parser.add_argument("-uuid", "--uuid", default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
-                    help="uuid",  nargs='?', const="", required=False)
+                    help="uuid", nargs='?', const="", required=False)
 parser.add_argument("-manufacturer", "--manufacturer", default="ocf",
                     help="manufacturer name",  nargs='?', const="", required=False)
 parser.add_argument("-devicetype", "--devicetype", default="oic.d.light",

@@ -33,4 +33,5 @@ jobs:
       - name: Run a multi-line script
         run: |
           pip install pep8
-          pep8 --first src/swagger2x.py
+          # E501 ignore long lines (e.g. larger than 80 chars)
+          pep8 --first --ignore=E501 src/swagger2x.py

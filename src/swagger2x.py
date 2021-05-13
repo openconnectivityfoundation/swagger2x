@@ -96,7 +96,8 @@ def create_c_struct(nested_json):
         def my_flatten(my_dict, name=''):
             if isinstance(my_dict, dict):
                 for my_name, my_sdict in my_dict.items():
-                    if my_name not in ["properties", "allOf", "anyOf", "items", "description", "type", "enum"]:
+                    if my_name not in ["properties", "allOf", "anyOf", 
+                        "items", "description", "type", "enum"]:
                         # this is a property name
                         my_type = my_sdict.get("type")
                         description = my_sdict.get("description")
@@ -121,7 +122,8 @@ def create_c_struct(nested_json):
                     my_flatten(a, name + str(i) + '_')
                     i += 1
             else:
-                if name not in ["properties", "allOf", "anyOf", "items", "description", "type"]:
+                if name not in ["properties", "allOf", 
+                    "anyOf", "items", "description", "type"]:
                     out[name] = my_dict
 
         cur_type = nested_json.get("type")
@@ -1387,10 +1389,10 @@ def sdf_item_object(itemObject):
             elif itemKey == "$ref":
                 # print('  sdf_item_object: $ref!! ', itemKey, itemValue)
                 output += sdf_ref_properties(json_data, itemValue)
-            elif itemValue == True:
+            elif itemValue is True:
                 output = output + "\"" + itemKey + "\": "
                 output = output + "true"
-            elif itemValue == False:
+            elif itemValue is False:
                 output = output + "\"" + itemKey + "\": "
                 output += "false"
             elif itemKey == "properties":
@@ -1544,7 +1546,7 @@ def sdf_is_writeable(json_value):
             for paramname, paramobj in obj_param["sdfProperty"].items():
                 for qualname, qualobj in paramobj.items():
                     if qualname == "writeable":
-                        if qualobj == True:
+                        if qualobj is True:
                             returnvalue = True
     except:
         print("sdf_is_writeable: error in ", args.swagger)

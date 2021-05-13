@@ -300,7 +300,7 @@ def parameter_names(parse_tree, path, value):
     path_names = ""
     # this is an list
     for parameter_data in parameters:
-        print ("parameter_names", parameter_data)
+        print("parameter_names", parameter_data)
     return path_names
 
 
@@ -410,7 +410,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                 try:
                     schema = path_item["post"]["responses"]["200"]["schema"]
                 except:
-                    print ("swagger_property_data_schema: could not find schema")
+                    print("swagger_property_data_schema: could not find schema")
                     pass
             # get the example
             try:
@@ -419,7 +419,7 @@ def swagger_property_data_schema(json_data, input_path, name):
                 try:
                     example = path_item["post"]["responses"]["200"]["x-example"]
                 except:
-                    print ("swagger_property_data_schema: could not find x-example")
+                    print("swagger_property_data_schema: could not find x-example")
                     pass
 
             value_found = False        
@@ -692,7 +692,6 @@ def retrieve_rt_from_path(parse_tree, path):
     :param value: key in the reference to be found
     :return:
     """
-    #print ("retrieve_rt_from_path: rt from path:", path)
     found_values = swagger_rt(parse_tree)
     for value in found_values:
         if value[0] == path:
@@ -709,7 +708,6 @@ def query_path(parse_tree, my_path, value):
     """
     keys = my_path.split("/")
     index = len(keys)
-    #print ("query_ref: reference:",keys[index-1])
     parameter_block = get_value_by_path_name(parse_tree, "parameters", keys[index-1])
     try:
         return parameter_block[value]
@@ -808,7 +806,6 @@ def convert_to_cplus_type(json_type):
     :param json_type: the json type
     :return: c++ type.
     """
-    #print ("convert_to_cplus_type: json_type:", json_type)
     if json_type in ["boolean"]:
         return "bool"
     if json_type in ["number"]:
@@ -908,7 +905,7 @@ def convert_to_c_type_no_pointer(json_type):
         
     return "void*"
 
-def convert_to_c_type_array_size (json_type):
+def convert_to_c_type_array_size(json_type):
     """
     convert the json type to c type
     :param json_type: the json type
@@ -1021,7 +1018,7 @@ def convert_value_to_c_value(my_value):
     """
     
     if isinstance(my_value, list):
-        if len (my_value) > 0:
+        if len(my_value) > 0:
             my_value = my_value[0]
         else:
             my_value = ""  # default is empty string
@@ -1126,7 +1123,7 @@ def escape_quotes(my_string):
           
     return new_string3
 
-#JLR New functions for SDF (one data model)     
+# Functions for SDF (one data model)     
 def sdf_supported_model(json_data, name):
     # if there are multiple paths defined, the model is currently not supported (likely a collection or atomic model)
     unsupported = False
@@ -1152,16 +1149,16 @@ def sdf_supported_model(json_data, name):
         unsupported = True     
     
     if unsupported:
-        #debug, write filenames that are supported to hardcoded filename
-        #f = open("C:/BUILD/out/iot/unsupported.txt", 'a+')
-        #f.write(name + '\n')
-        #f.close()
+        # debug, write filenames that are supported to hardcoded filename
+        # f = open("C:/BUILD/out/iot/unsupported.txt", 'a+')
+        # f.write(name + '\n')
+        # f.close()
         return False
     else:
-        #debug, write filenames that are unsupported to hardcoded filename
-        #f = open("C:/BUILD/out/iot/supported.txt", 'a+')
-        #f.write(name + '\n')
-        #f.close()
+        # debug, write filenames that are unsupported to hardcoded filename
+        # f = open("C:/BUILD/out/iot/supported.txt", 'a+')
+        # f.write(name + '\n')
+        # f.close()
         return True
 
 def sdf_supported_property(property_name):
@@ -1170,12 +1167,12 @@ def sdf_supported_property(property_name):
     :param property_name name to check
     :return: boolean true/false
     """
-    #these supported items, assume the input models are valid JSON, and do no addition verification of linking properties to valid types.
-    #basic JSON properties
+    # these supported items, assume the input models are valid JSON, and do no addition verification of linking properties to valid types.
+    # basic JSON properties
     supportedProperties = ["type", "minimum", "maximum", "uniqueItems", "format"]
-    #extended JSON properties
+    # extended JSON properties
     supportedProperties.extend(["minItems", "maxItems", "default", "exclusiveMinimum", "exclusiveMaximum"])
-    #properties used for strings, other modifiers 
+    # properties used for strings, other modifiers 
     supportedProperties.extend(["maxLength", "minLength"])
     # description, readOnly, enum, $ref handled in a special function, to rename / reorder properties
     if property_name in supportedProperties:
@@ -1223,7 +1220,7 @@ def sdf_property_object(json_data, level):
     
     """
     
-    if (level == "top"):
+    if(level == "top"):
         iter_json_data = swagger_properties_filtered(json_data, sdf_return_path_info(json_data, "path")).items()
     else:
         # json_data passed in is what's required for iteration below, embedded property blocks
@@ -1275,7 +1272,7 @@ def sdf_properties_block(propertyData):
         elif propertyData_key == "required":
             output += ("\"" + propertyData_key + "\": " + sdf_enum_array(propertyData_value))
         else:
-            print (" not handled in sdf.json.jinja2:sdf_properties_block: ", propertyData_key)
+            print(" not handled in sdf.json.jinja2:sdf_properties_block: ", propertyData_key)
             not_outputted += 1
         if j+1 < (len(propertyData.items())-not_outputted):
             output += ","
@@ -1365,7 +1362,6 @@ def sdf_item_object(itemObject):
             output += "}"
         i = i+1
     
-    # print ( "sdf_item_object : leave", flush=True)
     return output
 
 def sdf_ref_properties(json_data, url):
@@ -1392,7 +1388,7 @@ def sdf_ref_properties(json_data, url):
     try:
         lookup = ref_json_dict['definitions'][keyValue]
     except:
-        print ("!!!!sdf_ref_properties : error in finding", keyValue, flush=True)
+        print("!!!!sdf_ref_properties : error in finding", keyValue, flush=True)
         
 
     output += sdf_properties_block(lookup)
@@ -1458,7 +1454,7 @@ def sdf_return_path_info(json_data, returnType):
     if returnType == "name":
         return name
     elif returnType == "description":
-        return escape_quotes (remove_nl_crs (json_data["paths"][path]["get"]["description"], True))
+        return escape_quotes(remove_nl_crs(json_data["paths"][path]["get"]["description"], True))
     else:
         return path
 
@@ -1495,7 +1491,7 @@ def sdf_is_writeable(json_value):
                        if qualobj == True:
                             returnvalue=True
     except:
-        print ("sdf_is_writeable: error in ", args.swagger)
+        print("sdf_is_writeable: error in ", args.swagger)
         traceback.print_exc()
         pass
     
@@ -1549,7 +1545,7 @@ def sdf_resolve_sdfRef_draft07(json_dict):
             my_path_segments = my_path.split("/")
             my_data = json_data
             for path_seg in my_path_segments:
-                print (path_seg)
+                print(path_seg)
                 if path_seg != "#":
                     my_data = my_data[path_seg]
             return my_data
@@ -1616,9 +1612,9 @@ try:
 except:
     pass
 
-print ("************************")
-print ("swagger2x ", my_version)
-print ("************************")
+print("************************")
+print("swagger2x ", my_version)
+print("************************")
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-ver"        , "--verbose"    , help="Execute in verbose mode", action='store_true')
@@ -1653,7 +1649,7 @@ parser.add_argument("-jsonindent"  , "--jsonindent"  , default=None,
                     help="jsonindent , e.g. 2",  nargs='?',  required=False)
 
 # (args) supports batch scripts providing arguments
-print (sys.argv)
+print(sys.argv)
 args = parser.parse_args()
 
 print("file          : " + str(args.swagger))
@@ -1672,14 +1668,14 @@ print("")
 
 try:
     if os.path.exists(args.template_dir) is False:
-        print( "template_dir not found:", args.template_dir)
+        print("template_dir not found:", args.template_dir)
 
     full_path = os.path.join(args.template_dir, args.template)
 
     json_data = load_json_schema(args.swagger)
     object_string = json.dumps(json_data, sort_keys=True, indent=2, separators=(',', ': '))
-    print ("parse tree of input file:")
-    print (object_string)
+    print("parse tree of input file:")
+    print(object_string)
     # always in the same order..
     json_dict = json.loads(object_string)
     
@@ -1707,7 +1703,7 @@ try:
     env.filters['sdf_resolve_sdfRef_draft07'] = sdf_resolve_sdfRef_draft07
 
     for template_file in template_files:
-        print ("processing:", template_file)
+        print("processing:", template_file)
         template_environment = env.get_template(template_file)
         # add the custom functions
         template_environment.globals['replace_chars'] = replace_chars
@@ -1824,9 +1820,8 @@ try:
             continue
         source_file =  os.path.join(full_path, file)
         destination_file =  os.path.join(args.out_dir, file)
-        print ("copying template file: ", file)
+        print("copying template file: ", file)
         copyfile(source_file, destination_file)
-
 
 except:
     traceback.print_exc()

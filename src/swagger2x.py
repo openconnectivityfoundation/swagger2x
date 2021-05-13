@@ -332,7 +332,7 @@ def query_ref(parse_tree, parameter_ref, value):
     keys = parameter_ref.split("/")
     index = len(keys)
     parameter_block = get_value_by_path_name(
-        parse_tree, "parameters", keys[index-1])
+        parse_tree, "parameters", keys[index - 1])
     try:
         return parameter_block[value]
     except:
@@ -724,7 +724,7 @@ def query_path(parse_tree, my_path, value):
     keys = my_path.split("/")
     index = len(keys)
     parameter_block = get_value_by_path_name(
-        parse_tree, "parameters", keys[index-1])
+        parse_tree, "parameters", keys[index - 1])
     try:
         return parameter_block[value]
     except:
@@ -806,7 +806,7 @@ def variablesyntax(input_string):
     :return: adjusted string
     """
     chars_to_replace = "/\  +-*^|%$=~@()[].,?"
-    return "_"+replace_chars(input_string, chars_to_replace)
+    return "_" + replace_chars(input_string, chars_to_replace)
 
 #
 #  jinga custom functions: filter
@@ -820,7 +820,7 @@ def variableforbidden(input_string):
     :return: adjusted string
     """
     if input_string in ["if", "var", "function", "null"]:
-        return "_"+input_string
+        return "_" + input_string
     return input_string
 
 
@@ -854,7 +854,7 @@ def convert_to_cplus_array_type(json_data):
 
     if subtype is not None:
         if subtype in ["string", "number", "boolean", "integer"]:
-            return "std::vector<"+convert_to_cplus_type(json_data["items"]["type"])+">"
+            return "std::vector<" + convert_to_cplus_type(json_data["items"]["type"]) + ">"
         if subtype in ["object"]:
             return "std::vector<OCRepresentation>"
         if subtype in ["array"]:
@@ -995,13 +995,13 @@ def convert_to_cplus_string_array(my_array):
     my_ret = '{'
     counter = 0
     if isinstance(my_array, str):
-        my_ret += '"'+str(my_array)+'"'
+        my_ret += '"' + str(my_array) + '"'
     elif isinstance(my_array, list):
         for item in my_array:
             if counter > 0:
                 my_ret += ','
             my_ret += '"' + str(item) + '"'
-            counter + =1
+            counter += 1
     else:
         pass
 
@@ -1214,7 +1214,7 @@ def sdf_supported_property(property_name):
 
 def sdf_make_reference_external(iter_json_data, url):
     """
-    Checks all $ref and prepend the url to it if it is 
+    Checks all $ref and prepend the url to it if it is
     a local reference (e.g. start with #)
     :param json data
     :param url url to be prefixed to the local reference
@@ -1232,7 +1232,7 @@ def sdf_make_reference_external(iter_json_data, url):
 
 def sdf_supported_property_non_string(property_name):
     """
-    Check to verify that this property is support natively in SDF 
+    Check to verify that this property is support natively in SDF
     (without modification)
     :param property_name name to check
     :return: boolean true/false
@@ -1249,7 +1249,7 @@ def sdf_supported_property_non_string(property_name):
 
 def sdf_property_object(json_data, level):
     """
-    Take the property values from a resource type and reformat for sdf 
+    Take the property values from a resource type and reformat for sdf
     :param json_data: sdfProperty's json_data from resource type
     :param level: "top" = top level, ignore filtered out types, "sub" = subsequent level, no filter required
     :return: json formatted string
@@ -1268,7 +1268,7 @@ def sdf_property_object(json_data, level):
         # new name field
         output += sdf_properties_block(property_data)
         output += "}"
-        if i+1 < len(iter_json_data):
+        if i + 1 < len(iter_json_data):
             output += ","
     return output
 
@@ -1293,33 +1293,26 @@ def sdf_properties_block(propertyData):
             else:
                 output += "\"" + propertyData_key + "\": " + "\"" + propertyData_value + "\""
         elif propertyData_key == "description":
-            output += ("\"" + propertyData_key + "\": \"" +
-                       escape_quotes(propertyData_value) + "\"")
+            output += ("\"" + propertyData_key + "\": \"" + escape_quotes(propertyData_value) + "\"")
         elif propertyData_key == "enum":
-            output += ("\"" + propertyData_key + "\": " +
-                       sdf_enum_array(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_enum_array(propertyData_value))
         elif propertyData_key == "pattern":
-            output += ("\"" + propertyData_key + "\": \"" +
-                       escape_escapes(propertyData_value) + "\"")
+            output += ("\"" + propertyData_key + "\": \"" + escape_escapes(propertyData_value) + "\"")
         elif propertyData_key == "readOnly":
-            output += ("\"writable\": " +
-                       sdf_readOnly_object(propertyData_value))
+            output += ("\"writable\": " + sdf_readOnly_object(propertyData_value))
         elif propertyData_key == "items":
-            output += ("\"" + propertyData_key + "\": " +
-                       sdf_item_object(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_item_object(propertyData_value))
         elif propertyData_key == "$ref":
             output += sdf_ref_properties(json_data, propertyData_value)
         elif propertyData_key == "properties":
-            output += ("\"" + propertyData_key +
-                       "\": {" + sdf_property_object(propertyData_value, "sub")) + "}"
+            output += ("\"" + propertyData_key + "\": {" + sdf_property_object(propertyData_value, "sub")) + "}"
         elif propertyData_key == "required":
-            output += ("\"" + propertyData_key + "\": " +
-                       sdf_enum_array(propertyData_value))
+            output += ("\"" + propertyData_key + "\": " + sdf_enum_array(propertyData_value))
         else:
             print(" not handled in sdf.json.jinja2:sdf_properties_block: ",
                   propertyData_key)
             not_outputted += 1
-        if j+1 < (len(propertyData.items())-not_outputted):
+        if j + 1 < (len(propertyData.items()) - not_outputted):
             output += ","
         output_total += output
 
@@ -1351,7 +1344,7 @@ def sdf_required_object(json_value):
 
     for i, requiredItem in enumerate(requiredItems):
         output += "\"#/sdfObject/" + object_name + "/sdfProperty/" + requiredItem + "\""
-        if i+1 < len(requiredItems):
+        if i + 1 < len(requiredItems):
             output += ","
     output += "]"
     return output
@@ -1405,11 +1398,11 @@ def sdf_item_object(itemObject):
             else:
                 output = output + "\"" + itemKey + "\": "
                 output += "\"" + str(itemValue) + "\""
-        if i < len(itemObject)-1:
+        if i < len(itemObject) - 1:
             output += ","
         else:
             output += "}"
-        i = i+1
+        i = i + 1
     return output
 
 
@@ -1461,14 +1454,14 @@ def sdf_readOnly_object(RO_value):
 
 def sdf_enum_array(enumArray):
     """
-    Take the enum array value and additionally parse for sdf 
+    Take the enum array value and additionally parse for sdf
     :param enumArray: array of items associated with enum type
     :return: json formatted string
     """
     output = "["
     for i, item in enumerate(enumArray):
         output = output + "\"" + item + "\""
-        if i < len(enumArray)-1:
+        if i < len(enumArray) - 1:
             output = output + ","
         else:
             output = output + "]"
@@ -1478,7 +1471,8 @@ def sdf_enum_array(enumArray):
 def load_json_schema_fromURL(url):
     """
     load the JSON schema file
-    :param url: location of schema file, e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
+    :param url: location of schema file, 
+        e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
     :return: json_dict
     """
     response = requests.get(url)
@@ -1492,8 +1486,8 @@ def sdf_return_path_info(json_data, returnType):
     Return ocf resource type name: OCF name, e.g. oic.r.grinderAppliance returns grinderAppliance or grinderApplianceResURI
     :json_data: inputted resource type file
     :returnType: "name" or "path" or "description"
-    :return: if returnType: "name" - string formatted name: e.g. grinder 
-                returnType: "description" - returns the description property of the "get" path, 
+    :return: if returnType: "name" - string formatted name: e.g. grinder
+                returnType: "description" - returns the description property of the "get" path,
                 returnType: "path" the path name, e.g. /GrinderResURI
     """
     rt = swagger_rt(json_data)

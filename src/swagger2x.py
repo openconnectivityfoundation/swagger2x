@@ -87,7 +87,7 @@ def create_c_struct(nested_json):
         Args:
             nested_json: A nested json object.
         Returns:
-            dict,  [0 = type, 1 = description ]
+            dict, [0 = type, 1 = description ]
     """
     try:
         out = {}
@@ -1287,11 +1287,9 @@ def sdf_properties_block(propertyData):
             elif isinstance(propertyData_value, bool) and propertyData_value is False:
                 output += "\"" + propertyData_key + "\":  false"
             elif isinstance(propertyData_value, Number):
-                output += "\"" + propertyData_key + \
-                    "\": " + str(propertyData_value)
+                output += "\"" + propertyData_key + "\": " + str(propertyData_value)
             elif isinstance(propertyData_value, int):
-                output += "\"" + propertyData_key + \
-                    "\": " + str(propertyData_value)
+                output += "\"" + propertyData_key + "\": " + str(propertyData_value)
             else:
                 output += "\"" + propertyData_key + "\": " + "\"" + propertyData_value + "\""
         elif propertyData_key == "description":

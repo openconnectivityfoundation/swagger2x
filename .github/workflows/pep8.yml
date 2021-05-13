@@ -36,4 +36,4 @@ jobs:
           # E501 ignore long lines (e.g. larger than 80 chars)
           # E722 do not use bare 'except'
           # W605 invalid escape sequence '\ ' 
-          pycodestyle --first --ignore=E501 --ignore=E722 --ignore=W605 src/swagger2x.py
+          pycodestyle --ignore=E501 --ignore=E722 --ignore=W605 src/swagger2x.py

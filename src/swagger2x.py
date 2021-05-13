@@ -1471,7 +1471,7 @@ def sdf_enum_array(enumArray):
 def load_json_schema_fromURL(url):
     """
     load the JSON schema file
-    :param url: location of schema file, 
+    :param url: location of schema file,
         e.g. https://openconnectivityfoundation.github.io/IoTDataModels/schemas/oic.baseresource.properties-schema.json#/definitions/range_integer
     :return: json_dict
     """

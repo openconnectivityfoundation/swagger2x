@@ -1,4 +1,4 @@
-#############################
+##############################################################################
 #
 # copyright 2016, 2020 Open Interconnect Consortium, Inc.
 # All rights reserved.
@@ -13,8 +13,8 @@
 #
 # THIS SOFTWARE IS PROVIDED BY THE OPEN INTERCONNECT CONSORTIUM, INC. "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# OR WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+# PURPOSEOR WARRANTIES OF NON-INFRINGEMENT, ARE DISCLAIMED. IN NO EVENT SHALL
 # THE OPEN INTERCONNECT CONSORTIUM, INC. OR CONTRIBUTORS BE LIABLE FOR ANY
 # DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 # (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
@@ -24,7 +24,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#############################
+##############################################################################
 import time
 import os
 import json
@@ -971,7 +971,7 @@ def convert_to_c_type_array_size(json_type):
 
 def get_c_data(json_data, prefix=""):
     """
-    convert the json type to c struct retrieve code 
+    convert the json type to c struct retrieve code
     :param json_type: the json type
     : Args:
             nested_json: A nested json object.
@@ -1275,7 +1275,7 @@ def sdf_property_object(json_data, level):
 
 def sdf_properties_block(propertyData):
 
-    if propertyData == None:
+    if propertyData is None:
         return ""
     output_total = ""
     not_outputted = 0
@@ -1284,7 +1284,7 @@ def sdf_properties_block(propertyData):
         if sdf_supported_property(propertyData_key):
             if isinstance(propertyData_value, bool) and propertyData_value is True:
                 output += "\"" + propertyData_key + "\":  true"
-            elif isinstance(propertyData_value, bool) and propertyData_value == False:
+            elif isinstance(propertyData_value, bool) and propertyData_value is False:
                 output += "\"" + propertyData_key + "\":  false"
             elif isinstance(propertyData_value, Number):
                 output += "\"" + propertyData_key + \
@@ -1802,7 +1802,7 @@ try:
         template_environment.globals['sdf_required_block_check'] = sdf_required_block_check
         template_environment.globals['sdf_required_object'] = sdf_required_object
         template_environment.globals['sdf_is_writeable'] = sdf_is_writeable
-        #template_environment.globals['sdf_resolve_sdfRef'] = sdf_resolve_sdfRef
+        # template_environment.globals['sdf_resolve_sdfRef'] = sdf_resolve_sdfRef
 
         # check for whether this model is supported for one-data-model
         if args.template == "OAS2SDF":

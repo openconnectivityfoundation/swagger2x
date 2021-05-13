@@ -121,8 +121,7 @@ def create_c_struct(nested_json):
                     my_flatten(a, name + str(i) + '_')
                     i += 1
             else:
-                if name not in ["properties", "allOf", 
-                    "anyOf", "items", "description", "type"]:
+                if name not in ["properties", "allOf", "anyOf", "items", "description", "type"]:
                     out[name] = my_dict
 
         cur_type = nested_json.get("type")
@@ -178,7 +177,7 @@ def find_key_link(rec_dict, target, depth=0):
                     if val == target:
                         return val
                     if isinstance(val, dict):
-                        r = find_key_link(val, target, depth+1)
+                        r = find_key_link(val, target, depth + 1)
                         if r is not None:
                             found = True
                             # TODO: this should return an array, now it only returns the last found item
@@ -1683,28 +1682,28 @@ parser.add_argument("-ver", "--verbose",
 parser.add_argument("-swagger", "--swagger", default=None,
                     help="swagger file name", nargs='?', const="", required=True)
 parser.add_argument("-template", "--template", default=None,
-                    help="template to be used",  nargs='?', const="", required=True)
+                    help="template to be used", nargs='?', const="", required=True)
 parser.add_argument("-template_dir", "--template_dir", default=None,
-                    help="template directory",  nargs='?', const="", required=True)
+                    help="template directory", nargs='?', const="", required=True)
 parser.add_argument("-schemadir", "--schemadir", default=".",
-                    help="path to dir with additional referenced schemas",  nargs='?', const="", required=False)
+                    help="path to dir with additional referenced schemas", nargs='?', const="", required=False)
 parser.add_argument("-out_dir", "--out_dir", default=".",
                     help="output dir", nargs='?', const="", required=True)
 # generation values
 parser.add_argument("-uuid", "--uuid", default="9b8fadc6-1e57-4651-bab2-e268f89f3ea7",
                     help="uuid", nargs='?', const="", required=False)
 parser.add_argument("-manufacturer", "--manufacturer", default="ocf",
-                    help="manufacturer name",  nargs='?', const="", required=False)
+                    help="manufacturer name", nargs='?', const="", required=False)
 parser.add_argument("-devicetype", "--devicetype", default="oic.d.light",
-                    help="device type , e.g. oic.d.xxx",  nargs='?',  required=False)
+                    help="device type, e.g. oic.d.xxx", nargs='?',  required=False)
 # output file
 parser.add_argument("-output_file", "--output_file", default=None,
-                    help="output file , e.g. <filename>.sdf.json",  nargs='?',  required=False)
+                    help="output file , e.g. <filename>.sdf.json", nargs='?',  required=False)
 parser.add_argument("-prefix_file", "--prefix_file", default=None,
-                    help="prefix file , e.g. <prefix><filename>.sdf.json",  nargs='?',  required=False)
+                    help="prefix file, e.g. <prefix><filename>.sdf.json", nargs='?', required=False)
 # indentation options
 parser.add_argument("-jsonindent", "--jsonindent", default=None,
-                    help="jsonindent , e.g. 2",  nargs='?',  required=False)
+                    help="jsonindent, e.g. 2", nargs='?', required=False)
 
 # (args) supports batch scripts providing arguments
 print(sys.argv)

@@ -437,9 +437,9 @@ app_init(void)
   int ret = oc_init_platform("{{manufacturer}}", NULL, NULL);
   /* the settings determine the appearance of the device on the network
      can be ocf.2.2.0 (or even higher)
-     supplied values are for ocf.2.2.2 */
+     supplied values are for ocf.2.2.3 */
   ret |= oc_add_device("/oic/d", "{{device_type}}", "{{json_data['info']['title']}}", 
-                       "ocf.2.2.2", /* icv value */
+                       "ocf.2.2.3", /* icv value */
                        "ocf.res.1.3.0, ocf.sh.1.3.0",  /* dmv value */
                        NULL, NULL);
                        

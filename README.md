@@ -88,6 +88,14 @@ New templates can be added by:
 - [more details on the template](/swagger2x/src/templates/PythonFlask)
 - [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/PythonFlask) 
 
+##### OAS2PahoPy
+
+- generates a python OCF MQTT device
+  - uses the MQTT Paho python library
+- MQTT OCF implemenation
+- [more details on the template](/swagger2x/src/templates/OAS2PahoPy)
+- [folder](https://github.com/openconnectivityfoundation/swagger2x/tree/master/src/templates/OAS2PahoPy/) 
+
 ##### OAS2SDF
 
 - generates schemas files for One Data Model in Semantic Definition Format (SDF) language.  

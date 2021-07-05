@@ -17,6 +17,7 @@ The generated code is a good start to hook up all the hardware that that the pro
   - [Generic concept](#generic-concept)
   - [What is generated](#what-is-generated)
     - [Introspection Device Data (IDD)](#introspection-device-data-idd)
+  - [DeviceBuilder](#DeviceBuilder)
   - [Config file](#config-file)
   - [security](#security)
 
@@ -103,6 +104,12 @@ The IDD is generated, and can be imported in the code via:
 - can be located 1 folder up in the hierarchy
   
 The default setup is reading the IDD file from disk.
+
+## DeviceBuilder
+
+The device builder tool chain can be adapted to generate the python code.
+The gen.sh contains information to enable the code generation for a server.
+e.g. comment out the indicated line.
 
 ## Config file
 

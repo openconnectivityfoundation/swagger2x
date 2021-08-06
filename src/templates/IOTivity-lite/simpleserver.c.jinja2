@@ -15,39 +15,75 @@
  limitations under the License.
 -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 */
+#ifndef DOXYGEN
+// Force doxygen to document static inline
+#define STATIC static
+#endif
 
-/* Application Design
-*
-* support functions:
-* app_init
-*  initializes the oic/p and oic/d values.
-* register_resources
-*  function that registers all endpoints, e.g. sets the RETRIEVE/UPDATE handlers for each end point
-*
-* main 
-*  starts the stack, with the registered resources.
-*
-* Each resource has:
-*  global property variables (per resource path) for:
-*    the property name
-*       naming convention: g_<path>_RESOURCE_PROPERTY_NAME_<propertyname>
-*    the actual value of the property, which is typed from the json data type
-*      naming convention: g_<path>_<propertyname>
-*  global resource variables (per path) for:
-*    the path in a variable:
-*      naming convention: g_<path>_RESOURCE_ENDPOINT
-*
-*  handlers for the implemented methods (get/post)
-*   get_<path>
-*     function that is being called when a RETRIEVE is called on <path>
-*     set the global variables in the output
-*   post_<path>
-*     function that is being called when a UPDATE is called on <path>
-*     checks the input data
-*     if input data is correct
-*       updates the global variables
-*
-*/
+/**
+ * @file
+ *  Generated Code
+ */
+/**
+ * ## Application Design
+ *
+ * support functions:
+ *
+ * - app_init
+ *   initializes the oic/p and oic/d values.
+ * - register_resources
+ *   function that registers all endpoints, e.g. sets the RETRIEVE/UPDATE/DELETE handlers for each end point
+ *
+ * - main 
+ *   starts the stack, with the registered resources.
+ *   can be compiled out with NO_MAIN
+ *
+ * Each resource has:
+ *  - global property variables (per resource path) for:
+ *    - the property name
+ *       naming convention: g_[path]_RESOURCE_PROPERTY_NAME_[propertyname]
+ *    - the actual value of the property, which is typed from the json data type
+ *      naming convention: g_[path]_[propertyname]
+ *  - global resource variables (per path) for:
+ *    - the path in a variable:
+ *      naming convention: g_[path]_RESOURCE_ENDPOINT
+ *
+ *  handlers for the implemented methods (get/post):
+ *   - get_[path]
+ *     function that is being called when a RETRIEVE is called on [path]
+ *     set the global variables in the output
+ *   - post_[path]
+ *     function that is being called when a UPDATE is called on [path]
+ *     checks the input data
+ *     if input data is correct
+ *       updates the global variables
+ *
+ * ## IoTivity specific defines
+ *
+ *  - OC_SECURITY 
+      enable security
+ *    - OC_PKI 
+ *      enable use of PKI, note onboarding is enabled by means of run time code
+ *    - OC_SECURITY_PIN 
+ *      enables Random PIN onboarding, 
+ *  - OC_CLOUD 
+ *    enables cloud access
+ *  - OC_IDD_API 
+ *    IDD via API, otherwise use header file to define the IDD
+ * - __linux__ 
+ *   build for linux
+ * - WIN32 
+ *   build for windows
+ *
+ * ## File specific defines
+ *
+ * - NO_MAIN
+ *   compile out the function main()
+ * - INCLUDE_EXTERNAL
+ *   includes header file "external_header.h", so that other tools/dependencies can be included without changing this code
+ * - OPTIMIZE_PSTAT
+ *   disable PSTAT observe
+ */
 /*
  tool_version          : {{version}}
  input_file            : {{input_file}}
@@ -67,8 +103,14 @@
 #include "oc_introspection.h"
 #endif
 
+#ifdef INCLUDE_EXTERNAL
+/* import external definitions from header file*/
+/* this file should be externally supplied */
+#include "external_header.h"
+#endif
+
 #ifdef __linux__
-/* linux specific code */
+/** linux specific code */
 #include <pthread.h>
 #ifndef NO_MAIN
 static pthread_mutex_t mutex;
@@ -78,21 +120,30 @@ static struct timespec ts;
 #endif
 
 #ifdef WIN32
-/* windows specific code */
+/** windows specific code */
 #include <windows.h>
-static CONDITION_VARIABLE cv;   /* event loop variable */
-static CRITICAL_SECTION cs;     /* event loop variable */
+STATIC CONDITION_VARIABLE cv;   /**< event loop variable */
+STATIC CRITICAL_SECTION cs;     /**< event loop variable */
+#endif
+
+#include <stdio.h>  /* defines FILENAME_MAX */
+#ifdef WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
 #endif
 
 #define btoa(x) ((x)?"true":"false")
 
-#define MAX_STRING 30           /* max size of the strings. */
-#define MAX_PAYLOAD_STRING 65   /* max size strings in the payload */
-#define MAX_ARRAY 10            /* max size of the array */
+#define MAX_STRING 30           /**< max size of the strings. */
+#define MAX_PAYLOAD_STRING 65   /**< max size strings in the payload */
+#define MAX_ARRAY 10            /**< max size of the array */
 /* Note: Magic numbers are derived from the resource definition, either from the example or the definition.*/
 
-volatile int quit = 0;          /* stop variable, used by handle_signal */
-static const size_t DEVICE = 0; /* default device index */
+volatile int quit = 0;          /**< stop variable, used by handle_signal */
+STATIC const size_t DEVICE = 0; /**< default device index */
 
 {%- macro trans_interfaces(interface) -%}
  {%- if interface == "oic.if.baseline" %} OC_IF_BASELINE
@@ -231,7 +282,7 @@ static const size_t DEVICE = 0; /* default device index */
       PRINT("     array item string {{k}}[0] : %d %s\n", i, g{{my_path|variablesyntax}}{{var|variablesyntax}}[i].{{k}}[0]);
       oc_rep_close_array({{var}}, {{k}});
 {% else %}
-    /* {{k}} not handled */
+    /** {{k}} not handled */
 {% endif %}
     {%- endfor %}
       oc_rep_object_array_end_item({{var}});
@@ -357,25 +408,25 @@ static const size_t DEVICE = 0; /* default device index */
 {% for path, path_data in json_data['paths'].items() if "?" not in path %}
 /* global property variables for path: "{{path}}" */
 {%- if query_if_exist(json_data, path, "oic.if.startup") or query_if_exist(json_data, path, "oic.if.startup.revert") %}
-int g{{path|variablesyntax}}_storage_status = 0;  /* 0=no storage, 1=startup, 2=startup.revert */ 
+int g{{path|variablesyntax}}_storage_status = 0;  /**< 0=no storage, 1=startup, 2=startup.revert */ 
 {%- endif %}
 {%- for var, var_data in query_properties_filtered(json_data, path).items() %}
-static char *g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; /* the name for the attribute */
+STATIC char *g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}} = "{{var}}"; /**< the name for the attribute */
 {%- if var_data.type == "boolean" %}
-{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */
+{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /**< current value of property "{{var}}" {{var_data["description"]}} */
 {%- elif var_data.type == "integer" %}
-{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}" {{var_data["description"]}} */
+{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /**< current value of property "{{var}}" {{var_data["description"]}} */
 {%- elif var_data.type == "number" %}
-{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /* current value of property "{{var}}"  {{var_data["description"]}} */
+{{var_data.type|convert_to_c_type}} g{{path|variablesyntax}}{{var|variablesyntax}} = {{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type)}}; /**< current value of property "{{var}}"  {{var_data["description"]}} */
 {%- elif var_data.type == "string" %}
-char g{{path|variablesyntax}}{{var|variablesyntax}}[ {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}} ] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) }}"; /* current value of property "{{var}}" {{var_data["description"]}} */
+char g{{path|variablesyntax}}{{var|variablesyntax}}[ {{var_data.maxLength|default("MAX_PAYLOAD_STRING")}} ] = "{{swagger_property_data_schema(json_data, path, var)|init_value_if_empty(var_data.type) }}"; /**< current value of property "{{var}}" {{var_data["description"]}} */
 {%- elif var_data.type == "object" %}
 /* Object "{{var}}" as structure */
 {%- set my_data = var_data.properties |get_c_data() %}
 struct {{path|variablesyntax}}{{var|variablesyntax}}_t
 {
 {%- for k,v in my_data.items() %}
-  {{v[0]|convert_to_c_type_no_pointer()}} {{k}} {% if v[0] | convert_to_c_type_array_size() == 1 %}[MAX_PAYLOAD_STRING]{% endif %}{% if v[0] | convert_to_c_type_array_size() == 2 %}[MAX_ARRAY][MAX_PAYLOAD_STRING]{% endif -%};  /* {{v[1]}} */
+  {{v[0]|convert_to_c_type_no_pointer()}} {{k}} {% if v[0] | convert_to_c_type_array_size() == 1 %}[MAX_PAYLOAD_STRING]{% endif %}{% if v[0] | convert_to_c_type_array_size() == 2 %}[MAX_ARRAY][MAX_PAYLOAD_STRING]{% endif -%};  /**< {{v[1]}} */
   {% if v[0] | convert_to_c_type_array_size() == 2 %}int {{k}}_array_size; /* current size of the array */{% endif %}
 {%- endfor %}
 };
@@ -401,13 +452,13 @@ size_t g{{path|variablesyntax}}{{var|variablesyntax}}_array_size;
 char g{{path|variablesyntax}}{{var|variablesyntax}}[{{var_data.maxItems|default("MAX_ARRAY")}}][{{var_data.maxLength|default("MAX_PAYLOAD_STRING")}}];
 size_t g{{path|variablesyntax}}{{var|variablesyntax}}_array_size;
 {%- elif var_data |convert_to_cplus_array_type == "std::vector<OCRepresentation>" -%}
-/* array of objects */
+/** array of objects */
 {%- set my_data = var_data |get_c_data() %}
 struct {{path|variablesyntax}}{{var|variablesyntax}}_t
 {
 {%- for k,v in my_data.items() %}
-  {{v[0]|convert_to_c_type_no_pointer()}} {{k}} {% if v[0] | convert_to_c_type_array_size() == 1 %}[MAX_PAYLOAD_STRING]{% endif %}{% if v[0] | convert_to_c_type_array_size() == 2 %}[MAX_ARRAY][MAX_PAYLOAD_STRING]{% endif -%};  /* {{v[1]}} */
-  {% if v[0] | convert_to_c_type_array_size() == 2 %}int {{k}}_array_size; /* current size of the array */{% endif %}
+  {{v[0]|convert_to_c_type_no_pointer()}} {{k}} {% if v[0] | convert_to_c_type_array_size() == 1 %}[MAX_PAYLOAD_STRING]{% endif %}{% if v[0] | convert_to_c_type_array_size() == 2 %}[MAX_ARRAY][MAX_PAYLOAD_STRING]{% endif -%};  /**< {{v[1]}} */
+  {% if v[0] | convert_to_c_type_array_size() == 2 %}int {{k}}_array_size; /**< current size of the array */{% endif %}
 {%- endfor %}
 };
 struct {{path|variablesyntax}}{{var|variablesyntax}}_t g{{path|variablesyntax}}{{var|variablesyntax}}[MAX_ARRAY];
@@ -417,19 +468,25 @@ int g{{path|variablesyntax}}{{var|variablesyntax}}_array_size = 0;
 {% else %}
 /* {{var}} not handled */
 {% endif -%}
-{% endfor -%} 
-{% endfor -%} 
-/* registration data variables for the resources */
+{% endfor -%}
+{% endfor -%}
+/** registration data variables for the resources */
 {% for path, path_data in json_data['paths'].items() if "?" not in path %}
 /* global resource variables for path: {{path}} */
-static char *g{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}"; /* used path for this resource */
-static char *g{{path|variablesyntax}}_RESOURCE_TYPE[MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; /* rt value (as an array) */
-int g{{path|variablesyntax}}_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}};
+STATIC char *g{{path|variablesyntax}}_RESOURCE_ENDPOINT = "{{path}}"; /**< used path for this resource */
+STATIC char *g{{path|variablesyntax}}_RESOURCE_TYPE[MAX_STRING] = {{query_rt(json_data, path)|convert_to_c_type_array}}; /**< rt value (as an array) */
+int g{{path|variablesyntax}}_nr_resource_types = {{query_rt(json_data, path)|convert_array_size}}; /**< number of resource type entries */
 {%- endfor %}
 
 /**
-* function to set up the device.
-*
+ * function to set up the device.
+ * 
+ * sets the:
+ * - OCF device_type
+ * - friendly device name
+ * - OCF version
+ * - introspection device data
+ *
 */
 int
 app_init(void)
@@ -477,12 +534,13 @@ app_init(void)
 }
 
 /**
-* helper function to check if the POST input document contains 
-* the common readOnly properties or the resouce readOnly properties
-* @param name the name of the property
-* @return the error_status, e.g. if error_status is true, then the input document contains something illegal
-*/
-static bool
+ * helper function to check if the POST input document contains 
+ * the common readOnly properties or the resouce readOnly properties
+ * @param name the name of the property
+ * @param error_state the current (input) error state
+ * @return the error_status, e.g. if error_status is true, then the input document contains something illegal
+ */
+STATIC bool
 check_on_readonly_common_resource_properties(oc_string_t name, bool error_state)
 {
   if (strcmp ( oc_string(name), "n") == 0) {
@@ -508,27 +566,25 @@ check_on_readonly_common_resource_properties(oc_string_t name, bool error_state)
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "get" %} 
 /**
-* get method for "{{path}}" resource.
-* function is called to intialize the return values of the GET method.
-* initialisation of the returned values are done from the global property values.
-* Resource Description:
-{{method_data.description| code_indent("* ")}}
-*
-* @param request the request representation.
-* @param interfaces the interface used for this call
-* @param user_data the user data.
+ * get method for "{{path}}" resource.
+ * function is called to intialize the return values of the GET method.
+ * initialisation of the returned values are done from the global property values.
+ * Resource Description:
+{{method_data.description| code_indent(" * ")}}
+ *
+ * @param request the request representation.
+ * @param interfaces the interface used for this call
+ * @param user_data the user data.
 */
-static void
+STATIC void
 get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
 {
   (void)user_data;  /* variable not used */
   /* TODO: SENSOR add here the code to talk to the HW if one implements a sensor.
      the call to the HW needs to fill in the global variable before it returns to this function here.
      alternative is to have a callback from the hardware that sets the global variables.
-  
-     The implementation always return everything that belongs to the resource.
-     this implementation is not optimal, but is functionally correct and will pass CTT1.2.2 */
-  bool error_state = false;
+  */
+  bool error_state = false; /**< the error state, the generated code */
   int oc_status_code = OC_STATUS_OK;
   {% set query_list = list_query_params(json_data, path)  %}
   {%- for item in query_list %}
@@ -623,18 +679,18 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "post" %} 
 /**
-* post method for "{{path}}" resource.
-* The function has as input the request body, which are the input values of the POST method.
-* The input values (as a set) are checked if all supplied values are correct.
-* If the input values are correct, they will be assigned to the global  property values.
-* Resource Description:
-{{method_data.description | code_indent("* ")}}
-*
-* @param request the request representation.
-* @param interfaces the used interfaces during the request.
-* @param user_data the supplied user data.
-*/
-static void
+ * post method for "{{path}}" resource.
+ * The function has as input the request body, which are the input values of the POST method.
+ * The input values (as a set) are checked if all supplied values are correct.
+ * If the input values are correct, they will be assigned to the global  property values.
+ * Resource Description:
+{{method_data.description | code_indent(" * ")}}
+ *
+ * @param request the request representation.
+ * @param interfaces the used interfaces during the request.
+ * @param user_data the supplied user data.
+ */
+STATIC void
 post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
 {
   (void)interfaces;
@@ -1081,15 +1137,15 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
 {% for methodName, method_data in path_data.items() -%}
 {% if methodName == "delete" %} 
 /**
-* delete method for "{{path}}" resource.
-* Resource Description:
-{{method_data.description | code_indent("* ")}}
-*
-* @param request the request representation.
-* @param interfaces the used interfaces during the request.
-* @param user_data the supplied user data.
-*/
-static void
+ * delete method for "{{path}}" resource.
+ * Resource Description:
+{{method_data.description | code_indent(" * ")}}
+ *
+ * @param request the request representation.
+ * @param interfaces the used interfaces during the request.
+ * @param user_data the supplied user data.
+ */
+STATIC void
 delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces, void *user_data)
 {
   (void)request;
@@ -1125,15 +1181,15 @@ delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfa
 {%- endfor %}  
 
 /**
-* register all the resources to the stack
-* this function registers all application level resources:
-* - each resource path is bind to a specific function for the supported methods (GET, POST, PUT)
-* - each resource is 
-*   - secure
-*   - observable
-*   - discoverable 
-*   - used interfaces, including the default interface.
-*     default interface is the first of the list of interfaces as specified in the input file
+ * register all the resources to the stack
+ * this function registers all application level resources:
+ * - each resource path is bind to a specific function for the supported methods (GET, POST, PUT)
+ * - each resource is 
+ *   - secure
+ *   - observable
+ *   - discoverable 
+ *   - used interfaces, including the default interface.
+ *     default interface is the first of the list of interfaces as specified in the input file
 */
 void
 register_resources(void)
@@ -1181,6 +1237,12 @@ register_resources(void)
   /* disable observe for oic/p */
   oc_resource_t* platform_resource = oc_core_get_resource_by_index(OCF_P, DEVICE);
   oc_resource_set_observable(platform_resource, false);
+  
+#ifdef OPTIMIZE_PSTAT
+  	/* disable observe on PSTAT resource to save on peak memory consumption */
+	oc_resource_t *pstat_resource = oc_core_get_resource_by_index(OCF_SEC_PSTAT, 0);
+	oc_resource_set_observable(pstat_resource, false);
+#endif
 }
 
 #ifdef OC_SECURITY
@@ -1196,6 +1258,12 @@ random_pin_cb(const unsigned char *pin, size_t pin_len, void *data)
 #endif /* OC_SECURITY_PIN */
 #endif /* OC_SECURITY */
 
+/**
+ * initiate preset for device
+ *
+ * @param device the device indentifier of the list of devices
+ * @param data the supplied data.
+ */
 void
 factory_presets_cb(size_t device, void *data)
 {
@@ -1231,12 +1299,10 @@ factory_presets_cb(size_t device, void *data)
 #endif /* OC_SECURITY && OC_PKI */
 }
 
-
 /**
-* intializes the global variables
-* registers and starts the handler
-
-*/
+ * intializes the global variables
+ * registers and starts the handler
+ */
 void
 initialize_variables(void)
 {
@@ -1357,17 +1423,15 @@ initialize_variables(void)
   
   /* set the flag for NO oic/con resource. */
   oc_set_con_res_announced(false);
-
 }
 
 #ifndef NO_MAIN
-
 #ifdef WIN32
 /**
 * signal the event loop (windows version)
 * wakes up the main function to handle the next callback
 */
-static void
+STATIC void
 signal_event_loop(void)
 {
   WakeConditionVariable(&cv);
@@ -1379,7 +1443,7 @@ signal_event_loop(void)
 * signal the event loop (Linux)
 * wakes up the main function to handle the next callback
 */
-static void
+STATIC void
 signal_event_loop(void)
 {
   pthread_mutex_lock(&mutex);
@@ -1402,10 +1466,14 @@ handle_signal(int signal)
 
 #ifdef OC_CLOUD
 /**
-* cloud status handler.
-* handler to print out the status of the cloud connection
+ * cloud status handler.
+ * handler to print out the status of the cloud connection
+ *
+ * @param ctx the cloud context
+ * @param status the status of the cloud connection
+ * @param data the supplied user data.
 */
-static void
+STATIC void
 cloud_status_handler(oc_cloud_context_t *ctx, oc_cloud_status_t status,
                      void *data)
 {
@@ -1438,7 +1506,27 @@ cloud_status_handler(oc_cloud_context_t *ctx, oc_cloud_status_t status,
     PRINT("\t\t-Refreshed Token\n");
   }
 }
-#endif // OC_CLOUD
+#endif /* OC_CLOUD */
+
+/**
+ * oc_ownership_status_cb callback implementation
+ * handler to print out the DI after onboarding
+ *
+ * @param device_uuid the device ID
+ * @param device_index the index in the list of device IDs
+ * @param owned owned or unowned indication
+ * @param user_data the supplied user data.
+*/
+void oc_ownership_status_cb(const oc_uuid_t* device_uuid,
+  size_t device_index, bool owned,
+  void* user_data)
+{
+  (void)user_data;
+
+  char uuid[37] = { 0 };
+  oc_uuid_to_str(device_uuid, uuid, OC_UUID_LEN);
+  PRINT(" oc_ownership_status_cb: DI: '%s'\n", uuid);
+}
 
 /**
 * main application.
@@ -1473,6 +1561,15 @@ int init;
   PRINT("Used input file : \"{{input_file}}\"\n");
   PRINT("OCF Server name : \"{{json_data['info']['title']}}\"\n");
 
+  char buff[FILENAME_MAX];
+  char* retbuf = NULL;
+  retbuf = GetCurrentDir(buff, FILENAME_MAX);
+  if (retbuf != NULL)
+  {
+    PRINT("Current working dir: %s\n", buff);
+  }
+  PRINT("OCF Server name : \"%s\"\n", device_name);
+
 /*
  The storage folder depends on the build system
  for Windows the projects simpleserver and cloud_server are overwritten, hence the folders should be the same as those targets.
@@ -1499,7 +1596,7 @@ int init;
 #endif /* OC_SECURITY */
 
   /* initializes the handlers structure */
-  static const oc_handler_t handler = {.init = app_init,
+  STATIC const oc_handler_t handler = {.init = app_init,
                                        .signal_event_loop = signal_event_loop,
                                        .register_resources = register_resources
 #ifdef OC_CLIENT
@@ -1535,6 +1632,12 @@ int init;
     oc_cloud_manager_start(ctx, cloud_status_handler, NULL);
   }
 #endif 
+
+  /* print out the current DI of the device */
+  char uuid[37] = { 0 };
+  oc_uuid_to_str(oc_core_get_device_id(0), uuid, OC_UUID_LEN);
+  PRINT(" DI: '%s'\n", uuid);
+  oc_add_ownership_status_cb(oc_ownership_status_cb, NULL);
 
   PRINT("OCF server \"{{json_data['info']['title']}}\" running, waiting on incoming connections.\n");
 

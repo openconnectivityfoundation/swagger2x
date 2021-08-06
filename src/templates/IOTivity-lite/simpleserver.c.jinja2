@@ -1522,6 +1522,8 @@ void oc_ownership_status_cb(const oc_uuid_t* device_uuid,
   void* user_data)
 {
   (void)user_data;
+  (void)device_index;
+  (void)owned;
 
   char uuid[37] = { 0 };
   oc_uuid_to_str(device_uuid, uuid, OC_UUID_LEN);

@@ -81,6 +81,9 @@
  *   compile out the function main()
  * - INCLUDE_EXTERNAL
  *   includes header file "external_header.h", so that other tools/dependencies can be included without changing this code
+ * - INCLUDE_EXTERNAL_FUNCTION
+ *   includes header file "external_header.h", so that other tools/dependencies can be included without changing this code
+ *   calls function void external_registration(void) during 
  * - OPTIMIZE_PSTAT
  *   disable PSTAT observe
  */
@@ -673,7 +676,7 @@ get{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfaces
 }
 {% endif -%}
 {% endfor -%}
-{% endfor -%}  
+{% endfor -%}
 
 {% for path, path_data in json_data['paths'].items() if "?" not in path  -%}
 {% for methodName, method_data in path_data.items() -%}
@@ -1045,7 +1048,7 @@ post{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interface
       oc_rep_set_int(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}} );
       {%- if query_if_exist(json_data, path, "oic.if.startup.revert") %}
       oc_storage_write("g{{path|variablesyntax}}{{var|variablesyntax}}", (uint8_t*)&g{{path|variablesyntax}}{{var|variablesyntax}}, sizeof(g{{path|variablesyntax}}{{var|variablesyntax}}));
-      {%- endif %}	
+      {%- endif %}
       {%- elif var_data.type == "string" %}
       PRINT("   %s : %s\n", g{{path|variablesyntax}}_RESOURCE_PROPERTY_NAME{{var|variablesyntax}}, g{{path|variablesyntax}}{{var|variablesyntax}});
       oc_rep_set_text_string(root, {{var}}, g{{path|variablesyntax}}{{var|variablesyntax}}); 
@@ -1159,7 +1162,7 @@ delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfa
   int {{item.name|variablesyntax}}_len = oc_get_query_value(request, "{{item.name}}", &{{item.name|variablesyntax}});
   if ({{item.name|variablesyntax}}_len != -1) {
     bool query_ok = false;
-	/* input check {{item.enum}} {{item.pattern}} */
+    /* input check {{item.enum}} {{item.pattern}} */
   {% for enum_value in item.enum %}
     if ( strncmp ({{item.name|variablesyntax}}, "{{enum_value}}", {{item.name|variablesyntax}}_len) == 0)  query_ok = true;
   {%- endfor %}
@@ -1178,7 +1181,7 @@ delete{{path|variablesyntax}}(oc_request_t *request, oc_interface_mask_t interfa
 }
 {% endif -%}
 {% endfor -%}
-{%- endfor %}  
+{%- endfor %}
 
 /**
  * register all the resources to the stack
@@ -1239,9 +1242,13 @@ register_resources(void)
   oc_resource_set_observable(platform_resource, false);
   
 #ifdef OPTIMIZE_PSTAT
-  	/* disable observe on PSTAT resource to save on peak memory consumption */
-	oc_resource_t *pstat_resource = oc_core_get_resource_by_index(OCF_SEC_PSTAT, 0);
-	oc_resource_set_observable(pstat_resource, false);
+  /* disable observe on PSTAT resource to save on peak memory consumption */
+  oc_resource_t *pstat_resource = oc_core_get_resource_by_index(OCF_SEC_PSTAT, 0);
+  oc_resource_set_observable(pstat_resource, false);
+#endif
+
+#ifdef INCLUDE_EXTERNAL_FUNCTION
+  external_registration();
 #endif
 }
 

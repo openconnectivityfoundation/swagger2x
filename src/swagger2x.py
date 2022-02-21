@@ -1819,6 +1819,7 @@ try:
                     outputfile = args.prefix_file + outputfile
                 out_file = os.path.join(args.out_dir, outputfile)
             else:
+                outputfile = args.output_file
                 if (args.prefix_file) is not None:
                     outputfile = args.prefix_file + args.output_file
                 out_file = os.path.join(args.out_dir, outputfile)

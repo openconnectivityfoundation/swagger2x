@@ -5,6 +5,10 @@
     "title": "{{json_data['info']['title']}}",
     "version": "{{json_data['info']['version']}}"
   },
+  "namespace" : {
+    "ocf" : "https://onedm.org/ecosystem/ocf"
+  },
+  "defaultNamespace" : "ocf",
   "sdfObject": {
     "{{ sdf_return_path_info(json_data, "name") }}": {
     "description": "{{ sdf_return_path_info(json_data, "description") }}",

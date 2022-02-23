@@ -77,7 +77,7 @@
           "items": {
             "enum": [
 {% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{sdfObject}}"
-{% elif "Open Mobile Alliance" in json_data['info']['copyright']%}"oic.r.o.{{sdfObject}}"{% else %}
+{% elif "Open Mobile Alliance" in json_data['info']['copyright']%}"oic.r.o.{{sdfObject | replace('_','.') | lower }}"{% else %}
 "x.unknown.{{sdfObject}}"
 {% endif %}
             ],

@@ -76,7 +76,10 @@
           "description": "The Resource Type.",
           "items": {
             "enum": [
-{% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{sdfObject}}"{% else %}"x.unknown.{{sdfObject}}"{% endif %}
+{% if "Open Connectivity Foundation" in json_data['info']['copyright']%}"oic.r.{{sdfObject}}"
+{% elif "Open Mobile Alliance" in json_data['info']['copyright']%}"oic.r.o.{{sdfObject}}"{% else %}
+"x.unknown.{{sdfObject}}"
+{% endif %}
             ],
             "type": "string"
           },
@@ -103,7 +106,7 @@
           "type": "array"
         },
        {% for sdfProp, sdfProp_data in sdfObject_data['sdfProperty'].items() %} 
-        "{{sdfProp}}" : {{sdfProp_data | sdf_resolve_sdfRef |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"')| replace('"label"','"x-label"')| replace('"sdfType"','"x-sdfType"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
+        "{{sdfProp}}" : {{sdfProp_data | sdf_resolve_sdfRef |tojson(2)| replace("\\u0027","'")| replace('"units"','"x-units"') | replace('"unit"','"x-unit"')| replace('"label"','"x-label"')| replace('"sdfType"','"x-sdfType"') | replace('"readable":','"x-readable":')| replace('"writable": false','"readOnly": true') | replace('"writable": true','"readOnly": false')}}{{ "," if not loop.last }}{% endfor %}
       },
       "type": "object" {% if sdfObject_data['sdfRequired'] | length > 0  %},
       "required" : [{% for item in sdfObject_data['sdfRequired'] %} 

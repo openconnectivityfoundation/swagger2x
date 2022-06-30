@@ -543,7 +543,7 @@ app_init(void)
  * @param error_state the current (input) error state
  * @return the error_status, e.g. if error_status is true, then the input document contains something illegal
  */
-STATIC bool
+bool
 check_on_readonly_common_resource_properties(oc_string_t name, bool error_state)
 {
   if (strcmp ( oc_string(name), "n") == 0) {
